@@ -9,7 +9,7 @@ planeId = p.loadURDF("plane.urdf", basePosition=[0,0,0])
 tableId = p.loadURDF("table/table.urdf", basePosition=[0, 0, 0.1])
 startPos = [0, 0, 0]
 startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-itemId = p.loadURDF("random_urdfs/000/000.urdf", basePosition=[0,0,1], baseOrientation=startOrientation)
+itemId = p.loadURDF("random_urdfs/000/000.urdf", basePosition=[0,0,2], baseOrientation=startOrientation)
 # set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
 for i in range(10000):
     p.stepSimulation()
