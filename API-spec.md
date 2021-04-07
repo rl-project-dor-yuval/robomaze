@@ -4,10 +4,11 @@
 
 * Initially set the episode rules:
     1. Maze size in boxes resolution (5*10, 10*10, 15*10)
-        * map from text file
+       Map from text file
        (The joints state is initialized by default values.
         
     2. Rewards for events: 
+     
       - arriving target
       
       - collision 
