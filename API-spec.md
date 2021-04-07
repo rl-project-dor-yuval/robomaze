@@ -31,7 +31,7 @@ there will be boxes at the boundaries (with normal collision)
     - different cameras (tracking camera, static drone from above...)
     - different combinations of the above
 
-In each step, the user can access the observations space and set the R^8 vector controlling the joint motors.
+In each step, the user can access the chosen observations space and set the R^8 vector controlling the joint motors.
 
 ??? should the actions be always a R^8 continuous vector?
  should we define another discrete actions system for algorithms like DQN or should it be done by the agent? ???
