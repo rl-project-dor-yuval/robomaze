@@ -9,9 +9,13 @@
         
     2. Rewards for events: 
       - arriving target
+      
       - collision 
+      
       - distance from target
+      
       - walking speed 
+      
       - maybe custom reward from raw data
 
     3. End of episode rules
