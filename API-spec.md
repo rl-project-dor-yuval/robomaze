@@ -3,7 +3,7 @@
 # parameters set by the user:
 
 * Initially set the episode rules:
-    1. Maze size in boxes resolution (5*10, 10*10, 15*10)
+    1. Maze size in boxes resolution (5x5, 10x10, 15x10)
        Map from text file
        (The joints state is initialized by default values.
         
@@ -28,17 +28,17 @@ and control the simulation using the R8 vector controlling the joint motors.
 
 * obeservetion space: 
  
- - robot_joints_state (R8 vector?)
+    - robot_joints_state (R8 vector?)
  
- - robot_location+target_location 
+     - robot_location+target_location 
  
- - distance_from_target (l2)
+     - distance_from_target (l2)
  
- - fixed_map 
+     - fixed_map 
  
- - combinations of them
+     - combinations of them
  
- - (later) cameras 
+     - (later) cameras 
 
 
 ### in the future:
