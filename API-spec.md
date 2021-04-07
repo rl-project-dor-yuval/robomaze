@@ -1,6 +1,6 @@
 # parameters set by the user:
 
-## Environment Rules Set At Creation:
+## Environment Parameters Set At Creation:
 
 Each parameter will have default value, (default map, default rewards...) so it will be 
 easier to configure only the desired parameters.
@@ -35,6 +35,8 @@ In each step, the user can access the observations space and set the R^8 vector 
 
 ??? should the actions be always a R^8 continuous vector?
  should we define another discrete actions system for algorithms like DQN or should it be done by the agent? ???
+
+* Recorder: create video of the episode or not (decided in reset() and not in __init__())
 
 ### in the future:
 * custom robot from URDF instead of the ant
