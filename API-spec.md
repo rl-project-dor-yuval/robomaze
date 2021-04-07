@@ -27,12 +27,18 @@ In every single episode , user can access the observations space.
 and control the simulation using the R8 vector controlling the joint motors.
 
 * obeservetion space: 
-  - robot_joints_state (R8 vector?)
-  - robot_location+target_location 
-  - distance_from_target (l2)
-  - fixed_map 
-  - combinations of them
-  - (later) cameras 
+ 
+ - robot_joints_state (R8 vector?)
+ 
+ - robot_location+target_location 
+ 
+ - distance_from_target (l2)
+ 
+ - fixed_map 
+ 
+ - combinations of them
+ 
+ - (later) cameras 
 
 
 ### in the future:
