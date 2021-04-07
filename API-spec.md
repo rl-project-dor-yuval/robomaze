@@ -5,7 +5,7 @@
 Each parameter will have default value, (default map, default rewards...) so it will be 
 easier to configure only the desired parameters.
 
-* Maze size in boxes resolution (5x5, 10x10, 15x10) .maybe more or different sizes, we will see what seems reasonable.
+* Maze size in boxes resolution (5x5, 10x10, 15x10). maybe more or different sizes, we will see what looks reasonable.
 there will be boxes at the boundaries (with normal collision)
 
 * Map from text/csv file (the file will contain the char map where: '#' marks a box for example)
@@ -30,7 +30,6 @@ there will be boxes at the boundaries (with normal collision)
     - fixed size map (not from camera) 
     - different cameras (tracking camera, static drone from above...)
     - different combinations of the above
-
 
 In each step, the user can access the observations space and set the R^8 vector controlling the joint motors.
 
