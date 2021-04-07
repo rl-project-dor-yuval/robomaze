@@ -3,20 +3,15 @@
 # parameters set by the user:
 
 * Initially set the episode rules:
-    1. Maze size in boxes resolution (5x5, 10x10, 15x10)
+    1. Maze size in boxes resolution (5x5, 10x10, 15x10) (maybe more or different sizes, we will see what seems reasonable)
        Map from text file
        (The joints state is initialized by default values.
         
     2. Rewards for events: 
-     
       - arriving target
-      
       - collision 
-      
       - distance from target
-      
       - walking speed 
-      
       - maybe custom reward from raw data
 
     3. End of episode rules
