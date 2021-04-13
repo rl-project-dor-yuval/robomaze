@@ -4,7 +4,6 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-
 # change to named tuple or class
 MAZE_SIZE_SMALL = (5, 10)
 MAZE_SIZE_MEDIUM = (15, 15)
@@ -19,10 +18,16 @@ class Rewards:
         # TODO add more
 
 
-class MazeEnv(gym.Env):
+class ObsDef:
+    def __init__(self, observations: list = ["joint_state", "robot_loc", "robot_target"]):
+        for ob in observations:
+            if ob not in {"joint_state", "robot_loc", "robot_target"}:
+                raise ValueError
 
+
+class MazeEnv(gym.Env):
     def __init__(self, maze_size, start_state, rewards: Rewards,
-                 timeout_steps: int = 0, observations: list = ["joint_state"]):
+                 timeout_steps: int = 0, observations: list = ["joint_state", "robot_loc", "robot_target"]):
         """
         :param maze_size: TODO: define named tuple
         :param start_state: TODO: will include staff like start and end position,
@@ -47,7 +52,3 @@ class MazeEnv(gym.Env):
 
     def close(self):
         pass
-
-
-
-
