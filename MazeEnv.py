@@ -1,14 +1,15 @@
 from typing import Optional
+from enum import Enum
 
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
 
-# change to named tuple or class
-MAZE_SIZE_SMALL = (5, 10)
-MAZE_SIZE_MEDIUM = (15, 15)
-MAZE_SIZE_LARGE = (20, 20)
+class MazeSize:
+    SMALL = (5, 10)
+    MEDIUM = (15, 15)
+    LARGE = (20, 20)
 
 
 class Rewards:
@@ -21,7 +22,7 @@ class Rewards:
 
 class MazeEnv(gym.Env):
 
-    def __init__(self, maze_size, start_state, rewards: Rewards,
+    def __init__(self, maze_size: tuple, start_state, rewards: Rewards,
                  timeout_steps: int = 0, observations: list = ["joint_state"]):
         """
         :param maze_size: TODO: define named tuple
