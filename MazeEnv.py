@@ -5,11 +5,13 @@ from gym.utils import seeding
 import pybullet as p
 import pybullet_data
 import os
+import numpy as np
+import math
 
 
 class MazeSize:
     SMALL = (5, 10)
-    MEDIUM = (15, 15)
+    MEDIUM = (10, 15)
     LARGE = (20, 20)
 
 
@@ -39,6 +41,9 @@ class ObservationsDefinition:
 
 
 class MazeEnv(gym.Env):
+
+    _BLOCK_Z = 0.5  # half of block size so they won't be inside the floor
+
     def __init__(self, maze_size=MazeSize.MEDIUM , start_state=None, rewards: Rewards=None,
                  timeout_steps: int = 0, observations: ObservationsDefinition = None,):
         """
@@ -52,6 +57,10 @@ class MazeEnv(gym.Env):
 
         Initializing environment object
         """
+        self.maze_frame_uids = np.zeros([4])
+        self.antUid = None
+        self.is_reset = False
+
         # TODO handle default for all parameters
         # TODO validate maze size
         self.maze_size = maze_size
@@ -68,7 +77,7 @@ class MazeEnv(gym.Env):
             self.observations = observations
 
     def step(self, action):
-
+        # TODO throw exception if is_reset false
         p.stepSimulation()
         # TODO return observation, reward, is_done, info
 
@@ -77,35 +86,72 @@ class MazeEnv(gym.Env):
         reset the environment for the next episode
         :param create_video: weather to create video file from the next episode
         """
-        # TODO Initialize pybullet simulation and maze
         p.connect(p.GUI)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         p.setGravity(0, 0, -10)
 
-        floorUid = p.loadURDF("plane_transparent.urdf")
-        p.changeVisualShape(objectUniqueId=floorUid,
-                            linkIndex=-1,
-                            rgbaColor=[0, 0.5, 0.7, 1])
+        floorUid = p.loadURDF("floor.urdf")
+        # p.changeVisualShape(objectUniqueId=floorUid,
+        #                     linkIndex=-1,
+        #                     rgbaColor=[0, 0.5, 0.7, 1])
 
         # load maze, TODO change to dynamic maze loading:
+        self._load_maze_frame()
         # for i in range(-7, 8):
         #     cubeUid = p.loadURDF("cube.urdf", basePosition=[i, 7, 0.5])
         #     cubeUid = p.loadURDF("cube.urdf", basePosition=[i, -7, 0.5])
         #     cubeUid = p.loadURDF("cube.urdf", basePosition=[-7, i, 0.5])
         #     cubeUid = p.loadURDF("cube.urdf", basePosition=[7, i, 0.5])
 
-        # load ant,
+        # load ant, TODO: change colors
         self.antUid = p.loadMJCF("data/myAnt.xml")[0]
+        p.resetBasePositionAndOrientation(self.antUid,
+                                          [1, 1, 2 ],
+                                          p.getBasePositionAndOrientation(self.antUid)[1])
+
         # for i in range(-1,20):
         #     p.changeVisualShape(self.antUid, i, rgbaColor=(0.3,0.3,0.3,0.9))
 
-        # sUid = p.loadURDF("data/s.urdf")
+        p.resetDebugVisualizerCamera(cameraDistance=20,
+                                     cameraYaw=0,
+                                     cameraPitch=-89.9,
+                                     cameraTargetPosition=[10, 10, 0])
+
+        self.is_reset = True
 
     def render(self):
         # TODO think if it is necessary
         pass
 
+    def _load_maze_frame(self):
+        block_x_path = "data/block" + str(self.maze_size[0]) + ".urdf"
+        block_y_path = "data/block" + str(self.maze_size[1]) + ".urdf"
+
+        # TODO: throw exeption if blocks does not exist for this size (maybe better in init?)
+
+        # along y blocks:
+        self.maze_frame_uids[0] = p.loadURDF(block_y_path,
+                                             basePosition=[-0.5,
+                                                           self.maze_size[1]/2,
+                                                           self._BLOCK_Z])
+        self.maze_frame_uids[1] = p.loadURDF(block_y_path,
+                                             basePosition=[self.maze_size[0] + 0.5,
+                                                           self.maze_size[1]/2,
+                                                           self._BLOCK_Z])
+
+        # along x blocks:
+        x_orientation = p.getQuaternionFromEuler([0, 0, math.pi/2])
+        self.maze_frame_uids[2] = p.loadURDF(block_x_path,
+                                             basePosition=[self.maze_size[0]/2,
+                                                           -0.5,
+                                                           self._BLOCK_Z],
+                                             baseOrientation=x_orientation)
+        self.maze_frame_uids[3] = p.loadURDF(block_x_path,
+                                             basePosition=[self.maze_size[0]/2,
+                                                           self.maze_size[1] + 0.5,
+                                                           self._BLOCK_Z],
+                                             baseOrientation=x_orientation)
 
 
 

@@ -2,7 +2,10 @@ import MazeEnv as mz
 import time
 import os
 
-maze = mz.MazeEnv()
+import pybullet as p
+
+
+maze = mz.MazeEnv(maze_size=mz.MazeSize.LARGE)
 maze.reset()
 
 for i in range(10000):
