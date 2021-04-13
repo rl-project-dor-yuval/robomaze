@@ -1,5 +1,4 @@
 from typing import Optional
-from enum import Enum
 
 import gym
 from gym import error, spaces, utils
@@ -14,16 +13,28 @@ class MazeSize:
 
 class Rewards:
     def __init__(self, target_arrival=1, collision=-1, timeout=0):
+        """
+        The collection of rewards that that you are intrested with in the upcoming simulation
+        :param target_arrival: the reward's value for arriving the target
+        :param collision: the reward's value for a collision
+        :param timeout: the reward's value for timeout
+        """
         self.target_arrival = target_arrival
         self.collision = collision
         self.timeout = timeout
         # TODO add more
 
 
-class MazeEnv(gym.Env):
+class ObsDef:
+    def __init__(self, observations: list = ["joint_state", "robot_loc", "robot_target"]):
+        for ob in observations:
+            if ob not in {"joint_state", "robot_loc", "robot_target"}:
+                raise ValueError
 
-    def __init__(self, maze_size: tuple, start_state, rewards: Rewards,
-                 timeout_steps: int = 0, observations: list = ["joint_state"]):
+
+class MazeEnv(gym.Env):
+    def __init__(self, maze_size, start_state, rewards: Rewards,
+                 timeout_steps: int = 0, observations: list = ["joint_state", "robot_loc", "robot_target"]):
         """
         :param maze_size: TODO: define named tuple
         :param start_state: TODO: will include staff like start and end position,
