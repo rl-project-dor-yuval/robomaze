@@ -12,6 +12,12 @@ MAZE_SIZE_LARGE = (20, 20)
 
 class Rewards:
     def __init__(self, target_arrival=1, collision=-1, timeout=0):
+        """
+        The collection of rewards that that you are intrested with in the upcoming simulation
+        :param target_arrival: the reward's value for arriving the target
+        :param collision: the reward's value for a collision
+        :param timeout: the reward's value for timeout
+        """
         self.target_arrival = target_arrival
         self.collision = collision
         self.timeout = timeout
