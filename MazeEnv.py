@@ -45,7 +45,7 @@ class MazeEnv(gym.Env):
     _BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
     zoom = 1.3  # is also relative to maze size
 
-    def __init__(self, maze_size=MazeSize.MEDIUM , start_state=None, rewards: Rewards=None,
+    def __init__(self, maze_size=MazeSize.MEDIUM, start_state=None, rewards: Rewards=None,
                  timeout_steps: int = 0, observations: ObservationsDefinition = None,):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -62,6 +62,8 @@ class MazeEnv(gym.Env):
         self.antUid = None
         self.is_reset = False
         self.step_count = 0
+        self.connectionUid = None
+        self.episode_count = 0
 
         # TODO handle default for all parameters
         # TODO validate maze size
@@ -81,6 +83,8 @@ class MazeEnv(gym.Env):
     def step(self, action):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
+
+
         p.stepSimulation()
         
         # >>do the step actions
@@ -94,13 +98,16 @@ class MazeEnv(gym.Env):
         
         # TODO return observation, reward, is_done, info
 
-    def reset(self, create_video=False):
+    def reset(self, create_video=False, reset_episode_count=False):
         """
         reset the environment for the next episode
+        :param reset_episode_count: wather to reset the MazeEnv.episode_count value
         :param create_video: weather to create video file from the next episode
         """
-        # TODO handle if environment already ran
-        p.connect(p.GUI)
+        if self.connectionUid is not None:
+            p.disconnect()
+
+        self.connectionUid = p.connect(p.GUI)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         p.setGravity(0, 0, -10)
@@ -113,7 +120,7 @@ class MazeEnv(gym.Env):
         # load ant, TODO: change colors
         self.antUid = p.loadMJCF("data/myAnt.xml")[0]
         p.resetBasePositionAndOrientation(self.antUid,
-                                          [1, 1, 2 ],
+                                          [1, 1, 2],
                                           p.getBasePositionAndOrientation(self.antUid)[1])
         # for i in range(-1,20):
         #     p.changeVisualShape(self.antUid, i, rgbaColor=(0.3,0.3,0.3,0.9))
@@ -124,9 +131,12 @@ class MazeEnv(gym.Env):
                                      cameraPitch=-89.9,
                                      cameraTargetPosition=[self.maze_size[0]/2, self.maze_size[1]/2, 0])
 
+        # TODO handle recording and save recoding from previous episode if needed
+
+        self.episode_count = 0 if reset_episode_count else self.episode_count
+        self.episode_count += 1
         self.step_count = 0
         self.is_reset = True
-
 
     def render(self):
         # TODO think if it is necessary
