@@ -122,6 +122,10 @@ class MazeEnv(gym.Env):
         p.resetBasePositionAndOrientation(self.antUid,
                                           [1, 1, 2],
                                           p.getBasePositionAndOrientation(self.antUid)[1])
+
+        # load goal sphere TODO change location to target location
+        self.goal_sphereUid = p.loadURDF("data/goalSphere.urdf", basePosition=[2,2,0])
+
         # for i in range(-1,20):
         #     p.changeVisualShape(self.antUid, i, rgbaColor=(0.3,0.3,0.3,0.9))
 
