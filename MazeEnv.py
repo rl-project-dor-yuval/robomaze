@@ -1,4 +1,3 @@
-from typing import Optional
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
@@ -8,6 +7,9 @@ import os
 
 
 class MazeSize:
+    """
+    3 different sizes that could be set for the maze
+    """
     SMALL = (5, 10)
     MEDIUM = (15, 15)
     LARGE = (20, 20)
@@ -34,16 +36,36 @@ class ObservationsDefinition:
         for ob in observations:
             if ob not in self.observations_opts:
                 raise ValueError
-
         self.observations = observations
 
 
+def StartState_is_valid(maze_size, start_state):
+    """
+    This function ensures that the locations are in the maze
+    :param maze_size: tuple of the maze size (x,y)
+    :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
+    """
+    s_loc = start_state["start_loc"]
+    t_loc = start_state["target_loc"]
+    if s_loc[0] > maze_size[0]/2 or s_loc[1] > maze_size[1]/2 \
+            or t_loc[0] > maze_size[0]/2 or t_loc[1] > maze_size[1]/2:
+        return False
+
+    return True
+
+
 class MazeEnv(gym.Env):
-    def __init__(self, maze_size=MazeSize.MEDIUM , start_state=None, rewards: Rewards=None,
-                 timeout_steps: int = 0, observations: ObservationsDefinition = None,):
+    default_rewards = Rewards()
+    default_obs = ObservationsDefinition()
+
+    def __init__(self, maze_size=MazeSize.MEDIUM,
+                 start_state: dict = {"start_loc": (0, 0, 0), "target_loc": (3, 3, 0)},
+                 rewards: Rewards = default_rewards,
+                 timeout_steps: int = 0,
+                 observations: ObservationsDefinition = default_obs, ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
-        :param start_state: TODO: will include staff like start and end position,
+        :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
         :param rewards: definition of reward values for events
         :param timeout_steps: maximum steps until getting timeout reward
          (if a timeout reward is defined)
@@ -53,11 +75,12 @@ class MazeEnv(gym.Env):
         Initializing environment object
         """
         # TODO handle default for all parameters
-        # TODO validate maze size
-        self.maze_size = maze_size
-        #TODO validate start_state
-        self.start_state = start_state
+        sizes = {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
+        if maze_size not in sizes or not StartState_is_valid(maze_size, start_state) or (timeout_steps < 0):
+            raise Exception("Input Invalid")
 
+        self.maze_size = maze_size
+        self.start_state = start_state
         self.rewards = rewards
         self.timeout_steps = timeout_steps
 
@@ -105,7 +128,3 @@ class MazeEnv(gym.Env):
     def render(self):
         # TODO think if it is necessary
         pass
-
-
-
-
