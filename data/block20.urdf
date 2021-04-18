@@ -2,15 +2,15 @@
  	 <static>true</static>
 	 <link name="baselink">
 	   <inertial>
-		 <origin xyz="0 0 0.5" rpy="0 0 0"/>
+		 <origin xyz="0 0 0" rpy="0 0 0"/>
 		 <mass value="0"/>
-		 <inertia ixx="100"  ixy="0"  ixz="0" iyy="100" iyz="0" izz="100" />
+		 <inertia ixx="0"  ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
 	   </inertial>
 
 	   <visual>
 		 <origin xyz="0 0 0" rpy="0 0 0" />
 		 <geometry>
-		   <box size="1 1 1" />
+		   <box size="1 20 1" />
 		 </geometry>
 		 <material name="Cyan">
 		   <color rgba="0 1.0 1.0 1.0"/>
@@ -20,7 +20,7 @@
 	   <collision>
 		 <origin xyz="0 0 0" rpy="0 0 0"/>
 		 <geometry>
-			<box size="1 1 1" />
+			<box size="1 20 1" />
 		 </geometry>
 	   </collision>
 	 </link>
