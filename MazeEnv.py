@@ -52,8 +52,8 @@ def start_state_is_valid(maze_size, start_state):
     """
     s_loc = start_state["start_loc"]
     t_loc = start_state["target_loc"]
-    if s_loc[0] > maze_size[0]/2 or s_loc[1] > maze_size[1]/2 \
-            or t_loc[0] > maze_size[0]/2 or t_loc[1] > maze_size[1]/2:
+    if s_loc[0] > maze_size[0] or s_loc[1] > maze_size[1] \
+            or t_loc[0] > maze_size[0] or t_loc[1] > maze_size[1]:
         return False
 
     return True
@@ -70,8 +70,10 @@ class MazeEnv(gym.Env):
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
     recording_video_fps = 24
 
+    physics_server = p.GUI  # TODO add setter?
+
     def __init__(self, maze_size=MazeSize.MEDIUM,
-                 start_state: dict = {"start_loc": (0, 0, 0), "target_loc": (3, 3, 0)},
+                 start_state: dict = {"start_loc": (1, 1, 0), "target_loc": (3, 3, 0)},
                  rewards: Rewards = default_rewards,
                  timeout_steps: int = 0,
                  observations: ObservationsDefinition = default_obs, ):
@@ -96,9 +98,10 @@ class MazeEnv(gym.Env):
         self.episode_count = 0
 
         # TODO handle default for all parameters
-        sizes = {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
-        if maze_size not in sizes or not start_state_is_valid(maze_size, start_state) or (timeout_steps < 0):
-            raise Exception("Input Invalid")
+        if not start_state_is_valid(maze_size, start_state):
+            raise Exception("Start state is invalid")
+        if timeout_steps < 0:
+            raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.maze_size = maze_size
         self.start_state = start_state
@@ -133,7 +136,6 @@ class MazeEnv(gym.Env):
                                               height=self.recording_video_size[1])
             self.recorder.insert_frame(im)
 
-
         # TODO return observation, reward, is_done, info
 
     def reset(self, create_video=False, reset_episode_count=False):
@@ -145,7 +147,7 @@ class MazeEnv(gym.Env):
         if self.connectionUid is not None:
             p.disconnect()
 
-        self.connectionUid = p.connect(p.GUI)
+        self.connectionUid = p.connect(self.physics_server)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         p.setGravity(0, 0, -10)
@@ -158,14 +160,12 @@ class MazeEnv(gym.Env):
         # load ant, TODO change to start position
         self.antUid = p.loadMJCF("data/ant.xml")[0]
         p.resetBasePositionAndOrientation(self.antUid,
-                                          [1, 1, 2],
+                                          [1, 1, 1],
                                           p.getBasePositionAndOrientation(self.antUid)[1])
         self._color_ant()
 
         # load goal sphere TODO change location to target location
         self.goal_sphereUid = p.loadURDF("data/goalSphere.urdf", basePosition=[2,2,0])
-
-
 
         # setup camera for a bird view
         p.resetDebugVisualizerCamera(cameraDistance=self.maze_size[1]/self.zoom,
