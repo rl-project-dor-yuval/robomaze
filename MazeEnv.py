@@ -89,7 +89,7 @@ class MazeEnv(gym.Env):
 
         # TODO handle default for all parameters
         sizes = {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
-        if maze_size not in sizes or not StartState_is_valid(maze_size, start_state) or (timeout_steps < 0):
+        if maze_size not in sizes or not start_state_is_valid(maze_size, start_state) or (timeout_steps < 0):
             raise Exception("Input Invalid")
 
         self.maze_size = maze_size
