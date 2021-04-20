@@ -7,6 +7,7 @@ import pybullet_data
 from os import path
 import numpy as np
 import math
+from Recorder import Recorder
 
 
 class MazeSize:
@@ -43,7 +44,11 @@ class ObservationsDefinition:
 class MazeEnv(gym.Env):
 
     _BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
+    _ANT_START_Z_COORD = 1  # the height the ant starts at
     zoom = 1.3  # is also relative to maze size
+
+    recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
+    recording_video_fps = 24
 
     def __init__(self, maze_size=MazeSize.MEDIUM, start_state=None, rewards: Rewards=None,
                  timeout_steps: int = 0, observations: ObservationsDefinition = None,):
@@ -58,8 +63,10 @@ class MazeEnv(gym.Env):
 
         Initializing environment object
         """
+        self.recorder = Recorder()
         self.maze_frame_uids = np.zeros([4])
         self.antUid = None
+        self.goal_sphereUid=None
         self.is_reset = False
         self.step_count = 0
         self.connectionUid = None
@@ -95,7 +102,14 @@ class MazeEnv(gym.Env):
         self.step_count += 1
 
         # if collision or exceeded time steps: is_done<-True
-        
+
+        if self.recorder.is_recording:
+            # TODO maybe it is opposite and ..size[0] is for height
+            _, _, im, _, _ = p.getCameraImage(width=self.recording_video_size[0],
+                                              height=self.recording_video_size[1])
+            self.recorder.insert_frame(im)
+
+
         # TODO return observation, reward, is_done, info
 
     def reset(self, create_video=False, reset_episode_count=False):
@@ -117,17 +131,17 @@ class MazeEnv(gym.Env):
         # load maze, TODO change to dynamic maze loading:
         self._load_maze_edges()
 
-        # load ant, TODO: change colors
-        self.antUid = p.loadMJCF("data/myAnt.xml")[0]
+        # load ant, TODO change to start position
+        self.antUid = p.loadMJCF("data/ant.xml")[0]
         p.resetBasePositionAndOrientation(self.antUid,
-                                          [1, 1, 2],
+                                          [1, 1, self._ANT_START_Z_COORD],
                                           p.getBasePositionAndOrientation(self.antUid)[1])
+        self._color_ant()
 
         # load goal sphere TODO change location to target location
         self.goal_sphereUid = p.loadURDF("data/goalSphere.urdf", basePosition=[2,2,0])
 
-        # for i in range(-1,20):
-        #     p.changeVisualShape(self.antUid, i, rgbaColor=(0.3,0.3,0.3,0.9))
+
 
         # setup camera for a bird view
         p.resetDebugVisualizerCamera(cameraDistance=self.maze_size[1]/self.zoom,
@@ -136,6 +150,14 @@ class MazeEnv(gym.Env):
                                      cameraTargetPosition=[self.maze_size[0]/2, self.maze_size[1]/2, 0])
 
         # TODO handle recording and save recoding from previous episode if needed
+        if self.recorder.is_recording:
+            self.recorder.save_recording_and_reset()
+        if create_video:
+            # TODO handle crating folder and move the folder inside the class
+            video_file_name = "videos/episode" + str(self.episode_count) + ".avi"
+            self.recorder.start_recording(video_file_name,
+                                          self.recording_video_fps,
+                                          self.recording_video_size)
 
         self.episode_count = 0 if reset_episode_count else self.episode_count
         self.episode_count += 1
@@ -183,6 +205,9 @@ class MazeEnv(gym.Env):
         pass
 
     def _get_reward(self):
+        pass
+
+    def _color_ant(self):
         pass
 
 
