@@ -4,45 +4,15 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import pybullet as p
 import pybullet_data
-from os import path
 import numpy as np
 import math
 from Recorder import Recorder
+from EnvAttributes import Rewards, ObservationsDefinition, MazeSize
+from Ant import Ant
+from Maze import Maze
 
 
-class MazeSize:
-    """
-    3 different sizes that could be set for the maze
-    """
-    SMALL = (5, 10)
-    MEDIUM = (10, 15)
-    LARGE = (20, 20)
-
-
-class Rewards:
-    def __init__(self, target_arrival=1, collision=-1, timeout=0):
-        """
-        The collection of rewards and their values
-        :param target_arrival: the reward's value for arriving the target
-        :param collision: the reward's value for a collision
-        :param timeout: the reward's value for timeout
-        """
-        self.target_arrival = target_arrival
-        self.collision = collision
-        self.timeout = timeout
-        # TODO add more
-
-
-class ObservationsDefinition:
-    observations_opts = {"joint_state", "robot_loc", "robot_target_loc"}
-
-    def __init__(self, observations: list = ["joint_state", "robot_loc", "robot_target_loc"]):
-        for ob in observations:
-            if ob not in self.observations_opts:
-                raise ValueError
-
-        self.observations = observations
-
+#TODO change "start_state" name? maybe seperate vars
 
 def start_state_is_valid(maze_size, start_state):
     """
@@ -52,6 +22,7 @@ def start_state_is_valid(maze_size, start_state):
     """
     s_loc = start_state["start_loc"]
     t_loc = start_state["target_loc"]
+    # TODO - fix to make sure coordinates are >1. also make MazeEnv member function
     if s_loc[0] > maze_size[0] or s_loc[1] > maze_size[1] \
             or t_loc[0] > maze_size[0] or t_loc[1] > maze_size[1]:
         return False
@@ -61,12 +32,8 @@ def start_state_is_valid(maze_size, start_state):
 
 class MazeEnv(gym.Env):
 
-    _BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
     _ANT_START_Z_COORD = 1  # the height the ant starts at
     zoom = 1.3  # is also relative to maze size
-    default_rewards = Rewards()
-    default_obs = ObservationsDefinition()
-
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
     recording_video_fps = 24
 
@@ -74,9 +41,9 @@ class MazeEnv(gym.Env):
 
     def __init__(self, maze_size=MazeSize.MEDIUM,
                  start_state: dict = {"start_loc": (1, 1, 0), "target_loc": (3, 3, 0)},
-                 rewards: Rewards = default_rewards,
+                 rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
-                 observations: ObservationsDefinition = default_obs, ):
+                 observations: ObservationsDefinition = ObservationsDefinition(), ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
@@ -88,14 +55,6 @@ class MazeEnv(gym.Env):
 
         Initializing environment object
         """
-        self.recorder = Recorder()
-        self.maze_frame_uids = np.zeros([4])
-        self.antUid = None
-        self.goal_sphereUid = None
-        self.is_reset = False
-        self.step_count = 0
-        self.connectionUid = None
-        self.episode_count = 0
 
         # TODO handle default for all parameters
         if not start_state_is_valid(maze_size, start_state):
@@ -103,35 +62,51 @@ class MazeEnv(gym.Env):
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
-        self.maze_size = maze_size
+        self.is_reset = False
+        self.step_count = 0
+        self.episode_count = 0
         self.start_state = start_state
         self.rewards = rewards
         self.timeout_steps = timeout_steps
 
-        if observations is None:
-            # default observations:
-            self.observations = ObservationsDefinition()
-        else:
-            self.observations = observations
+        # setup simulation:
+        self.connectionUid = p.connect(self.physics_server)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        p.setGravity(0, 0, -10)
+
+        # load maze:
+        # TODO handle passing the map instead of None
+        self.maze = Maze(maze_size, None, start_state["target_loc"])
+
+        # load ant robot:
+        self.ant = Ant(self.start_state["start_loc"])
+
+        # setup camera for a bird view:
+        p.resetDebugVisualizerCamera(cameraDistance=self.maze.maze_size[1] / self.zoom,
+                                     cameraYaw=0,
+                                     cameraPitch=-89.9,
+                                     cameraTargetPosition=[self.maze.maze_size[0] / 2, self.maze.maze_size[1] / 2, 0])
+
+        self.recorder = Recorder()
 
     def step(self, action):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
 
-
         p.stepSimulation()
 
         # >>do the step actions
+        self.ant.action(action)
 
         observation = self._get_observation()
         reward = self._get_reward()
 
         self.step_count += 1
 
-        # if collision or exceeded time steps: is_done<-True
+        # TODO if collision or exceeded time steps: is_done<-True
 
         if self.recorder.is_recording:
-            # TODO maybe it is opposite and ..size[0] is for height
+            # TODO handle recording during p.DIRECT MODE. should do projection stuff
             _, _, im, _, _ = p.getCameraImage(width=self.recording_video_size[0],
                                               height=self.recording_video_size[1])
             self.recorder.insert_frame(im)
@@ -144,35 +119,10 @@ class MazeEnv(gym.Env):
         :param reset_episode_count: wather to reset the MazeEnv.episode_count value
         :param create_video: weather to create video file from the next episode
         """
-        if self.connectionUid is not None:
-            p.disconnect()
+        # move ant to start position:
+        self.ant.reset()
 
-        self.connectionUid = p.connect(self.physics_server)
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-        p.setGravity(0, 0, -10)
-
-        floorUid = p.loadURDF("floor.urdf")
-
-        # load maze, TODO change to dynamic maze loading:
-        self._load_maze_edges()
-
-        # load ant, TODO change to start position
-        self.antUid = p.loadMJCF("data/ant.xml")[0]
-        p.resetBasePositionAndOrientation(self.antUid,
-                                          [1, 1, 1],
-                                          p.getBasePositionAndOrientation(self.antUid)[1])
-        self._color_ant()
-
-        # load goal sphere TODO change location to target location
-        self.goal_sphereUid = p.loadURDF("data/goalSphere.urdf", basePosition=[2,2,0])
-
-        # setup camera for a bird view
-        p.resetDebugVisualizerCamera(cameraDistance=self.maze_size[1]/self.zoom,
-                                     cameraYaw=0,
-                                     cameraPitch=-89.9,
-                                     cameraTargetPosition=[self.maze_size[0]/2, self.maze_size[1]/2, 0])
-
+        # handle recording (save last episode if needed)
         if self.recorder.is_recording:
             self.recorder.save_recording_and_reset()
         if create_video:
@@ -181,6 +131,7 @@ class MazeEnv(gym.Env):
                                           self.recording_video_fps,
                                           self.recording_video_size)
 
+        # update self state:
         self.episode_count = 0 if reset_episode_count else self.episode_count
         self.episode_count += 1
         self.step_count = 0
@@ -190,46 +141,10 @@ class MazeEnv(gym.Env):
         # TODO think if it is necessary
         pass
 
-    def _load_maze_edges(self):
-        """load the blocks for the edges of the maze"""
-        block_x_path = "data/block" + str(self.maze_size[0]) + ".urdf"
-        block_y_path = "data/block" + str(self.maze_size[1]) + ".urdf"
-
-        if not (path.exists(block_x_path) and path.exists(block_y_path)):
-            raise Exception("Could not load maze at the given size,"
-                            " no matching edges block were found."
-                            " please use MazeSize.<desired size>")
-
-        # along y blocks:
-        self.maze_frame_uids[0] = p.loadURDF(block_y_path,
-                                             basePosition=[-0.5,
-                                                           self.maze_size[1]/2,
-                                                           self._BLOCK_Z_COORD])
-        self.maze_frame_uids[1] = p.loadURDF(block_y_path,
-                                             basePosition=[self.maze_size[0] + 0.5,
-                                                           self.maze_size[1]/2,
-                                                           self._BLOCK_Z_COORD])
-
-        # along x blocks:
-        x_orientation = p.getQuaternionFromEuler([0, 0, math.pi/2])
-        self.maze_frame_uids[2] = p.loadURDF(block_x_path,
-                                             basePosition=[self.maze_size[0]/2,
-                                                           -0.5,
-                                                           self._BLOCK_Z_COORD],
-                                             baseOrientation=x_orientation)
-        self.maze_frame_uids[3] = p.loadURDF(block_x_path,
-                                             basePosition=[self.maze_size[0]/2,
-                                                           self.maze_size[1] + 0.5,
-                                                           self._BLOCK_Z_COORD],
-                                             baseOrientation=x_orientation)
-
     def _get_observation(self):
         pass
 
     def _get_reward(self):
-        pass
-
-    def _color_ant(self):
         pass
 
 

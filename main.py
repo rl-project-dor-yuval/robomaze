@@ -3,16 +3,17 @@ import time
 import os
 
 
-maze = mz.MazeEnv(maze_size=mz.MazeSize.SMALL)
-maze.reset(create_video=True)
+maze = mz.MazeEnv(maze_size=mz.MazeSize.SMALL,)
+maze.reset(create_video=False)
 
-for i in range(100):
+for i in range(50):
     maze.step(None)
-    # time.sleep(1. / 240.)
+    time.sleep(1. / 240.)
 
 
 maze.reset()  # has to be called to save video
 
-# for i in range(1000):
-#     maze.step(None)
-#     time.sleep(1. / 240.)
+for i in range(50):
+    maze.step(None)
+    time.sleep(1. / 240.)
+
