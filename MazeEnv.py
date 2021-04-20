@@ -149,12 +149,10 @@ class MazeEnv(gym.Env):
                                      cameraPitch=-89.9,
                                      cameraTargetPosition=[self.maze_size[0]/2, self.maze_size[1]/2, 0])
 
-        # TODO handle recording and save recoding from previous episode if needed
         if self.recorder.is_recording:
             self.recorder.save_recording_and_reset()
         if create_video:
-            # TODO handle crating folder and move the folder inside the class
-            video_file_name = "videos/episode" + str(self.episode_count) + ".avi"
+            video_file_name = "episode" + str(self.episode_count) + ".avi"
             self.recorder.start_recording(video_file_name,
                                           self.recording_video_fps,
                                           self.recording_video_size)

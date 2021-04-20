@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from datetime import datetime
+import os
 
 
 class Recorder:
@@ -8,8 +10,12 @@ class Recorder:
         self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         self.video = None  # start_recording(...) has to be called to record
 
+        date_time_string = datetime.now().strftime("D%d-%m-%Y-T%H-%M-%S/")
+        self.directory_path = "videos/" + date_time_string
+        os.makedirs(self.directory_path, exist_ok=True)
+
     def start_recording(self, file_name, fps, video_size):
-        self.video = cv2.VideoWriter(file_name,
+        self.video = cv2.VideoWriter(self.directory_path + file_name,
                                      self.fourcc,
                                      fps,
                                      video_size,
