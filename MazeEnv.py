@@ -11,6 +11,9 @@ from Recorder import Recorder
 
 
 class MazeSize:
+    """
+    3 different sizes that could be set for the maze
+    """
     SMALL = (5, 10)
     MEDIUM = (10, 15)
     LARGE = (20, 20)
@@ -41,20 +44,40 @@ class ObservationsDefinition:
         self.observations = observations
 
 
+def start_state_is_valid(maze_size, start_state):
+    """
+    This function ensures that the locations are in the maze
+    :param maze_size: tuple of the maze size (x,y)
+    :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
+    """
+    s_loc = start_state["start_loc"]
+    t_loc = start_state["target_loc"]
+    if s_loc[0] > maze_size[0]/2 or s_loc[1] > maze_size[1]/2 \
+            or t_loc[0] > maze_size[0]/2 or t_loc[1] > maze_size[1]/2:
+        return False
+
+    return True
+
+
 class MazeEnv(gym.Env):
 
     _BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
     _ANT_START_Z_COORD = 1  # the height the ant starts at
     zoom = 1.3  # is also relative to maze size
+    default_rewards = Rewards()
+    default_obs = ObservationsDefinition()
 
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
     recording_video_fps = 24
 
-    def __init__(self, maze_size=MazeSize.MEDIUM, start_state=None, rewards: Rewards=None,
-                 timeout_steps: int = 0, observations: ObservationsDefinition = None,):
+    def __init__(self, maze_size=MazeSize.MEDIUM,
+                 start_state: dict = {"start_loc": (0, 0, 0), "target_loc": (3, 3, 0)},
+                 rewards: Rewards = default_rewards,
+                 timeout_steps: int = 0,
+                 observations: ObservationsDefinition = default_obs, ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
-        :param start_state: TODO: will include staff like start and end position,
+        :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
         :param rewards: definition of reward values for events
         :param timeout_steps: maximum steps until getting timeout reward
          (if a timeout reward is defined)
@@ -66,18 +89,19 @@ class MazeEnv(gym.Env):
         self.recorder = Recorder()
         self.maze_frame_uids = np.zeros([4])
         self.antUid = None
-        self.goal_sphereUid=None
+        self.goal_sphereUid = None
         self.is_reset = False
         self.step_count = 0
         self.connectionUid = None
         self.episode_count = 0
 
         # TODO handle default for all parameters
-        # TODO validate maze size
-        self.maze_size = maze_size
-        #TODO validate start_state
-        self.start_state = start_state
+        sizes = {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
+        if maze_size not in sizes or not start_state_is_valid(maze_size, start_state) or (timeout_steps < 0):
+            raise Exception("Input Invalid")
 
+        self.maze_size = maze_size
+        self.start_state = start_state
         self.rewards = rewards
         self.timeout_steps = timeout_steps
 
@@ -93,9 +117,9 @@ class MazeEnv(gym.Env):
 
 
         p.stepSimulation()
-        
+
         # >>do the step actions
-        
+
         observation = self._get_observation()
         reward = self._get_reward()
 
@@ -134,7 +158,7 @@ class MazeEnv(gym.Env):
         # load ant, TODO change to start position
         self.antUid = p.loadMJCF("data/ant.xml")[0]
         p.resetBasePositionAndOrientation(self.antUid,
-                                          [1, 1, self._ANT_START_Z_COORD],
+                                          [1, 1, 2],
                                           p.getBasePositionAndOrientation(self.antUid)[1])
         self._color_ant()
 

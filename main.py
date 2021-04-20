@@ -6,10 +6,11 @@ import pybullet as p
 
 
 maze = mz.MazeEnv(maze_size=mz.MazeSize.SMALL)
-maze.reset(True)
+maze.reset()
 
-for i in range(150):
+for i in range(10000):
     maze.step(None)
+    time.sleep(1. / 240.)
     # time.sleep(1. / 240.)
 
 
