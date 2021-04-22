@@ -95,7 +95,8 @@ class MazeEnv(gym.Env):
 
         p.stepSimulation()
 
-        # >>do the step actions
+        # do actions:
+        # TODO dor implement:
         self.ant.action(action)
 
         observation = self._get_observation()
@@ -108,7 +109,9 @@ class MazeEnv(gym.Env):
         if self.recorder.is_recording:
             # TODO handle recording during p.DIRECT MODE. should do projection stuff
             _, _, im, _, _ = p.getCameraImage(width=self.recording_video_size[0],
-                                              height=self.recording_video_size[1])
+                                              height=self.recording_video_size[1],
+                                              renderer=p.ER_TINY_RENDERER,
+                                              flags=p.ER_NO_SEGMENTATION_MASK)
             self.recorder.insert_frame(im)
 
         # TODO return observation, reward, is_done, info
@@ -142,6 +145,8 @@ class MazeEnv(gym.Env):
         pass
 
     def _get_observation(self):
+        # if "joint_state" in ...
+            # observation["joint_state "] =
         pass
 
     def _get_reward(self):
