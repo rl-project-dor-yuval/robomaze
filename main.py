@@ -2,9 +2,8 @@ import MazeEnv as mz
 import time
 import os
 
-
 maze = mz.MazeEnv(maze_size=mz.MazeSize.SMALL,)
-maze.reset(create_video=False)
+maze.reset(create_video=True)
 
 for i in range(50):
     maze.step(None)
