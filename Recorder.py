@@ -17,6 +17,8 @@ class Recorder:
      if a setters would be created in the future, it is necessary to make new
      projection and view matrices have to be recreated.
     """
+    is_recording: bool
+
     def __init__(self, maze_size, fps=24, video_size=(800, 600), zoom=1.2):
         self._maze_size = maze_size
         self._video_size = video_size
