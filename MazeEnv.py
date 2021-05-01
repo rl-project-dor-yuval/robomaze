@@ -33,11 +33,10 @@ def start_state_is_valid(maze_size, start_state):
 class MazeEnv(gym.Env):
 
     _ANT_START_Z_COORD = 1  # the height the ant starts at
-    zoom = 1.3  # is also relative to maze size
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
-    recording_video_fps = 24
+    zoom = 1.2  # is also relative to maze size
 
-    physics_server = p.GUI  # TODO add setter?
+    physics_server = p.DIRECT  # TODO add setter?
 
     def __init__(self, maze_size=MazeSize.MEDIUM,
                  start_state: dict = {"start_loc": (1, 1, 0), "target_loc": (3, 3, 0)},
@@ -87,7 +86,9 @@ class MazeEnv(gym.Env):
                                      cameraPitch=-89.9,
                                      cameraTargetPosition=[self.maze.maze_size[0] / 2, self.maze.maze_size[1] / 2, 0])
 
-        self.recorder = Recorder()
+        self.recorder = Recorder(maze_size=maze_size,
+                                 video_size=self.recording_video_size,
+                                 zoom=self.zoom)
 
     def step(self, action):
         if not self.is_reset:
@@ -107,12 +108,7 @@ class MazeEnv(gym.Env):
         # TODO if collision or exceeded time steps: is_done<-True
 
         if self.recorder.is_recording:
-            # TODO handle recording during p.DIRECT MODE. should do projection stuff
-            _, _, im, _, _ = p.getCameraImage(width=self.recording_video_size[0],
-                                              height=self.recording_video_size[1],
-                                              renderer=p.ER_TINY_RENDERER,
-                                              flags=p.ER_NO_SEGMENTATION_MASK)
-            self.recorder.insert_frame(im)
+            self.recorder.insert_current_frame()
 
         # TODO return observation, reward, is_done, info
 
@@ -130,9 +126,7 @@ class MazeEnv(gym.Env):
             self.recorder.save_recording_and_reset()
         if create_video:
             video_file_name = "episode" + str(self.episode_count) + ".avi"
-            self.recorder.start_recording(video_file_name,
-                                          self.recording_video_fps,
-                                          self.recording_video_size)
+            self.recorder.start_recording(video_file_name)
 
         # update self state:
         self.episode_count = 0 if reset_episode_count else self.episode_count
