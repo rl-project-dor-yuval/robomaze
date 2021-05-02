@@ -20,6 +20,10 @@ class Maze:
         self._target_sphereUid = p.loadURDF("data/goalSphere.urdf",
                                             basePosition=target_position3d)
 
+    def get_maze_objects_uids(self):
+        maze_uids = np.concatenate([self._maze_frame_uids, self._maze_frame_corners_uids])
+        return maze_uids, self._target_sphereUid
+
     def _load_maze_edges(self):
         """load the blocks for the edges of the maze"""
         block_x_path = "data/block" + str(self.maze_size[0]) + ".urdf"

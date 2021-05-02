@@ -8,6 +8,7 @@ import numpy as np
 import math
 from Recorder import Recorder
 from EnvAttributes import Rewards, ObservationsDefinition, MazeSize
+from CollisionManager import CollisionManager
 from Ant import Ant
 from Maze import Maze
 
@@ -36,7 +37,7 @@ class MazeEnv(gym.Env):
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
     zoom = 1.2  # is also relative to maze size
 
-    physics_server = p.DIRECT  # TODO add setter?
+    physics_server = p.GUI  # TODO add setter?
 
     def __init__(self, maze_size=MazeSize.MEDIUM,
                  start_state: dict = {"start_loc": (1, 1, 0), "target_loc": (3, 3, 0)},
@@ -80,6 +81,12 @@ class MazeEnv(gym.Env):
         # load ant robot:
         self.ant = Ant(self.start_state["start_loc"])
 
+        # create collision detector and pass relevant uids:
+        maze_uids, target_sphere_uid = self.maze.get_maze_objects_uids()
+        self.collision_manager = CollisionManager(maze_uids,
+                                                  target_sphere_uid,
+                                                  self.ant.uid)
+
         # setup camera for a bird view:
         p.resetDebugVisualizerCamera(cameraDistance=self.maze.maze_size[1] / self.zoom,
                                      cameraYaw=0,
@@ -94,11 +101,20 @@ class MazeEnv(gym.Env):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
 
-        p.stepSimulation()
-
-        # do actions:
+        # pass actions through the ant object:
         # TODO dor implement:
         self.ant.action(action)
+
+        # run simulation step
+        p.stepSimulation()
+
+        # check for ant collision in the last step:
+        hit_target, hit_maze = self.collision_manager.check_ant_collisions()
+        if hit_target:
+            # TODO: update reward instead of printing
+            print("hit target")
+        if hit_maze:
+            print("hit maze")
 
         observation = self._get_observation()
         reward = self._get_reward()
