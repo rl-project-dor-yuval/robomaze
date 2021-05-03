@@ -16,10 +16,6 @@ class CollisionManager:
         # "transparent for collisions" (ant can get inside)
         p.setCollisionFilterGroupMask(target_uid, -1, 0, 0)
 
-        print("ant:", ant_uid)
-        print("maze:", maze_uids)
-        print("target:", target_uid)
-
     def check_ant_collisions(self):
         """
         checks if there were collision between the ant and the maze or target

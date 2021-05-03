@@ -35,9 +35,10 @@ class MazeEnv(gym.Env):
 
     _ANT_START_Z_COORD = 1  # the height the ant starts at
     recording_video_size = (800, 600)  # TODO make configurable (and maybe not static)
+    video_skip_frames = 4
     zoom = 1.2  # is also relative to maze size
 
-    physics_server = p.GUI  # TODO add setter?
+    physics_server = p.DIRECT  # TODO add setter?
 
     def __init__(self, maze_size=MazeSize.MEDIUM,
                  start_state: dict = {"start_loc": (1, 1, 0), "target_loc": (3, 3, 0)},
@@ -101,6 +102,12 @@ class MazeEnv(gym.Env):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
 
+        # initialize return values:
+        observation = None  # TODO: handle
+        reward = 0
+        is_done = False
+        info = None  # TODO: handle?
+
         # pass actions through the ant object:
         # TODO dor implement:
         self.ant.action(action)
@@ -108,25 +115,27 @@ class MazeEnv(gym.Env):
         # run simulation step
         p.stepSimulation()
 
-        # check for ant collision in the last step:
+        # check for ant collision in the last step and update reward:
         hit_target, hit_maze = self.collision_manager.check_ant_collisions()
         if hit_target:
-            # TODO: update reward instead of printing
-            print("hit target")
+            reward += self.rewards.target_arrival
         if hit_maze:
-            print("hit maze")
-
-        observation = self._get_observation()
-        reward = self._get_reward()
+            reward += self.rewards.collision
+            is_done = True
 
         self.step_count += 1
 
-        # TODO if collision or exceeded time steps: is_done<-True
+        # check for timeout:
+        if self.step_count <= self.timeout_steps:
+            reward += self.rewards.timeout
+            is_done = True
 
-        if self.recorder.is_recording:
+        # handle recording
+        if self.recorder.is_recording and \
+                self.step_count % self.video_skip_frames == 0:
             self.recorder.insert_current_frame()
 
-        # TODO return observation, reward, is_done, info
+        return observation, reward, is_done, info
 
     def reset(self, create_video=False, reset_episode_count=False):
         """
