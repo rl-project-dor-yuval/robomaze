@@ -23,11 +23,8 @@ class Recorder:
         self._maze_size = maze_size
         self._video_size = video_size
         self._fps = fps
-
         self._zoom = zoom
-
         self.is_recording = False
-
         self._fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         self._video = None  # start_recording(...) has to be called to record
 

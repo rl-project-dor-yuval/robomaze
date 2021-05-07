@@ -29,7 +29,6 @@ class Ant:
         self.uid = p.loadMJCF("data/ant.xml")[0]
         self.initial_orientation = p.getBasePositionAndOrientation(self.uid)[1]
         self.reset()
-        self.action_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
 
         # Initializing ant's action space, for 8 joint ranging -1 to 1.
 
@@ -53,7 +52,6 @@ class Ant:
         #      O
         #  3  / \  4
         assert in_action.dtype == 'float64', "action dtype is not float64"
-        assert self.action_space.contains(in_action), "Expected shape (8,) and value in [-1,1] "
 
         mode = p.POSITION_CONTROL
         action = np.copy(in_action)
