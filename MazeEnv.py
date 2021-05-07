@@ -76,7 +76,6 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
 
         self.action_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
-        self.observation_space =
 
         # setup simulation:
         self._connectionUid = p.connect(self._physics_server)
