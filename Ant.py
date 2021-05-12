@@ -68,3 +68,21 @@ class Ant:
         # perform the move
         p.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000, 2000, 2000, 2000,
                                                                                     2000, 2000, 2000, 2000])
+
+    def get_pos_and_vel(self):
+        """ return 4d vector,
+        2 first values are ant position
+        2 next values are ant velocity"""
+        return np.zeros([4])
+
+    def get_joint_state(self):
+        """
+         return 16d vector,
+        8 are joints position
+        8 next values are joint velocity
+        """
+        return np.zeros([16])
+
+    def get_facing_direction(self):
+        """ return ant facing direction"""
+        return 0

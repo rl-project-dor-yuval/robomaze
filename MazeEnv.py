@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 import gym
 from gym import error, spaces, utils
-from gym.spaces import Box
+from gym.spaces import Box, Dict
 from gym.utils import seeding
 import pybullet as p
 import pybullet_data
@@ -61,7 +61,6 @@ class MazeEnv(gym.Env):
         Initializing environment object
         """
 
-        # TODO handle default for all parameters
         if not self._start_state_is_valid(maze_size, start_loc, target_loc):
             raise Exception("Start state is invalid")
         if timeout_steps < 0:
@@ -77,13 +76,15 @@ class MazeEnv(gym.Env):
 
         self.action_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
 
+        observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
+        self.observation_space = Box(observations_bounds_low, observations_bounds_high, dtype=np.float32)
+
         # setup simulation:
         self._connectionUid = p.connect(self._physics_server)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -10)
 
         # load maze:
-        # TODO handle passing the map instead of None
         self._maze = Maze(maze_size, None, self._target_loc)
 
         # load ant robot:
@@ -111,13 +112,12 @@ class MazeEnv(gym.Env):
         assert self.action_space.contains(action), "Expected shape (8,) and value in [-1,1] "
 
         # initialize return values:
-        observation = None  # TODO: handle
+        observation = self._get_observation()
         reward = 0
         is_done = False
         info = None  # TODO: handle?
 
         # pass actions through the ant object:
-        # TODO dor implement:
         self._ant.action(action)
 
         # run simulation step
@@ -167,16 +167,20 @@ class MazeEnv(gym.Env):
         self.step_count = 0
         self.is_reset = True
 
-    def render(self):
-        # TODO think if it is necessary
-        pass
-
     def _get_observation(self):
-        # if "joint_state" in ...
-            # observation["joint_state "] =
-        pass
+        """in the future the observation space is going to be configurable,
+            right now its just a 21D vector. see self._get_observation_bounds
+            for detail"""
+        observation = np.zeros(self.observation_space.shape)
 
-    def _start_state_is_valid(self, maze_size, start_loc, target_loc):
+        observation[0:4] = self._ant.get_pos_and_vel()
+        observation[4:20] = self._ant.get_joint_state()
+        observation[20] = self._ant.get_facing_direction()
+
+        return observation
+
+    @staticmethod
+    def _start_state_is_valid(maze_size, start_loc, target_loc):
         """
         This function ensures that the locations are in the maze
         :param maze_size: tuple of the maze size (x,y)
@@ -190,6 +194,28 @@ class MazeEnv(gym.Env):
         #     return False
 
         return True
+
+    @staticmethod
+    def _get_observation_bounds(maze_size):
+        # ant position 2d:
+        observations_bounds_high = [maze_size[0] / 2, maze_size[1] / 2]
+
+        # ant velocity 2d:
+        observations_bounds_high.append(np.finfo(np.float32).max)
+        observations_bounds_high.append(np.finfo(np.float32).max)
+
+        # ant facing direction 1d
+        observations_bounds_high.append(math.pi)
+
+        # joint position 8d + joint velocity 8d:
+        observations_bounds_high += [1] * 16
+
+        observations_bounds_high = np.array(observations_bounds_high)
+        observations_bounds_low = -observations_bounds_high
+
+        return observations_bounds_low, observations_bounds_high
+
+
 
 
 

@@ -20,7 +20,6 @@ class Rewards:
         self.target_arrival = target_arrival
         self.collision = collision
         self.timeout = timeout
-        # TODO add more
 
 
 class ObservationsDefinition:
