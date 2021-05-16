@@ -69,11 +69,20 @@ class Ant:
         p.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000, 2000, 2000, 2000,
                                                                                     2000, 2000, 2000, 2000])
 
-    def get_pos_and_vel(self):
-        """ return 4d vector,
+    def get_pos_vel_and_facing_direction(self):
+        """
+        return 5d vector,
         2 first values are ant position
-        2 next values are ant velocity"""
-        return np.zeros([4])
+        2 next values are ant velocity
+        last value the facing direction of the ant
+        """
+        position, orientation_quat = p.getBasePositionAndOrientation(self.uid)
+        orientation = p.getEulerFromQuaternion(orientation_quat)
+        vel, _ = p.getBaseVelocity(self.uid)
+
+        # we only take x and y velocity and position
+        # yaw (rotation around z) is in index 2 of the orientation
+        return np.array([position[0], position[1], vel[0], vel[1], orientation[2]])
 
     def get_joint_state(self):
         """
@@ -83,6 +92,4 @@ class Ant:
         """
         return np.zeros([16])
 
-    def get_facing_direction(self):
-        """ return ant facing direction"""
-        return 0
+

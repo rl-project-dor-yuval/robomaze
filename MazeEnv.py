@@ -40,14 +40,16 @@ class MazeEnv(gym.Env):
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
 
-    _physics_server = p.GUI  # TODO add setter?
+    _physics_server: int
     _connectionUid: int
 
-    def __init__(self, maze_size=MazeSize.MEDIUM,
+    def __init__(self,
+                 maze_size=MazeSize.MEDIUM,
                  start_loc=(1, 1),
                  target_loc=(3, 3),
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
+                 show_gui: bool = False,
                  observations: ObservationsDefinition = ObservationsDefinition(), ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -55,6 +57,7 @@ class MazeEnv(gym.Env):
         :param rewards: definition of reward values for events
         :param timeout_steps: maximum steps until getting timeout reward
          (if a timeout reward is defined)
+        :param show_gui: if set to true, the simulation will be shown in a GUI window
         :param observations: definition of the desired observations for the agent
         :return: Maze Environment object
 
@@ -80,6 +83,11 @@ class MazeEnv(gym.Env):
         self.observation_space = Box(observations_bounds_low, observations_bounds_high, dtype=np.float32)
 
         # setup simulation:
+        if show_gui:
+            self._physics_server = p.GUI
+        else:
+            self._physics_server = p.DIRECT
+
         self._connectionUid = p.connect(self._physics_server)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -10)
@@ -173,9 +181,8 @@ class MazeEnv(gym.Env):
             for detail"""
         observation = np.zeros(self.observation_space.shape)
 
-        observation[0:4] = self._ant.get_pos_and_vel()
+        observation[np.array([0, 1, 2, 3, 20])] = self._ant.get_pos_vel_and_facing_direction()
         observation[4:20] = self._ant.get_joint_state()
-        observation[20] = self._ant.get_facing_direction()
 
         return observation
 

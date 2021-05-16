@@ -1,5 +1,6 @@
 # Todo List For Version 0 of the simulator
-* move maze to be around (0,0) and update start_state validation
+* move maze to be around (0,0)
+* update start_state validation
 * return obvesrvation as concatenated vector of:
     * ant position (COM) - R^2 (-maze_size/2, maze_size/2)
     * ant velocity (COM) - R^2  
