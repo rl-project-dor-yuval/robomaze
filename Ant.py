@@ -51,7 +51,7 @@ class Ant:
         #  2  \ /  1
         #      O
         #  3  / \  4
-        assert in_action.dtype == 'float64', "action dtype is not float64"
+        # assert in_action.dtype == 'float64', "action dtype is not float64"
 
         mode = p.POSITION_CONTROL
         action = np.copy(in_action)

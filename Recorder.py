@@ -19,7 +19,7 @@ class Recorder:
     """
     is_recording: bool
 
-    def __init__(self, maze_size, fps=24, video_size=(800, 600), zoom=1.2):
+    def __init__(self, maze_size, fps=24, video_size=(800, 600), zoom=1):
         self._maze_size = maze_size
         self._video_size = video_size
         self._fps = fps

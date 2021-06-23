@@ -4,9 +4,13 @@ class MazeSize:
     """
     3 different sizes that could be set for the maze
     """
+    SQUARE5 = (5, 5)
+    SQUARE10 = (10, 10)
+    SQUARE15 = (15, 15)
+    SQUARE20 = (20, 20)
     SMALL = (5, 10)
     MEDIUM = (10, 15)
-    LARGE = (20, 20)
+    LARGE = SQUARE20
 
 
 class Rewards:

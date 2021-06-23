@@ -13,12 +13,10 @@ from CollisionManager import CollisionManager
 from Ant import Ant
 from Maze import Maze
 
-
 _ANT_START_Z_COORD = 1  # the height the ant starts at
 
 
 class MazeEnv(gym.Env):
-
     # public members:
     rewards: Rewards
 
@@ -27,7 +25,7 @@ class MazeEnv(gym.Env):
     is_reset: bool
     episode_count: int
 
-    recording_video_size: Tuple[int, int] = (800, 600)
+    recording_video_size: Tuple[int, int] = (400, 400)
     video_skip_frames: int = 4
     zoom: float = 1.2  # is also relative to maze size
 
@@ -45,6 +43,8 @@ class MazeEnv(gym.Env):
 
     def __init__(self,
                  maze_size=MazeSize.MEDIUM,
+                 maze_map: np.ndarray = None,
+                 tile_size=0.1,
                  start_loc=(1, 1),
                  target_loc=(3, 3),
                  rewards: Rewards = Rewards(),
@@ -53,19 +53,30 @@ class MazeEnv(gym.Env):
                  observations: ObservationsDefinition = ObservationsDefinition(), ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
-        :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
+        :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
+         if no value is passed, an empty maze is made, means there are only edges.
+        :param tile_size: the size of each point in the maze passed by maze map. determines the
+         resolution of the maze
+        :param start_loc: the location the ant starts at
+        :param target_loc: the location of the target sphere center
         :param rewards: definition of reward values for events
         :param timeout_steps: maximum steps until getting timeout reward
          (if a timeout reward is defined)
         :param show_gui: if set to true, the simulation will be shown in a GUI window
         :param observations: definition of the desired observations for the agent
+
         :return: Maze Environment object
 
         Initializing environment object
         """
-
+        if maze_map is not None and np.any(maze_size != np.dot(maze_map.shape, tile_size)):
+            raise Exception("maze_map and maze_size mismatch. maze_map size is {map_size}, "
+                            "maze size is {maze_size}, tile_size is {tile_size}.\n "
+                            "note that map_size must be  maze_size / tile_size.".format(map_size=maze_map.shape,
+                                                                                        maze_size=maze_size,
+                                                                                        tile_size=tile_size))
         if not self._start_state_is_valid(maze_size, start_loc, target_loc):
-            raise Exception("Start state is invalid")
+            raise Exception("Start state is invalid, ant or target in a wrong position")
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
@@ -77,10 +88,10 @@ class MazeEnv(gym.Env):
         self.rewards = rewards
         self.timeout_steps = timeout_steps
 
-        self.action_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
+        self.action_space = Box(low=-1, high=1, shape=(8,))
 
         observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
-        self.observation_space = Box(observations_bounds_low, observations_bounds_high, dtype=np.float32)
+        self.observation_space = Box(observations_bounds_low, observations_bounds_high)
 
         # setup simulation:
         if show_gui:
@@ -93,7 +104,7 @@ class MazeEnv(gym.Env):
         p.setGravity(0, 0, -10)
 
         # load maze:
-        self._maze = Maze(maze_size, None, self._target_loc)
+        self._maze = Maze(maze_size, maze_map, tile_size, self._target_loc)
 
         # load ant robot:
         self._ant = Ant(self._start_loc)
@@ -117,7 +128,8 @@ class MazeEnv(gym.Env):
     def step(self, action):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
-        assert self.action_space.contains(action), "Expected shape (8,) and value in [-1,1] "
+        if not self.action_space.contains(action):
+            raise Exception("Expected shape (8,) and value in [-1,1] ")
 
         # initialize return values:
         observation = self._get_observation()
@@ -196,6 +208,7 @@ class MazeEnv(gym.Env):
         # s_loc = start_state["start_loc"]
         # t_loc = start_state["target_loc"]
         # # TODO - fix to make sure coordinates are >1. also make MazeEnv member function
+        # # TODO make sure that did not start on a maze tile
         # if s_loc[0] > maze_size[0] or s_loc[1] > maze_size[1] \
         #         or t_loc[0] > maze_size[0] or t_loc[1] > maze_size[1]:
         #     return False
@@ -221,8 +234,3 @@ class MazeEnv(gym.Env):
         observations_bounds_low = -observations_bounds_high
 
         return observations_bounds_low, observations_bounds_high
-
-
-
-
-
