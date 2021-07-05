@@ -13,6 +13,7 @@ from CollisionManager import CollisionManager
 from Ant import Ant
 from Maze import Maze
 
+
 _ANT_START_Z_COORD = 1  # the height the ant starts at
 
 
@@ -29,7 +30,7 @@ class MazeEnv(gym.Env):
     video_skip_frames: int = 4
     zoom: float = 1.2  # is also relative to maze size
 
-    # private members:
+    # protected members:
     _collision_manager: CollisionManager
     _maze: Maze
     _ant: Ant
@@ -102,6 +103,7 @@ class MazeEnv(gym.Env):
         self._connectionUid = p.connect(self._physics_server)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -10)
+        p.configureDebugVisualizer(p.COV_ENABLE_GUI, False)  # dont show debugging windows
 
         # load maze:
         self._maze = Maze(maze_size, maze_map, tile_size, self._target_loc)
@@ -135,7 +137,7 @@ class MazeEnv(gym.Env):
         observation = self._get_observation()
         reward = 0
         is_done = False
-        info = None  # TODO: handle?
+        info = dict()  # TODO: handle?
 
         # pass actions through the ant object:
         self._ant.action(action)
@@ -143,16 +145,17 @@ class MazeEnv(gym.Env):
         # run simulation step
         p.stepSimulation()
 
+        self.step_count += 1
+
+        # reward and is_done update:
         # check for ant collision in the last step and update reward:
         hit_target, hit_maze = self._collision_manager.check_ant_collisions()
         if hit_target:
             reward += self.rewards.target_arrival
+            is_done = True
         if hit_maze:
             reward += self.rewards.collision
             is_done = True
-
-        self.step_count += 1
-
         # check for timeout:
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
             reward += self.rewards.timeout
@@ -191,7 +194,7 @@ class MazeEnv(gym.Env):
         """in the future the observation space is going to be configurable,
             right now its just a 21D vector. see self._get_observation_bounds
             for detail"""
-        observation = np.zeros(self.observation_space.shape)
+        observation = np.zeros(self.observation_space.shape, dtype=np.float32)
 
         observation[np.array([0, 1, 2, 3, 20])] = self._ant.get_pos_vel_and_facing_direction()
         observation[4:20] = self._ant.get_joint_state()
@@ -221,8 +224,8 @@ class MazeEnv(gym.Env):
         observations_bounds_high = [maze_size[0] / 2, maze_size[1] / 2]
 
         # ant velocity 2d:
-        observations_bounds_high.append(np.finfo(np.float32).max)
-        observations_bounds_high.append(np.finfo(np.float32).max)
+        observations_bounds_high.append(np.inf)
+        observations_bounds_high.append(-np.inf)
 
         # ant facing direction 1d
         observations_bounds_high.append(math.pi)
@@ -230,7 +233,7 @@ class MazeEnv(gym.Env):
         # joint position 8d + joint velocity 8d:
         observations_bounds_high += [1] * 16
 
-        observations_bounds_high = np.array(observations_bounds_high)
+        observations_bounds_high = np.array(observations_bounds_high, dtype=np.float32)
         observations_bounds_low = -observations_bounds_high
 
         return observations_bounds_low, observations_bounds_high

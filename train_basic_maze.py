@@ -33,9 +33,10 @@ if __name__ == "__main__":
 
     for i in range(10 ** 5):
         # action = maze.action_space.sample()
-        action = np.zeros(8)
+        action = np.array([0, 1, 0, 1, 0, 1, 0, 1], dtype=np.float32)
         obs, reward, is_done, _ = maze.step(action)
-
+        print(obs)
+        time.sleep(1./200.)
         # if reward != 0:
         #     print(reward)
 

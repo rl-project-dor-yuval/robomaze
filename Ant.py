@@ -66,8 +66,7 @@ class Ant:
         action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
 
         # perform the move
-        p.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000, 2000, 2000, 2000,
-                                                                                    2000, 2000, 2000, 2000])
+        p.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000]*8)
 
     def get_pos_vel_and_facing_direction(self):
         """
@@ -87,9 +86,19 @@ class Ant:
     def get_joint_state(self):
         """
          return 16d vector,
-        8 are joints position
+        8 first values are joints position
         8 next values are joint velocity
         """
-        return np.zeros([16])
+        joint_states_tuple = p.getJointStates(self.uid, JOINTS_INDICES)
+        positions = np.array([j_state[0] for j_state in joint_states_tuple])
+        velocities = np.array([j_state[1] for j_state in joint_states_tuple])
+
+        positions[::2] = scale(positions[::2], SHOULDER_HIGH, SHOULDER_LOW, 1, -1,)
+        positions[1] = -scale(positions[1], ANKLE_1_4_HIGH, ANKLE_1_4_LOW, 1, -1)
+        positions[7] = -scale(positions[7], ANKLE_1_4_HIGH, ANKLE_1_4_LOW, 1, -1)
+        positions[5] = scale(positions[5], ANKLE_2_3_HIGH, ANKLE_2_3_LOW, 1, -1)
+        positions[3] = scale(positions[3], ANKLE_2_3_HIGH, ANKLE_2_3_LOW, 1, -1)
+
+        return np.concatenate((positions, velocities))
 
 
