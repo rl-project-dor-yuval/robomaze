@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 import gym
+import numpy
 from gym import error, spaces, utils
 from gym.spaces import Box, Dict
 from gym.utils import seeding
@@ -12,7 +13,6 @@ from EnvAttributes import Rewards, ObservationsDefinition, MazeSize
 from CollisionManager import CollisionManager
 from Ant import Ant
 from Maze import Maze
-
 
 _ANT_START_Z_COORD = 1  # the height the ant starts at
 
@@ -70,14 +70,16 @@ class MazeEnv(gym.Env):
 
         Initializing environment object
         """
+
         if maze_map is not None and np.any(maze_size != np.dot(maze_map.shape, tile_size)):
             raise Exception("maze_map and maze_size mismatch. maze_map size is {map_size}, "
                             "maze size is {maze_size}, tile_size is {tile_size}.\n "
                             "note that map_size must be  maze_size / tile_size.".format(map_size=maze_map.shape,
                                                                                         maze_size=maze_size,
                                                                                         tile_size=tile_size))
-        if not self._start_state_is_valid(maze_size, start_loc, target_loc):
-            raise Exception("Start state is invalid, ant or target in a wrong position")
+        # will raise an exception if something is wrong:
+        self._check_start_state(maze_size, start_loc, target_loc)
+
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
@@ -90,7 +92,6 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
-
         observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
         self.observation_space = Box(observations_bounds_low, observations_bounds_high)
 
@@ -135,6 +136,7 @@ class MazeEnv(gym.Env):
 
         # initialize return values:
         observation = self._get_observation()
+
         reward = 0
         is_done = False
         info = dict()  # TODO: handle?
@@ -190,6 +192,8 @@ class MazeEnv(gym.Env):
         self.step_count = 0
         self.is_reset = True
 
+        return self._get_observation()
+
     def _get_observation(self):
         """in the future the observation space is going to be configurable,
             right now its just a 21D vector. see self._get_observation_bounds
@@ -202,21 +206,22 @@ class MazeEnv(gym.Env):
         return observation
 
     @staticmethod
-    def _start_state_is_valid(maze_size, start_loc, target_loc):
+    def _check_start_state(maze_size, start_loc, target_loc):
         """
-        This function ensures that the locations are in the maze
-        :param maze_size: tuple of the maze size (x,y)
-        :param start_state: dictionary - {start_loc : tuple(3), target_loc : tuple(3)}
+        This function ensures that the locations are inside the maze.
+        It does not handle the cases where the ant or target are on
+        a maze tile or the maze is unsolvable.
         """
-        # s_loc = start_state["start_loc"]
-        # t_loc = start_state["target_loc"]
-        # # TODO - fix to make sure coordinates are >1. also make MazeEnv member function
-        # # TODO make sure that did not start on a maze tile
-        # if s_loc[0] > maze_size[0] or s_loc[1] > maze_size[1] \
-        #         or t_loc[0] > maze_size[0] or t_loc[1] > maze_size[1]:
-        #     return False
-
-        return True
+        min_x = min_y = 1
+        max_x, max_y = (maze_size[0] - 1), (maze_size[1] - 1)
+        target_loc = tuple(target_loc)
+        start_loc = tuple(start_loc)
+        print(target_loc < (min_x, min_y) or target_loc > (max_x, max_y))
+        if start_loc < (min_x, min_y) or start_loc > (max_x, max_y) or \
+                target_loc < (min_x, min_y) or target_loc > (max_x, max_y):
+            raise Exception(f"Start location and target location must be at least "
+                            f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
+                            f"and {min_y} < y < {max_y} for this maze size")
 
     @staticmethod
     def _get_observation_bounds(maze_size):

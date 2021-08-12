@@ -1,18 +1,23 @@
 import pybullet as p
 import numpy as np
+import math
 from gym.spaces import Box
 
 # the indices of the joints in the built model
 ANKLE_IDX = np.array([3, 8, 13, 18])
 SHOULDER_IDX = np.array([1, 6, 11, 16])
 JOINTS_INDICES = np.array([1, 3, 6, 8, 11, 13, 16, 18])
-# Practical joints ranges
+# Practical joints motors ranges
 SHOULDER_HIGH = 0.698
 SHOULDER_LOW = -0.698
 ANKLE_1_4_HIGH = 1.745
 ANKLE_1_4_LOW = 0.523
 ANKLE_2_3_HIGH = -0.523
 ANKLE_2_3_LOW = -1.745
+INIT_JOINT_STATES = [0, (ANKLE_1_4_HIGH+ANKLE_1_4_LOW)/2,
+                     0, (ANKLE_2_3_HIGH+ANKLE_2_3_LOW)/2,
+                     0, (ANKLE_2_3_HIGH+ANKLE_2_3_LOW)/2,
+                     0, (ANKLE_1_4_HIGH+ANKLE_1_4_LOW)/2]
 
 
 # this function scales the given value to
@@ -36,6 +41,8 @@ class Ant:
         p.resetBasePositionAndOrientation(self.uid,
                                           self.start_position,
                                           self.initial_orientation)
+        for joint, state in zip(JOINTS_INDICES, INIT_JOINT_STATES):
+            p.resetJointState(self.uid, joint, state)
 
     def action(self, in_action: np.array):
         # action will preform the given action following R8 vector that corresponds to each joint of the ant.
@@ -78,7 +85,6 @@ class Ant:
         position, orientation_quat = p.getBasePositionAndOrientation(self.uid)
         orientation = p.getEulerFromQuaternion(orientation_quat)
         vel, _ = p.getBaseVelocity(self.uid)
-
         # we only take x and y velocity and position
         # yaw (rotation around z) is in index 2 of the orientation
         return np.array([position[0], position[1], vel[0], vel[1], orientation[2]])
