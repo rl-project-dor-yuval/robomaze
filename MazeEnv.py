@@ -92,8 +92,10 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
+
         observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
-        self.observation_space = Box(observations_bounds_low, observations_bounds_high)
+        # self.observation_space = Box(observations_bounds_low, observations_bounds_high)
+        self.observation_space = Box(-np.inf, np.inf, (21,))
 
         # setup simulation:
         if show_gui:
@@ -168,13 +170,21 @@ class MazeEnv(gym.Env):
                 self.step_count % self.video_skip_frames == 0:
             self._recorder.insert_current_frame()
 
+        # if done and recording save video
+        if is_done and self._recorder.is_recording:
+            self._recorder.save_recording_and_reset()
+
         return observation, reward, is_done, info
 
-    def reset(self, create_video=False, reset_episode_count=False):
+    def reset(self, create_video=False, video_path=None, reset_episode_count=False):
         """
         reset the environment for the next episode
-        :param reset_episode_count: wather to reset the MazeEnv.episode_count value
         :param create_video: weather to create video file from the next episode
+        :param video_path: path to the video file. if None then the file will be saved
+                            to the default path at "/videos/date-time/episode#.mp4
+        :param reset_episode_count: weather to reset the MazeEnv.episode_count value
+
+        :return observation for the zeroth time step
         """
         # move ant to start position:
         self._ant.reset()
@@ -183,8 +193,11 @@ class MazeEnv(gym.Env):
         if self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
         if create_video:
-            video_file_name = "episode" + str(self.episode_count) + ".avi"
-            self._recorder.start_recording(video_file_name)
+            if video_path is None:
+                video_file_name = "episode" + str(self.episode_count) + ".avi"
+                self._recorder.start_recording(video_file_name)
+            else:
+                self._recorder.start_recording(video_path, custom_path=True)
 
         # update self state:
         self.episode_count = 0 if reset_episode_count else self.episode_count
@@ -216,7 +229,7 @@ class MazeEnv(gym.Env):
         max_x, max_y = (maze_size[0] - 1), (maze_size[1] - 1)
         target_loc = tuple(target_loc)
         start_loc = tuple(start_loc)
-        print(target_loc < (min_x, min_y) or target_loc > (max_x, max_y))
+
         if start_loc < (min_x, min_y) or start_loc > (max_x, max_y) or \
                 target_loc < (min_x, min_y) or target_loc > (max_x, max_y):
             raise Exception(f"Start location and target location must be at least "
@@ -230,13 +243,16 @@ class MazeEnv(gym.Env):
 
         # ant velocity 2d:
         observations_bounds_high.append(np.inf)
-        observations_bounds_high.append(-np.inf)
+        observations_bounds_high.append(np.inf)
 
         # ant facing direction 1d
         observations_bounds_high.append(math.pi)
 
-        # joint position 8d + joint velocity 8d:
-        observations_bounds_high += [1] * 16
+        # joint position 8d
+        observations_bounds_high += [1] * 8
+
+        # joint velocity 8d:
+        observations_bounds_high += [np.inf] * 8
 
         observations_bounds_high = np.array(observations_bounds_high, dtype=np.float32)
         observations_bounds_low = -observations_bounds_high

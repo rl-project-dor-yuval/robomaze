@@ -50,8 +50,14 @@ class Recorder:
                                                                nearVal=camera_distance - 4,
                                                                farVal=camera_distance + 1)
 
-    def start_recording(self, file_name):
-        self._video = cv2.VideoWriter(self._directory_path + file_name,
+    def start_recording(self, file_name, custom_path=False):
+        """
+        :param file_name: the name of the file to save the video to
+        :param custom_path: if true, then file name will be used as a full path to
+                            the saved video, instead of the default path.
+        """
+        path = file_name if custom_path else self._directory_path + file_name
+        self._video = cv2.VideoWriter(path,
                                       self._fourcc,
                                       self._fps,
                                       self._video_size,
