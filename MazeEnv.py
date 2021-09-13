@@ -1,10 +1,9 @@
 from typing import Optional, Tuple
 import gym
-import numpy
-from gym import error, spaces, utils
 from gym.spaces import Box, Dict
 from gym.utils import seeding
-import pybullet as p
+import pybullet
+from pybullet_utils import bullet_client as bc
 import pybullet_data
 import numpy as np
 import math
@@ -18,7 +17,6 @@ _ANT_START_Z_COORD = 1  # the height the ant starts at
 
 
 class MazeEnv(gym.Env):
-    # public members:
     rewards: Rewards
 
     timeout_steps: int
@@ -30,7 +28,6 @@ class MazeEnv(gym.Env):
     video_skip_frames: int = 4
     zoom: float = 1.2  # is also relative to maze size
 
-    # protected members:
     _collision_manager: CollisionManager
     _maze: Maze
     _ant: Ant
@@ -40,7 +37,7 @@ class MazeEnv(gym.Env):
     _target_loc: Tuple[float, float, float]
 
     _physics_server: int
-    _connectionUid: int
+    _pclient: bc.BulletClient
 
     def __init__(self,
                  maze_size=MazeSize.MEDIUM,
@@ -99,34 +96,36 @@ class MazeEnv(gym.Env):
 
         # setup simulation:
         if show_gui:
-            self._physics_server = p.GUI
+            self._physics_server = pybullet.GUI
         else:
-            self._physics_server = p.DIRECT
+            self._physics_server = pybullet.DIRECT
 
-        self._connectionUid = p.connect(self._physics_server)
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        p.setGravity(0, 0, -10)
-        p.configureDebugVisualizer(p.COV_ENABLE_GUI, False)  # dont show debugging windows
+        self._pclient = bc.BulletClient(connection_mode=self._physics_server)
+        self._pclient.setAdditionalSearchPath(pybullet_data.getDataPath())
+        self._pclient.setGravity(0, 0, -10)
+        self._pclient.configureDebugVisualizer(self._pclient.COV_ENABLE_GUI, False)  # dont show debugging windows
 
         # load maze:
-        self._maze = Maze(maze_size, maze_map, tile_size, self._target_loc)
+        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc)
 
         # load ant robot:
-        self._ant = Ant(self._start_loc)
+        self._ant = Ant(self._pclient, self._start_loc)
 
         # create collision detector and pass relevant uids:
         maze_uids, target_sphere_uid = self._maze.get_maze_objects_uids()
-        self._collision_manager = CollisionManager(maze_uids,
+        self._collision_manager = CollisionManager(self._pclient,
+                                                   maze_uids,
                                                    target_sphere_uid,
                                                    self._ant.uid)
 
         # setup camera for a bird view:
-        p.resetDebugVisualizerCamera(cameraDistance=self._maze.maze_size[1] / self.zoom,
+        self._pclient.resetDebugVisualizerCamera(cameraDistance=self._maze.maze_size[1] / self.zoom,
                                      cameraYaw=0,
                                      cameraPitch=-89.9,
                                      cameraTargetPosition=[self._maze.maze_size[0] / 2, self._maze.maze_size[1] / 2, 0])
 
-        self._recorder = Recorder(maze_size=maze_size,
+        self._recorder = Recorder(self._pclient,
+                                  maze_size=maze_size,
                                   video_size=self.recording_video_size,
                                   zoom=self.zoom)
 
@@ -147,7 +146,7 @@ class MazeEnv(gym.Env):
         self._ant.action(action)
 
         # run simulation step
-        p.stepSimulation()
+        self._pclient.stepSimulation()
 
         self.step_count += 1
 

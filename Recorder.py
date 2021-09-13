@@ -19,7 +19,8 @@ class Recorder:
     """
     is_recording: bool
 
-    def __init__(self, maze_size, fps=24, video_size=(800, 600), zoom=1):
+    def __init__(self, pybullet_client,maze_size, fps=24, video_size=(800, 600), zoom=1):
+        self._pclient = pybullet_client
         self._maze_size = maze_size
         self._video_size = video_size
         self._fps = fps
@@ -38,14 +39,14 @@ class Recorder:
         focal_point = (maze_size[0] / 2, maze_size[1] / 2, 0)  # middle
         aspect = video_size[0]/video_size[1]
 
-        self._view_matrix = p.computeViewMatrixFromYawPitchRoll(distance=camera_distance,
+        self._view_matrix = self._pclient.computeViewMatrixFromYawPitchRoll(distance=camera_distance,
                                                                 yaw=90,
                                                                 pitch=-90,
                                                                 roll=0,
                                                                 upAxisIndex=2,
                                                                 cameraTargetPosition=focal_point
                                                                 )
-        self._projection_matrix = p.computeProjectionMatrixFOV(fov=70,
+        self._projection_matrix = self._pclient.computeProjectionMatrixFOV(fov=70,
                                                                aspect=aspect,
                                                                nearVal=camera_distance - 4,
                                                                farVal=camera_distance + 1)
@@ -65,12 +66,12 @@ class Recorder:
         self.is_recording = True
 
     def insert_current_frame(self):
-        _, _, image_array, _, _ = p.getCameraImage(width=self._video_size[0],
+        _, _, image_array, _, _ = self._pclient.getCameraImage(width=self._video_size[0],
                                                    height=self._video_size[1],
                                                    viewMatrix=self._view_matrix,
                                                    projectionMatrix=self._projection_matrix,
-                                                   renderer=p.ER_TINY_RENDERER,
-                                                   flags=p.ER_NO_SEGMENTATION_MASK)
+                                                   renderer=self._pclient.ER_TINY_RENDERER,
+                                                   flags=self._pclient.ER_NO_SEGMENTATION_MASK)
 
         # remove the fourth layer which is the alpha
         colored_image = image_array[:, :, 0:3]

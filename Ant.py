@@ -1,7 +1,7 @@
-import pybullet as p
+import pybullet
+from pybullet_utils import bullet_client as bc
 import numpy as np
 import math
-from gym.spaces import Box
 
 # the indices of the joints in the built model
 ANKLE_IDX = np.array([3, 8, 13, 18])
@@ -26,23 +26,25 @@ def scale(value, old_high, old_low, new_high, new_low):
 
 
 class Ant:
-    def __init__(self, position3d):
+    def __init__(self, pybullet_client, position3d):
         self.start_position = position3d
+
+        self._pclient = pybullet_client
 
         # load ant and save it's initial orientation,
         # for now this will be the initial orientation always
-        self.uid = p.loadMJCF("data/ant.xml")[0]
-        self.initial_orientation = p.getBasePositionAndOrientation(self.uid)[1]
+        self.uid = self._pclient.loadMJCF("data/ant.xml")[0]
+        self.initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
         self.reset()
 
         # Initializing ant's action space, for 8 joint ranging -1 to 1.
 
     def reset(self):
-        p.resetBasePositionAndOrientation(self.uid,
+        self._pclient.resetBasePositionAndOrientation(self.uid,
                                           self.start_position,
                                           self.initial_orientation)
         for joint, state in zip(JOINTS_INDICES, INIT_JOINT_STATES):
-            p.resetJointState(self.uid, joint, state)
+            self._pclient.resetJointState(self.uid, joint, state)
 
     def action(self, in_action: np.array):
         # action will preform the given action following R8 vector that corresponds to each joint of the ant.
@@ -60,7 +62,7 @@ class Ant:
         #  3  / \  4
         # assert in_action.dtype == 'float64', "action dtype is not float64"
 
-        mode = p.POSITION_CONTROL
+        mode = self._pclient.POSITION_CONTROL
         action = np.copy(in_action)
         # scale the given values from the input range to the practical range
         # scale the shoulder position values in the odd indices
@@ -73,7 +75,7 @@ class Ant:
         action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
 
         # perform the move
-        p.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000]*8)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000]*8)
 
     def get_pos_vel_and_facing_direction(self):
         """
@@ -82,9 +84,9 @@ class Ant:
         2 next values are ant velocity
         last value the facing direction of the ant
         """
-        position, orientation_quat = p.getBasePositionAndOrientation(self.uid)
-        orientation = p.getEulerFromQuaternion(orientation_quat)
-        vel, _ = p.getBaseVelocity(self.uid)
+        position, orientation_quat = self._pclient.getBasePositionAndOrientation(self.uid)
+        orientation = self._pclient.getEulerFromQuaternion(orientation_quat)
+        vel, _ = self._pclient.getBaseVelocity(self.uid)
         # we only take x and y velocity and position
         # yaw (rotation around z) is in index 2 of the orientation
         return np.array([position[0], position[1], vel[0], vel[1], orientation[2]])
@@ -95,7 +97,7 @@ class Ant:
         8 first values are joints position
         8 next values are joint velocity
         """
-        joint_states_tuple = p.getJointStates(self.uid, JOINTS_INDICES)
+        joint_states_tuple = self._pclient.getJointStates(self.uid, JOINTS_INDICES)
         positions = np.array([j_state[0] for j_state in joint_states_tuple])
         velocities = np.array([j_state[1] for j_state in joint_states_tuple])
 

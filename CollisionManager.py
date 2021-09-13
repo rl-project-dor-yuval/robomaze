@@ -1,13 +1,15 @@
 import numpy as np
 import pybullet as p
-
+from pybullet_utils import bullet_client as bc
 
 class CollisionManager:
     target_uid: int
     maze_uids: np.ndarray
     ant_uid: int
+    _pclient: bc.BulletClient
 
-    def __init__(self, maze_uids, target_uid, ant_uid):
+    def __init__(self, pybullet_client, maze_uids, target_uid, ant_uid):
+        self._pclient = pybullet_client
         self.target_uid = target_uid
         self.maze_uids = maze_uids
         self.ant_uid = ant_uid
