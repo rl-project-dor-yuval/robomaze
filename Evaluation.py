@@ -47,8 +47,7 @@ class EvalAndSaveCallback(BaseCallback):
     def _on_step(self) -> bool:
         if self.n_calls % self.eval_freq == 0:
             self.evals_count += 1
-    
-            _ = self.eval_env.reset()
+
             # evaluate the model
             rewards, lengths = evaluate_policy(self.model, self.eval_env, self.eval_episodes,
                                                deterministic=True, return_episode_rewards=True)

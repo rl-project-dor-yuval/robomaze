@@ -16,7 +16,7 @@ class CollisionManager:
 
         # disable collision for target sphere since we want it to be
         # "transparent for collisions" (ant can get inside)
-        p.setCollisionFilterGroupMask(target_uid, -1, 0, 0)
+        self._pclient.setCollisionFilterGroupMask(target_uid, -1, 0, 0)
 
     def check_ant_collisions(self):
         """
@@ -28,7 +28,7 @@ class CollisionManager:
         hit_target = False
         hit_maze = False
 
-        contact_points = p.getContactPoints(bodyA=self.ant_uid)
+        contact_points = self._pclient.getContactPoints(bodyA=self.ant_uid)
         # each point is a tuple, the object the ant collided with is in
         # place 2 in the tuple
 
@@ -39,7 +39,7 @@ class CollisionManager:
 
         # since target sphere is masked for collision, we need to use
         # getClosestPoints to know if the ant is inside the sphere
-        if p.getClosestPoints(self.ant_uid, self.target_uid, distance=0):
+        if self._pclient.getClosestPoints(self.ant_uid, self.target_uid, distance=0):
             hit_target = True
 
         return hit_target, hit_maze
