@@ -1,5 +1,6 @@
 # Todo List For The Maze:
 * color ant
+* implement close() to disconnect from the pb client (for the case when running notebook)
 * Add a check in *start_state_validation* that the ant and the target are not on maze tiles
 * fix observation bounds (now its not used due to bug)
 * Create wrapper to change observation to [-1,1] 
