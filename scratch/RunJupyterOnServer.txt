@@ -1,0 +1,15 @@
+make sure that the you are on the virtual environment on the server, to activate it run:
+cd ~/robomaze
+source venvremote/bin/activate
+
+run:
+hostname -I | awk '{print $1}'
+and save the IP you get
+
+run:
+jupyter-lab --ip 0.0.0.0 --port 8888 --no-browser
+
+open the link but switch the computer name with the IP
+
+password should be: robomaze
+if there is a problem with that search how to change jupyter notebook password
