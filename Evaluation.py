@@ -1,11 +1,16 @@
-# TODO: explain what this file does
+# TODO: explain what this file is
 
 import os
 import numpy as np
 from dataclasses import dataclass
+import pandas as pd
+from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from MazeEnv import MazeEnv
+import imageio
+import sys
+import glob
 
 
 class EvalAndSaveCallback(BaseCallback):
@@ -105,3 +110,81 @@ def moving_average(x, kernel_size=7):
     res = np.convolve(x, np.ones(kernel_size), 'valid') / kernel_size
     res = np.concatenate([np.zeros(kernel_size-1), res])
     return res
+
+
+def plot_train_eval_results(log_dir, n_eval_episodes):
+    """
+    plots 4 graphs:
+    - Trainning Episodes Reward Moving Average
+    - Trainning Episodes Episode Length
+    - Evaluation Reward
+    - Evaluation Reward Moving Average
+
+    :param log_dir: the log dir that passed to the model. must contain:
+        results.monitor.csv and eval_results.csv
+    :param n_eval_episodes: the num of episodes that the evaluation reward was averaged on
+    :return: None
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+    results_df = pd.read_csv(os.path.join(log_dir, "results.monitor.csv"), header=1)
+    eval_results_df = pd.read_csv(os.path.join(log_dir, "eval_results.csv"),
+                                  names=["Step", "Avg Reward", "Avg Episode Length"],
+                                  index_col=0)
+
+    episode = results_df.index.to_numpy()
+    reward = results_df["r"].to_numpy()
+    reward_moving_avg = moving_average(reward, kernel_size=10)
+    episode_length = results_df["l"].to_numpy()
+
+    axes[0, 0].plot(episode, reward_moving_avg)
+    axes[0, 0].set_title("Trainning Episodes Reward Moving Average")
+    axes[0, 0].set_xlabel("Episode")
+
+    axes[1, 0].plot(episode, episode_length)
+    axes[1, 0].set_title("Trainning Episodes Episode Length")
+    axes[1, 0].set_xlabel("Episode")
+
+    eval_results_df.plot(y="Avg Reward", ax=axes[0, 1], legend=None)
+    axes[0, 1].set_title("Evaluation Reward (avg over {eval_episodes} episodes)".format(eval_episodes=n_eval_episodes))
+
+    steps = eval_results_df.index.to_numpy()
+    eval_reward = eval_results_df["Avg Reward"].to_numpy()
+    eval_reward_moving_avg = moving_average(eval_reward, kernel_size=10)
+    axes[1, 1].plot(steps, eval_reward_moving_avg)
+    axes[1, 1].set_title("Evaluation Reward Moving Average")
+    axes[1, 1].set_xlabel("Step")
+
+
+def record_model(model, env, video_path):
+    """
+    create video of a model doing one episode and save it
+    :param model: the model to record playing
+    :param env: the env to record on
+    :param video_path: the path to save the video in including file name
+    :return: the reward of the episode
+    """
+    # evaluate the best model
+    episode_reward = 0
+    obs = env.reset(create_video=True, video_path=video_path)
+    while True:
+        action, _ = model.predict(obs, deterministic=True)
+        obs, reward, done, _ = env.step(action)
+        episode_reward += reward
+        if done:
+            return episode_reward
+
+
+def create_gifs_from_avi(log_directory_path):
+    in_files_path = glob.glob(log_directory_path + "/*.avi")
+    out_files_path = [os.path.splitext(in_pth)[0] + ".gif" for in_pth in in_files_path]
+
+    for in_path, out_path in zip(in_files_path, out_files_path):
+        reader = imageio.get_reader(in_path)
+        fps = reader.get_meta_data()['fps']
+        writer = imageio.get_writer(out_path, fps=fps)
+
+        for i, im in enumerate(reader):
+            writer.append_data(im)
+
+        writer.close()
