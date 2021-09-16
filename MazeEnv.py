@@ -206,6 +206,33 @@ class MazeEnv(gym.Env):
 
         return self._get_observation()
 
+    def set_start_loc(self, start_loc):
+        """
+        change the start location of the ant in the next reset
+        :param start_loc: tuple of the start location
+        :return: None
+        """
+        self._check_start_state(self.maze.maze_size, start_loc, self._target_loc)
+        self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
+
+    def set_timeout_steps(self, timeout_steps):
+        """
+        change the amount of steps for timeout. The new value applies from the next step
+        :param timeout_steps: timeout steps for next step
+        :return: None
+        """
+        self.timeout_steps = timeout_steps
+
+    # def set_maze_map(self, new_map):
+    #     """
+    #     change the tiles map for the next reset
+    #     :param new_map: numpy array of the new map
+    #     :return: None
+    #     """
+    #     # To Do: implement, might be impossible without resetting the whole environment,
+    #     # maybe create wrapper to implement it
+
+
     def _get_observation(self):
         """in the future the observation space is going to be configurable,
             right now its just a 21D vector. see self._get_observation_bounds
