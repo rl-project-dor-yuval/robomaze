@@ -7,7 +7,8 @@
   * update : that can be done later, for ddpg it is actually less important since it does not use gaussian distribution in the algorithm
 
 # Todo List For Training and infrastructure:
-* Solve cuda error
+
+* remove videos directory creation, videos are in the log only.
 * Solve multiply environments bug
 * Handle video size and embed video in notebook
 * Get a trained model for dummy maze (with good video aside)
