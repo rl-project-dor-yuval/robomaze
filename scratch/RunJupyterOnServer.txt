@@ -9,7 +9,7 @@ and save the IP you get
 run:
 jupyter-lab --ip 0.0.0.0 --port 8888 --no-browser
 
-open the link but switch the computer name with the IP
+open the link but switch the computer name with the IP - http://132.68.55.146/
 
 password should be: robomaze
 if there is a problem with that search how to change jupyter notebook password
