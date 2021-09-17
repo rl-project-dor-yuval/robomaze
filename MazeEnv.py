@@ -92,7 +92,9 @@ class MazeEnv(gym.Env):
 
         observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
         # self.observation_space = Box(observations_bounds_low, observations_bounds_high)
-        self.observation_space = Box(-np.inf, np.inf, (21,))
+        self.observation_space = Dict({
+            'state': Box(-np.inf, np.inf, (21,))
+        })
 
         # setup simulation:
         if show_gui:
