@@ -107,8 +107,11 @@ def moving_average(x, kernel_size=7):
      An array of the same shape is returned with zeros at the first
      kernel_size-1 elements.
      """
+    # in order to fit plot when low number of samples.
+    if kernel_size > len(x):
+        kernel_size = len(x)
     res = np.convolve(x, np.ones(kernel_size), 'valid') / kernel_size
-    res = np.concatenate([np.zeros(kernel_size-1), res])
+    res = np.concatenate([np.zeros(kernel_size - 1), res])
     return res
 
 
