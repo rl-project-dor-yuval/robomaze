@@ -71,13 +71,15 @@ class EvalAndSaveCallback(BaseCallback):
             if self.mean_reward[-1] > self.best_mean_reward:
                 self.best_mean_reward = self.mean_reward[-1]
                 if self.verbose > 0:
-                    print("--Saving new best smodel--")
+                    print("--Saving new best model--")
                 self.model.save(self.model_save_path)
                 
             if self.eval_video_freq != -1 and self.evals_count % self.eval_video_freq == 0:
                 if self.verbose > 0:
                     print("creating video")
                 self._create_video()
+                # The video that is being created here is different from the
+                # case that made the `rewards` above
                 
         return True
 
