@@ -96,8 +96,8 @@ class MazeEnv(gym.GoalEnv):
         # self.observation_space = Box(observations_bounds_low, observations_bounds_high)
         self.observation_space = Dict({
             'observation': Box(-np.inf, np.inf, (21,)),
-            'achieved_goal': Box(-np.inf, np.inf, (21,)),
-            'desired_goal': Box(-np.inf, np.inf, (21,))
+            'achieved_goal': Box(-np.inf, np.inf, (2,)),
+            'desired_goal': Box(-np.inf, np.inf, (2,))
         })
         # self.observation_space = Box(-np.inf, np.inf, (21,))
 
@@ -147,7 +147,7 @@ class MazeEnv(gym.GoalEnv):
         observation = self._get_observation()
 
         # observation[achieved ,desired] are Dummy inputs here - dont really needed
-        reward = self.compute_reward(observation['achieved_goal'], observation['desired_goal'], None)
+        reward = 0
         is_done = False
         info = dict()  # TODO: handle?
 
@@ -164,6 +164,14 @@ class MazeEnv(gym.GoalEnv):
         hit_target, hit_maze = self._collision_manager.check_ant_collisions()
         if hit_target or hit_maze or (self.timeout_steps != 0 and self.step_count >= self.timeout_steps):
             is_done = True
+            reward = self.compute_reward(observation['achieved_goal'], observation['desired_goal'], None)
+
+            # if hit_target:
+            #     #print(f"~hit target - Reward= {reward}")
+            # if hit_maze:
+            #     #print(f"Hit maze- Reward= {reward}")
+            # if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
+            # print(f"Timeout- Reward= {reward}")
 
         # handle recording
         if self._recorder.is_recording and \
@@ -242,10 +250,13 @@ class MazeEnv(gym.GoalEnv):
         observation[np.array([0, 1, 2, 3, 20])] = self._ant.get_pos_vel_and_facing_direction()
         observation[4:20] = self._ant.get_joint_state()
 
+        achieved_goal = np.array([observation[0], observation[1]])
+        desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
+
         return OrderedDict([
             ('observation', observation),
-            ('achieved_goal', observation),
-            ('desired_goal', observation)
+            ('achieved_goal', achieved_goal),
+            ('desired_goal', desired_goal)
         ])
 
     @staticmethod
@@ -290,73 +301,25 @@ class MazeEnv(gym.GoalEnv):
         return observations_bounds_low, observations_bounds_high
 
     def compute_reward(self, achieved_goal, desired_goal, _info):
-        reward = 0
+        _reward = 0
         # reward and is_done update:
         # check for ant collision in the last step and update reward:
         hit_target, hit_maze = self._collision_manager.check_ant_collisions()
         if hit_target:
-            reward += self.rewards.target_arrival
+            _reward = self.rewards.target_arrival
+            # print(f"Hit target - returned reward {_reward}, target: {self.rewards.target_arrival},",
+            #       f"coll: {self.rewards.collision}, TO:{self.rewards.timeout}")
+            return _reward
+
         if hit_maze:
-            reward += self.rewards.collision
+            _reward = self.rewards.collision
+            # print(f"Hit maze returned reward {_reward}")
+            return _reward
+
         # check for timeout:
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            reward += self.rewards.timeout
-        return reward
+            _reward = self.rewards.timeout
+            # print(f"Time out returned reward {_reward}")
+            return _reward
 
-#
-#
-# class MazeHerWrapper(gym.GoalEnv):
-#     """
-#     This class is a wrapper class for MazeEnv to be inherited from gym.GoalEnv, and that way to use HER.
-#     """
-#
-#     def __init__(self,
-#                  maze_size=MazeSize.MEDIUM,
-#                  maze_map: np.ndarray = None,
-#                  tile_size=0.1,
-#                  start_loc=(1, 1),
-#                  target_loc=(3, 3),
-#                  rewards: Rewards = Rewards(),
-#                  timeout_steps: int = 0,
-#                  show_gui: bool = False,
-#                  observations: ObservationsDefinition = ObservationsDefinition(), ):
-#
-#         self.maze_env = MazeEnv.MazeEnv(maze_size=maze_size,
-#                                         maze_map=maze_map,
-#                                         tile_size=tile_size,
-#                                         start_loc=start_loc,
-#                                         target_loc=target_loc,
-#                                         timeout_steps=timeout_steps,
-#                                         show_gui=show_gui)
-#
-#         self.observation_space = Dict({
-#             'observation' : self.maze_env.get_observation,
-#             'achieved_goal' : self.maze_env.get_observation,
-#             'desired_goal': self.maze_env.get_observation
-#         })
-#
-#     def _get_obs(self):
-#         """
-#             Helper to create the observation.
-#             :return: (OrderedDict<int or ndarray>)
-#             """
-#         return self.observation_space
-#
-#     def reset(self, create_video=False, video_path=None, reset_episode_count=False):
-#         self.observation_space['observation'] = self.maze_env.reset(create_video, video_path, reset_episode_count)
-#         return
-#
-#     def step(self, action):
-#         obs, reward, done, info = self.maze_env.step(action)
-#
-#         reward_ = self.compute_reward(self.observation_space['achieved_goal'],
-#                             self.observation_space['desired_goal'],
-#                             None)
-#         done = reward_ == 1
-#         obs = self._get_obs()
-#         info = {'is_success' : done}
-#         done = done or self.current_step >= max_steps
-#         return obs, reward_, done, info
-#
-#
-#     def compute_reward(self, achieved_goal, desired_goal, info):
+        return _reward

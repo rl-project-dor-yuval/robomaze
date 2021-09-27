@@ -2,13 +2,41 @@ import MazeEnv as mz
 import time
 
 import numpy as np
+import MazeEnv as mz
+from MazeEnv import Rewards
+import time
+import numpy as np
+import pandas as pd
 from stable_baselines3 import DDPG
+import Evaluation
+from Evaluation import EvalAndSaveCallback
+from stable_baselines3.common.monitor import Monitor
+import matplotlib.pyplot as plt
+from stable_baselines3.common.env_checker import check_env
 
+START_LOC = (5, 3.2)
+TIMEOUT_STEPS = 200
+BUFFER_SIZE = 1000  # smaller buffer for small task
+TOTAL_TIME_STEPS = 10000
+LEARNING_RATE = 0.001
+
+REWARDS = Rewards(target_arrival=1, collision=-1, timeout=-0.5)
+
+EVAL_EPISODES = 1
+EVAL_FREQ = 100
+VIDEO_FREQ = 4
+
+# HER parameters
+N_SAMPLED = 3
+STRATEGY = 'future'  # futute, random or episode
+ONLINE_SAMPLING = True
 
 from stable_baselines3.common import results_plotter
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
-plot_results()
-load_results()
+
+
+# plot_results()
+# load_results()
 
 def make_circular_map(size, radius):
     center = np.divide(size, 2)
@@ -17,6 +45,7 @@ def make_circular_map(size, radius):
 
     return maze_map
 
+
 if __name__ == "__main__":
     start = time.time()
 
@@ -24,35 +53,63 @@ if __name__ == "__main__":
     tile_size = 0.1
     maze_size = mz.MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
-    maze_map = make_circular_map(map_size, 3. / tile_size)
+    maze_map = make_circular_map(map_size, 3 / tile_size)
     # maze_map = np.zeros(map_size)
-    maze_env = mz.MazeEnv(maze_size=maze_size,
-                          maze_map=maze_map,
-                          tile_size=tile_size,
-                          start_loc=(5, 3),
-                          target_loc=np.divide(maze_size, 2),
-                          timeout_steps=100,
-                          show_gui=False)
-    maze_env.reset()
+
+    maze_env = Monitor(mz.MazeEnv(maze_size=maze_size,
+                                  maze_map=maze_map,
+                                  tile_size=tile_size,
+                                  start_loc=START_LOC,
+                                  target_loc=np.divide(maze_size, 2),
+                                  timeout_steps=TIMEOUT_STEPS,
+                                  show_gui=False,
+                                  rewards=REWARDS),
+                       filename="logs/DummyMaze/results")
+    _ = maze_env.reset()
+
+    check_env(maze_env)
+
+    # create separete evaluation environment:
+    eval_maze_env = Monitor(mz.MazeEnv(maze_size=maze_size,
+                                       maze_map=maze_map,
+                                       tile_size=tile_size,
+                                       start_loc=START_LOC,
+                                       target_loc=np.divide(maze_size, 2),
+                                       timeout_steps=TIMEOUT_STEPS,
+                                       show_gui=False,
+                                       rewards=REWARDS)
+                            )
+    _ = eval_maze_env.reset()
 
     # create model:
-    model = DDPG(policy="MlpPolicy",
+    model = DDPG(policy="MultiInputPolicy",
                  env=maze_env,
-                 buffer_size=10**5,  # smaller buffer for small task
+                 buffer_size=BUFFER_SIZE,
+                 learning_rate=LEARNING_RATE,
                  device='cuda',
+                 train_freq=(1, "episode"),
+                 #              replay_buffer_class=HerReplayBuffer,
+                 #              replay_buffer_kwargs=dict(
+                 #                  n_sampled_goal=N_SAMPLED,
+                 #                  goal_selection_strategy=STRATEGY,
+                 #                  online_sampling=ONLINE_SAMPLING,
+                 #                  max_episode_length=TIMEOUT_STEPS,
+                 #              ),
                  verbose=1)
 
-    model.learn(total_timesteps=10 ** 4,
-                eval_env=maze_env,
-                eval_freq=1000,
-                n_eval_episodes=20,
-                eval_log_path="logs/train_basic_maze"
-                )
+    # create callback for evaluation
+    callback = EvalAndSaveCallback(log_dir="logs/DummyMaze",
+                                   eval_env=eval_maze_env,
+                                   eval_freq=EVAL_FREQ,
+                                   eval_episodes=EVAL_EPISODES,
+                                   eval_video_freq=VIDEO_FREQ,
+                                   verbose=1)
+
+    model.learn(total_timesteps=TOTAL_TIME_STEPS,
+                callback=callback)
 
     print("time", time.time() - start)
 
     # model.save("models/basic_maze")
 
     # maze_env.reset()  # has to be called to save video
-
-
