@@ -37,6 +37,8 @@ class MazeEnv(gym.GoalEnv):
 
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
+    hit_target_epsilon = 1.5
+    hit_maze_epsilon = 0.8
 
     _physics_server: int
     _pclient: bc.BulletClient
@@ -83,6 +85,7 @@ class MazeEnv(gym.GoalEnv):
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.is_reset = False
+        self.is_done = False
         self.step_count = 0
         self.episode_count = 0
         self._start_loc = (start_loc[0], start_loc[1], _ANT_START_Z_COORD)
@@ -92,14 +95,15 @@ class MazeEnv(gym.GoalEnv):
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
+        # we have decided to give up bounding the observation space for now so all elements are
+        # in (-inf, inf). TODO  might delete this line and the _get_observation_bounds method later or fix it
         observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
-        # self.observation_space = Box(observations_bounds_low, observations_bounds_high)
+
         self.observation_space = Dict({
             'observation': Box(-np.inf, np.inf, (21,)),
             'achieved_goal': Box(-np.inf, np.inf, (2,)),
             'desired_goal': Box(-np.inf, np.inf, (2,))
         })
-        # self.observation_space = Box(-np.inf, np.inf, (21,))
 
         # setup simulation:
         if show_gui:
@@ -143,35 +147,21 @@ class MazeEnv(gym.GoalEnv):
         if not self.action_space.contains(action):
             raise Exception("Expected shape (8,) and value in [-1,1] ")
 
-        # initialize return values:
-        observation = self._get_observation()
-
-        # observation[achieved ,desired] are Dummy inputs here - dont really needed
-        reward = 0
-        is_done = False
-        info = dict()  # TODO: handle?
-
-        # pass actions through the ant object:
+        # pass actions through the ant object and run simulation step:
         self._ant.action(action)
-
-        # run simulation step
         self._pclient.stepSimulation()
-
         self.step_count += 1
 
-        # reward and is_done update:
+        observation = self._get_observation()
+
+        # compute reward and is_done (self.is_done is updated in compute_reward)
         # check for ant collision in the last step and update reward:
         hit_target, hit_maze = self._collision_manager.check_ant_collisions()
-        if hit_target or hit_maze or (self.timeout_steps != 0 and self.step_count >= self.timeout_steps):
-            is_done = True
-            reward = self.compute_reward(observation['achieved_goal'], observation['desired_goal'], None)
-
-            # if hit_target:
-            #     #print(f"~hit target - Reward= {reward}")
-            # if hit_maze:
-            #     #print(f"Hit maze- Reward= {reward}")
-            # if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            # print(f"Timeout- Reward= {reward}")
+        compute_reward_info = dict(hit_target=hit_target, hit_maze=hit_maze, )
+        reward = self.compute_reward(observation['achieved_goal'],
+                                     observation['desired_goal'],
+                                     compute_reward_info)
+        info = dict()
 
         # handle recording
         if self._recorder.is_recording and \
@@ -179,10 +169,10 @@ class MazeEnv(gym.GoalEnv):
             self._recorder.insert_current_frame()
 
         # if done and recording save video
-        if is_done and self._recorder.is_recording:
+        if self.is_done and self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
 
-        return observation, reward, is_done, info
+        return observation, reward, self.is_done, info
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False):
         """
@@ -212,8 +202,41 @@ class MazeEnv(gym.GoalEnv):
         self.episode_count += 1
         self.step_count = 0
         self.is_reset = True
+        self.is_done = False
 
         return self._get_observation()
+
+    def compute_reward(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info):
+        """
+        computes the reward.
+        the definition of hitting target is indulgent: the ant hits the target if there
+        is a collision detection with the target or if it it's center of mass is closer
+        to the center of the target then self.hit_target_epsilon
+
+        :param achieved_goal: (x, y) of the achived goal
+        :param desired_goal: (x, y) of the center of the target
+        :param info: not used right now, mandatory for goalEnv
+        :return: computed reward
+        """
+        # check if hit target and return reward if it does return positive reward
+        target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
+        target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
+        if target_distance < self.hit_target_epsilon or info['hit_target']:
+            self.is_done = True
+            return self.rewards.target_arrival
+
+        # check if hit wall and return negative reward
+        if info['hit_wall']:
+            self.is_done = True
+            return self.rewards.collision
+
+        # check if timeout and return negative reward
+        if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
+            self.is_done = True
+            return self.rewards.timeout
+
+        # if none of the above, return idle reward
+        return self.rewards.idle
 
     def set_start_loc(self, start_loc):
         """
@@ -250,7 +273,7 @@ class MazeEnv(gym.GoalEnv):
         observation[np.array([0, 1, 2, 3, 20])] = self._ant.get_pos_vel_and_facing_direction()
         observation[4:20] = self._ant.get_joint_state()
 
-        achieved_goal = np.array([observation[0], observation[1]])
+        achieved_goal = observation[0:2]
         desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
 
         return OrderedDict([
@@ -300,26 +323,3 @@ class MazeEnv(gym.GoalEnv):
 
         return observations_bounds_low, observations_bounds_high
 
-    def compute_reward(self, achieved_goal, desired_goal, _info):
-        _reward = 0
-        # reward and is_done update:
-        # check for ant collision in the last step and update reward:
-        hit_target, hit_maze = self._collision_manager.check_ant_collisions()
-        if hit_target:
-            _reward = self.rewards.target_arrival
-            # print(f"Hit target - returned reward {_reward}, target: {self.rewards.target_arrival},",
-            #       f"coll: {self.rewards.collision}, TO:{self.rewards.timeout}")
-            return _reward
-
-        if hit_maze:
-            _reward = self.rewards.collision
-            # print(f"Hit maze returned reward {_reward}")
-            return _reward
-
-        # check for timeout:
-        if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            _reward = self.rewards.timeout
-            # print(f"Time out returned reward {_reward}")
-            return _reward
-
-        return _reward
