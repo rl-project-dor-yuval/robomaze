@@ -38,7 +38,6 @@ class MazeEnv(gym.GoalEnv):
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
     hit_target_epsilon = 1.5
-    hit_maze_epsilon = 0.8
 
     _physics_server: int
     _pclient: bc.BulletClient
@@ -161,7 +160,7 @@ class MazeEnv(gym.GoalEnv):
         reward = self.compute_reward(observation['achieved_goal'],
                                      observation['desired_goal'],
                                      compute_reward_info)
-        info = dict()
+        info = compute_reward_info
 
         # handle recording
         if self._recorder.is_recording and \

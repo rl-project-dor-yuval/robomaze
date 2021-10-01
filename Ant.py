@@ -30,7 +30,6 @@ class Ant:
         self.start_position = position3d
 
         self._pclient = pybullet_client
-
         # load ant and save it's initial orientation,
         # for now this will be the initial orientation always
         self.uid = self._pclient.loadMJCF("data/ant.xml")[0]

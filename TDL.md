@@ -1,4 +1,10 @@
+* ASAP: Separate the environment from the training and research (create folder for
+  environment files and one for notnooks and etc...). 
+  The later we do this the more work it will require
+
+
 # Todo List For The Maze:
+* fix bug: video folders created even if videos not recorded
 * color ant
 * implement close() to disconnect from the pb client (for the case when running notebook)
 * Add a check in *start_state_validation* that the ant and the target are not on maze tiles
@@ -7,7 +13,6 @@
   * update : that can be done later, for DDPG it is actually less important since it does not use gaussian distribution in the algorithm
 
 # Todo List For Training :
-
 * add option to evaluate outside the training process.(Now recording and video creation is done 
 solely at Callback class)
 * Get a trained model for dummy maze (with good video aside) v
