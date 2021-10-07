@@ -32,7 +32,6 @@ class Recorder:
         # prepare files and directory:
         date_time_string = datetime.now().strftime("D%d-%m-%Y-T%H-%M-%S/")
         self._directory_path = "videos/" + date_time_string
-        os.makedirs(self._directory_path, exist_ok=True)
 
         # setup camera:
         camera_distance = max(self._maze_size) / self._zoom  # depends on the longer axis
@@ -57,6 +56,7 @@ class Recorder:
         :param custom_path: if true, then file name will be used as a full path to
                             the saved video, instead of the default path.
         """
+        os.makedirs(self._directory_path, exist_ok=True)
         path = file_name if custom_path else self._directory_path + file_name
         self._video = cv2.VideoWriter(path,
                                       self._fourcc,
