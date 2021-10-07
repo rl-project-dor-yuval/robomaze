@@ -9,11 +9,11 @@ from pybullet_utils import bullet_client as bc
 import pybullet_data
 import numpy as np
 import math
-from Recorder import Recorder
-from EnvAttributes import Rewards, ObservationsDefinition, MazeSize
-from CollisionManager import CollisionManager
-from Ant import Ant
-from Maze import Maze
+from MazeEnv.Recorder import Recorder
+from MazeEnv.EnvAttributes import Rewards, ObservationsDefinition, MazeSize
+from MazeEnv.CollisionManager import CollisionManager
+from MazeEnv.Ant import Ant
+from MazeEnv.Maze import Maze
 
 _ANT_START_Z_COORD = 1  # the height the ant starts at
 
@@ -225,7 +225,7 @@ class MazeEnv(gym.GoalEnv):
             return self.rewards.target_arrival
 
         # check if hit wall and return negative reward
-        if info['hit_wall']:
+        if info['hit_maze']:
             self.is_done = True
             return self.rewards.collision
 

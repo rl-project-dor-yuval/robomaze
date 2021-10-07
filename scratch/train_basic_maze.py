@@ -1,17 +1,10 @@
 import MazeEnv as mz
-import time
-
-import numpy as np
-import MazeEnv as mz
 from MazeEnv import Rewards
 import time
 import numpy as np
-import pandas as pd
 from stable_baselines3 import DDPG
-import Evaluation
-from Evaluation import EvalAndSaveCallback
+from Training.Evaluation import EvalAndSaveCallback
 from stable_baselines3.common.monitor import Monitor
-import matplotlib.pyplot as plt
 from stable_baselines3.common.env_checker import check_env
 
 START_LOC = (5, 3.2)
@@ -30,9 +23,6 @@ VIDEO_FREQ = 4
 N_SAMPLED = 3
 STRATEGY = 'future'  # futute, random or episode
 ONLINE_SAMPLING = True
-
-from stable_baselines3.common import results_plotter
-from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
 
 
 # plot_results()
@@ -98,7 +88,7 @@ if __name__ == "__main__":
                  verbose=1)
 
     # create callback for evaluation
-    callback = EvalAndSaveCallback(log_dir="logs/DummyMaze",
+    callback = EvalAndSaveCallback(log_dir="../logs/DummyMaze",
                                    eval_env=eval_maze_env,
                                    eval_freq=EVAL_FREQ,
                                    eval_episodes=EVAL_EPISODES,
