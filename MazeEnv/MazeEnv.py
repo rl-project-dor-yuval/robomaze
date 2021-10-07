@@ -19,7 +19,7 @@ from MazeEnv.Maze import Maze
 _ANT_START_Z_COORD = 1  # the height the ant starts at
 
 
-class MazeEnv(gym.GoalEnv):
+class MazeEnv(gym.Env):
     rewards: Rewards
 
     timeout_steps: int
@@ -38,7 +38,7 @@ class MazeEnv(gym.GoalEnv):
 
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
-    hit_target_epsilon = 1.5
+    hit_target_epsilon = 1
 
     _physics_server: int
     _pclient: bc.BulletClient
@@ -97,13 +97,8 @@ class MazeEnv(gym.GoalEnv):
 
         # we have decided to give up bounding the observation space for now so all elements are
         # in (-inf, inf). TODO  might delete this line and the _get_observation_bounds method later or fix it
-        observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
-
-        self.observation_space = Dict({
-            'observation': Box(-np.inf, np.inf, (21,)),
-            'achieved_goal': Box(-np.inf, np.inf, (2,)),
-            'desired_goal': Box(-np.inf, np.inf, (2,))
-        })
+        # observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
+        self.observation_space = Box(-np.inf, np.inf, (23,))
 
         # setup simulation:
         if show_gui:
@@ -176,7 +171,7 @@ class MazeEnv(gym.GoalEnv):
         if self.is_done and self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
 
-        return observation, reward, self.is_done, info
+        return observation['observation'], reward, self.is_done, info
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False):
         """
@@ -212,19 +207,12 @@ class MazeEnv(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info):
         """
-        computes the reward.
-        the definition of hitting target is indulgent: the ant hits the target if there
-        is a collision detection with the target or if it it's center of mass is closer
-        to the center of the target then self.hit_target_epsilon
-
-        :param achieved_goal: (x, y) of the achived goal
-        :param desired_goal: (x, y) of the center of the target
-        :param info: not used right now, mandatory for goalEnv
-        :return: computed reward
+            TODO: complete
         """
         # check if hit target and return reward if it does return positive reward
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
+
         if target_distance < self.hit_target_epsilon or info['hit_target']:
             self.is_done = True
             return self.rewards.target_arrival
@@ -270,21 +258,30 @@ class MazeEnv(gym.GoalEnv):
 
     def _get_observation(self):
         """in the future the observation space is going to be configurable,
-            right now its just a 21D vector. see self._get_observation_bounds
-            for detail"""
-        observation = np.zeros(self.observation_space['observation'].shape, dtype=np.float32)
+            right now its just a 23D vector."""
+
+        observation = np.zeros(self.observation_space.shape, dtype=np.float32)
 
         observation[np.array([0, 1, 2, 3, 20])] = self._ant.get_pos_vel_and_facing_direction()
         observation[4:20] = self._ant.get_joint_state()
 
-        achieved_goal = observation[0:2]
+        # last two elements are angel and distance from target
+        ant_loc = observation[0:2]
+        target_loc = np.array(self._target_loc[0:2])
+        relative_target = target_loc - ant_loc
+
+        observation[21] = np.linalg.norm(relative_target)
+        observation[22] = np.arctan2(relative_target[1], relative_target[0])
+
         desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
 
         return OrderedDict([
             ('observation', observation),
-            ('achieved_goal', achieved_goal),
+            ('achieved_goal', ant_loc),
             ('desired_goal', desired_goal)
         ])
+
+
 
     @staticmethod
     def _check_start_state(maze_size, start_loc, target_loc):
@@ -304,26 +301,26 @@ class MazeEnv(gym.GoalEnv):
                             f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
                             f"and {min_y} < y < {max_y} for this maze size")
 
-    @staticmethod
-    def _get_observation_bounds(maze_size):
-        # ant position 2d:
-        observations_bounds_high = [maze_size[0] / 2, maze_size[1] / 2]
-
-        # ant velocity 2d:
-        observations_bounds_high.append(np.inf)
-        observations_bounds_high.append(np.inf)
-
-        # ant facing direction 1d
-        observations_bounds_high.append(math.pi)
-
-        # joint position 8d
-        observations_bounds_high += [1] * 8
-
-        # joint velocity 8d:
-        observations_bounds_high += [np.inf] * 8
-
-        observations_bounds_high = np.array(observations_bounds_high, dtype=np.float32)
-        observations_bounds_low = -observations_bounds_high
-
-        return observations_bounds_low, observations_bounds_high
+    # @staticmethod
+    # def _get_observation_bounds(maze_size):
+    #     # ant position 2d:
+    #     observations_bounds_high = [maze_size[0] / 2, maze_size[1] / 2]
+    #
+    #     # ant velocity 2d:
+    #     observations_bounds_high.append(np.inf)
+    #     observations_bounds_high.append(np.inf)
+    #
+    #     # ant facing direction 1d
+    #     observations_bounds_high.append(math.pi)
+    #
+    #     # joint position 8d
+    #     observations_bounds_high += [1] * 8
+    #
+    #     # joint velocity 8d:
+    #     observations_bounds_high += [np.inf] * 8
+    #
+    #     observations_bounds_high = np.array(observations_bounds_high, dtype=np.float32)
+    #     observations_bounds_low = -observations_bounds_high
+    #
+    #     return observations_bounds_low, observations_bounds_high
 
