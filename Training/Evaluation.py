@@ -194,3 +194,9 @@ def create_gifs_from_avi(log_directory_path):
             writer.append_data(im)
 
         writer.close()
+        
+def clear_files(path: str):
+    # clean the files from path - accepts linux syntax
+    files = glob.glob(path)
+    for f in files:
+        os.remove(f)

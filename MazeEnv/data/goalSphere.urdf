@@ -10,7 +10,7 @@
    
     <visual>
       <geometry>
-        <sphere radius="1"/>
+        <sphere radius="0.7"/>
       </geometry>
       <material name="Blue">
             <color rgba="0 0 1 0.4"/>
@@ -19,7 +19,7 @@
 	
 	<collision>
 	<geometry>
-        <sphere radius="1"/>
+        <sphere radius="0.7"/>
       </geometry>
 	</collision>
   </link>
