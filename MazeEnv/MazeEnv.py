@@ -9,6 +9,7 @@ from pybullet_utils import bullet_client as bc
 import pybullet_data
 import numpy as np
 import math
+import os
 from MazeEnv.Recorder import Recorder
 from MazeEnv.EnvAttributes import Rewards, ObservationsDefinition, MazeSize
 from MazeEnv.CollisionManager import CollisionManager
@@ -110,8 +111,12 @@ class MazeEnv(gym.GoalEnv):
         else:
             self._physics_server = pybullet.DIRECT
 
+        curr_dirname = os.path.dirname(__file__)
+        data_dir = os.path.join(curr_dirname, 'data')
         self._pclient = bc.BulletClient(connection_mode=self._physics_server)
         self._pclient.setAdditionalSearchPath(pybullet_data.getDataPath())
+        self._pclient.setAdditionalSearchPath(curr_dirname)
+        self._pclient.setAdditionalSearchPath(data_dir)
         self._pclient.setGravity(0, 0, -10)
         self._pclient.configureDebugVisualizer(self._pclient.COV_ENABLE_GUI, False)  # dont show debugging windows
 

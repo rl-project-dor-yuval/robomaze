@@ -32,7 +32,7 @@ class Ant:
         self._pclient = pybullet_client
         # load ant and save it's initial orientation,
         # for now this will be the initial orientation always
-        self.uid = self._pclient.loadMJCF("data/ant.xml")[0]
+        self.uid = self._pclient.loadMJCF("ant.xml")[0]
         self.initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
         self.reset()
 

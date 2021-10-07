@@ -7,16 +7,17 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
-from MazeEnv import MazeEnv
 import imageio
-import sys
 import glob
+import sys
+
+sys.path.append('..')
+from MazeEnv.MazeEnv import MazeEnv
 
 
 class EvalAndSaveCallback(BaseCallback):
     def __init__(self, log_dir: str, eval_env: MazeEnv, eval_freq: int = 200,
                  eval_episodes: int = 5, eval_video_freq=-1, verbose=1):
-
         """
         :param log_dir: The directory in which to put the results
         :param eval_env: MazeEnv to use for evaluation, should not be the original

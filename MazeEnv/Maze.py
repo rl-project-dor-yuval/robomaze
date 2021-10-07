@@ -11,6 +11,7 @@ _BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
 class Maze:
 
     def __init__(self, pybullet_client, maze_size, maze_map, tile_size, target_position3d):
+        from os import getcwd
         self.maze_size = maze_size
 
         self._pclient = pybullet_client
@@ -19,11 +20,11 @@ class Maze:
         self._maze_frame_corners_uids = np.zeros([4])
         self._load_maze_edges()
 
-        self._target_sphereUid = self._pclient.loadURDF("data/goalSphere.urdf",
+        self._target_sphereUid = self._pclient.loadURDF("goalSphere.urdf",
                                                         basePosition=target_position3d)
 
-        self._create_maze_urdf(maze_map, "data/curr_maze.urdf", tile_size)
-        self._maze_tiles_uid = self._pclient.loadURDF("data/curr_maze.urdf")
+        self._create_maze_urdf(maze_map, "curr_maze.urdf", tile_size)
+        self._maze_tiles_uid = self._pclient.loadURDF("curr_maze.urdf")
 
     def get_maze_objects_uids(self):
         maze_uids = np.concatenate([self._maze_frame_uids,
@@ -34,13 +35,13 @@ class Maze:
 
     def _load_maze_edges(self):
         """load the blocks for the edges of the maze"""
-        block_x_path = "data/block" + str(self.maze_size[0]) + ".urdf"
-        block_y_path = "data/block" + str(self.maze_size[1]) + ".urdf"
+        block_x_path = "block" + str(self.maze_size[0]) + ".urdf"
+        block_y_path = "block" + str(self.maze_size[1]) + ".urdf"
 
-        if not (path.exists(block_x_path) and path.exists(block_y_path)):
-            raise Exception("Could not load maze at the given size,"
-                            " no matching edges block were found."
-                            " please use MazeSize.<desired size>")
+        # if not (path.exists(block_x_path) and path.exists(block_y_path)):
+        #     raise Exception("Could not load maze at the given size,"
+        #                     " no matching edges block were found."
+        #                     " please use MazeSize.<desired size>")
 
         # along y blocks:
         self._maze_frame_uids[0] = self._pclient.loadURDF(block_y_path,
@@ -66,19 +67,19 @@ class Maze:
                                                           baseOrientation=x_orientation)
 
         # 4 corner blocks:
-        self._maze_frame_corners_uids[0] = self._pclient.loadURDF("data/blockCube.urdf",
+        self._maze_frame_corners_uids[0] = self._pclient.loadURDF("blockCube.urdf",
                                                                   basePosition=[-0.5,
                                                                                 -0.5,
                                                                                 _BLOCK_Z_COORD])
-        self._maze_frame_corners_uids[1] = self._pclient.loadURDF("data/blockCube.urdf",
+        self._maze_frame_corners_uids[1] = self._pclient.loadURDF("blockCube.urdf",
                                                                   basePosition=[self.maze_size[0] + 0.5,
                                                                                 -0.5,
                                                                                 _BLOCK_Z_COORD])
-        self._maze_frame_corners_uids[2] = self._pclient.loadURDF("data/blockCube.urdf",
+        self._maze_frame_corners_uids[2] = self._pclient.loadURDF("blockCube.urdf",
                                                                   basePosition=[-0.5,
                                                                                 self.maze_size[1] + 0.5,
                                                                                 _BLOCK_Z_COORD])
-        self._maze_frame_corners_uids[3] = self._pclient.loadURDF("data/blockCube.urdf",
+        self._maze_frame_corners_uids[3] = self._pclient.loadURDF("blockCube.urdf",
                                                                   basePosition=[self.maze_size[0] + 0.5,
                                                                                 self.maze_size[1] + 0.5,
                                                                                 _BLOCK_Z_COORD])

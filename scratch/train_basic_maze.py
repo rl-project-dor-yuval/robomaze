@@ -88,7 +88,7 @@ if __name__ == "__main__":
                  verbose=1)
 
     # create callback for evaluation
-    callback = EvalAndSaveCallback(log_dir="../logs/DummyMaze",
+    callback = EvalAndSaveCallback(log_dir="../Training/logs/DummyMaze",
                                    eval_env=eval_maze_env,
                                    eval_freq=EVAL_FREQ,
                                    eval_episodes=EVAL_EPISODES,
