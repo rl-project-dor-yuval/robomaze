@@ -5,16 +5,8 @@ sys.path.append('..')
 import MazeEnv.MazeEnv as mz
 import time
 import numpy as np
-
+from MazeEnv.Utils import *
 start = time.time()
-
-
-def make_circular_map(size, radius):
-    center = np.divide(size, 2)
-    x, y = np.ogrid[:size[0], :size[1]]
-    maze_map = np.where(np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) > radius, 1, 0)
-
-    return maze_map
 
 
 # create environment :
@@ -26,15 +18,15 @@ maze_map = make_circular_map(map_size, 4 / tile_size)
 TARGET_LOC = (3, 5)
 START_LOC = (5, 5)
 
-for _ in range(10):
+for _ in range(2):
     maze = mz.MazeEnv(maze_size=maze_size,
                       maze_map=maze_map,
                       tile_size=tile_size,
                       start_loc=START_LOC,
                       target_loc=TARGET_LOC,
                       timeout_steps=500,
-                      show_gui=True, )
-    maze.reset(create_video=False)
+                      show_gui=False, )
+    maze.reset(create_video=True)
     time.sleep(3)
     for i in range(3 * 10 ** 2):
         action = [1] * 8

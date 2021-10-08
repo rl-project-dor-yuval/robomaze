@@ -203,7 +203,7 @@ class MazeEnv(gym.Env):
         self.is_reset = True
         self.is_done = False
 
-        return self._get_observation()
+        return self._get_observation()['observation']
 
     def compute_reward(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info):
         """
