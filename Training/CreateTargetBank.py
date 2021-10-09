@@ -27,8 +27,8 @@ def create_target_bank(center, min_radius, max_radius, n_points=100):
 
 
 center = np.array([5, 5])
-min_radius = 2
-max_radius = 4
+min_radius = 1.5
+max_radius = 3
 points = create_target_bank(center, min_radius, max_radius, 30)
 
 # Plotting and saving the test coords

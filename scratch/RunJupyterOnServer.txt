@@ -13,3 +13,18 @@ open the link but switch the computer name with the IP - http://132.68.55.146/
 
 password should be: robomaze
 if there is a problem with that search how to change jupyter notebook password
+
+_________________________
+
+Run on the background:
+run:
+$ screen
+
+run the notebook from the terminal on the background: (btw, results can be saved to html file)
+$ jupyter nbconvert --execute Training/MultipleTargets.ipynb --to notebook &
+
+close the screen:
+ctrl + a, then d.
+
+now ssh session can be closed, and the screen can be reopened using
+$ screen -r

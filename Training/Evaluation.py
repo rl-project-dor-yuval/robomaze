@@ -1,6 +1,8 @@
 # TODO: explain what this file is
 
 import os
+import abc
+from typing import Tuple, List
 import numpy as np
 from dataclasses import dataclass
 import pandas as pd
@@ -13,9 +15,10 @@ import sys
 
 sys.path.append('..')
 from MazeEnv.MazeEnv import MazeEnv
+from MazeEnv.MultiTargetMazeEnv import MultiTargetMazeEnv
 
 
-class EvalAndSaveCallback(BaseCallback):
+class BaseEvalAndSaveCallback(BaseCallback):
     def __init__(self, log_dir: str, eval_env: MazeEnv, eval_freq: int = 200,
                  eval_episodes: int = 5, eval_video_freq=-1, verbose=1):
         """
@@ -27,7 +30,7 @@ class EvalAndSaveCallback(BaseCallback):
         :param eval_video_freq: create video every eval_video_freq evaluations. -1 will not create any video.
         :param verbose: verbose
         """
-        super(EvalAndSaveCallback, self).__init__(verbose)
+        super().__init__(verbose)
         self.eval_freq = eval_freq
         self.eval_episodes = eval_episodes
         self.log_dir = log_dir
@@ -55,8 +58,7 @@ class EvalAndSaveCallback(BaseCallback):
             self.evals_count += 1
 
             # evaluate the model
-            rewards, lengths = evaluate_policy(self.model, self.eval_env, self.eval_episodes,
-                                               deterministic=True, return_episode_rewards=True)
+            rewards, lengths = self.get_policy_evaluation()
 
             self.step.append(self.n_calls)
             self.mean_reward.append(sum(rewards) / float(len(rewards)))
@@ -102,6 +104,57 @@ class EvalAndSaveCallback(BaseCallback):
             obs, reward, done, _ = self.eval_env.step(action)
             if done:
                 break
+
+    @abc.abstractmethod
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+        """
+        :return: tuple of reward for each episode and length of each episode in the evaluation
+        """
+        pass
+
+
+class EvalAndSaveCallback(BaseEvalAndSaveCallback):
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+        evaluate_policy(self.model, self.eval_env, self.eval_episodes,
+                        deterministic=True, return_episode_rewards=True)
+
+
+class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
+    """
+    Only works with MultiTargetMazeEnv.
+    Each evaluation is for all the targets in the environment and result is averaged
+    """
+    eval_env: MultiTargetMazeEnv
+
+    def __init__(self, log_dir: str, eval_env: MultiTargetMazeEnv, eval_freq: int = 200,
+                 eval_video_freq=-1, verbose=1):
+        eval_episodes = eval_env.target_count
+        super().__init__(log_dir, eval_env, eval_freq, eval_episodes,
+                         eval_video_freq, verbose)
+
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+        rewards = []
+        episodes_length = []
+
+        # evaluate on all targets
+        for i in range(self.eval_episodes):
+            # play episode:
+            obs = self.eval_env.reset(target_index=i)
+            step_count = 0
+            total_reward = 0
+            done = False
+            while not done:
+                action, _ = self.model.predict(obs, deterministic=True)
+                obs, reward, done, _ = self.eval_env.step(action)
+                step_count += 1
+                total_reward += reward
+
+            # save results:
+            rewards.append(total_reward)
+            episodes_length.append(step_count)
+
+        return rewards, episodes_length
+
 
 
 def moving_average(x, kernel_size=7):

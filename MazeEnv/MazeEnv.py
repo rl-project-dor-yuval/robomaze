@@ -16,7 +16,7 @@ from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
 
-_ANT_START_Z_COORD = 1  # the height the ant starts at
+_ANT_START_Z_COORD = 0.8  # the height the ant starts at
 
 
 class MazeEnv(gym.Env):
