@@ -16,7 +16,7 @@ sys.path.append('..')
 
 import MazeEnv.MazeEnv as mz
 from MazeEnv.MazeEnv import Rewards
-from MazeEnv.Utils import *
+from Training.Utils import *
 from Training.Evaluation import EvalAndSaveCallback, clear_files
 import Training.Evaluation
 

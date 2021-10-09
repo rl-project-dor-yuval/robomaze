@@ -1,5 +1,14 @@
 import numpy as np
+import glob
 
+
+def clear_files(path: str):
+    """
+    clean the files from path - accepts file patterns as well
+    """
+    files = glob.glob(path)
+    for f in files:
+        os.remove(f)
 
 def make_circular_map(size, radius):
     """

@@ -1,6 +1,6 @@
 import MazeEnv.MazeEnv as mz
 from MazeEnv.MazeEnv import Rewards
-from MazeEnv.Utils import *
+from Training.Utils import *
 import time
 import numpy as np
 from stable_baselines3 import DDPG

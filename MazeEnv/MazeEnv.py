@@ -95,9 +95,6 @@ class MazeEnv(gym.Env):
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
-        # we have decided to give up bounding the observation space for now so all elements are
-        # in (-inf, inf). TODO  might delete this line and the _get_observation_bounds method later or fix it
-        # observations_bounds_low, observations_bounds_high = self._get_observation_bounds(maze_size)
         self.observation_space = Box(-np.inf, np.inf, (23,))
 
         # setup simulation:
@@ -247,15 +244,6 @@ class MazeEnv(gym.Env):
         """
         self.timeout_steps = timeout_steps
 
-    # def set_maze_map(self, new_map):
-    #     """
-    #     change the tiles map for the next reset
-    #     :param new_map: numpy array of the new map
-    #     :return: None
-    #     """
-    #     # To Do: implement, might be impossible without resetting the whole environment,
-    #     # maybe create wrapper to implement it
-
     def _get_observation(self):
         """in the future the observation space is going to be configurable,
             right now its just a 23D vector."""
@@ -281,8 +269,6 @@ class MazeEnv(gym.Env):
             ('desired_goal', desired_goal)
         ])
 
-
-
     @staticmethod
     def _check_start_state(maze_size, start_loc, target_loc):
         """
@@ -300,27 +286,4 @@ class MazeEnv(gym.Env):
             raise Exception(f"Start location and target location must be at least "
                             f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
                             f"and {min_y} < y < {max_y} for this maze size")
-
-    # @staticmethod
-    # def _get_observation_bounds(maze_size):
-    #     # ant position 2d:
-    #     observations_bounds_high = [maze_size[0] / 2, maze_size[1] / 2]
-    #
-    #     # ant velocity 2d:
-    #     observations_bounds_high.append(np.inf)
-    #     observations_bounds_high.append(np.inf)
-    #
-    #     # ant facing direction 1d
-    #     observations_bounds_high.append(math.pi)
-    #
-    #     # joint position 8d
-    #     observations_bounds_high += [1] * 8
-    #
-    #     # joint velocity 8d:
-    #     observations_bounds_high += [np.inf] * 8
-    #
-    #     observations_bounds_high = np.array(observations_bounds_high, dtype=np.float32)
-    #     observations_bounds_low = -observations_bounds_high
-    #
-    #     return observations_bounds_low, observations_bounds_high
 
