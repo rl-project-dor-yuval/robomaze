@@ -17,7 +17,7 @@ if there is a problem with that search how to change jupyter notebook password
 _________________________
 
 Run on the background:
-run:
+run
 $ screen
 
 run the notebook from the terminal on the background: (btw, results can be saved to html file)
