@@ -82,20 +82,19 @@ class Ant:
         # perform the move
         self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000]*8)
 
-    def get_pos_vel_and_facing_direction(self):
+    def get_pos_orientation_velocity(self):
         """
-        return 7d vector,
-        2 first values are ant position
-        2 next values are ant velocity
-        last 3 values are the euler orientation of the ant
+        return 12d vector,
+        3 first values are ant COM position
+        3 next values are ant COM velocity
+        3 next values are ant euler oriantation
+        last 3 values are angular velocity
         """
         position, orientation_quat = self._pclient.getBasePositionAndOrientation(self.uid)
         orientation = self._pclient.getEulerFromQuaternion(orientation_quat)
-        vel, _ = self._pclient.getBaseVelocity(self.uid)
-        # we only take x and y velocity and position
-        # yaw (rotation around z) is in index 2 of the orientation
-        return np.array([position[0], position[1], vel[0], vel[1],
-                         orientation[0], orientation[1], orientation[2]])
+        vel, angular_vel = self._pclient.getBaseVelocity(self.uid)
+
+        return np.concatenate([position, vel, orientation, angular_vel])
 
     def get_joint_state(self):
         """

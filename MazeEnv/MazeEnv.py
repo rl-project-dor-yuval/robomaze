@@ -95,7 +95,7 @@ class MazeEnv(gym.Env):
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
-        self.observation_space = Box(-np.inf, np.inf, (25,))
+        self.observation_space = Box(-np.inf, np.inf, (30,))
 
         # setup simulation:
         if show_gui:
@@ -250,20 +250,20 @@ class MazeEnv(gym.Env):
 
     def _get_observation(self):
         """in the future the observation space is going to be configurable,
-            right now its just a 25D vector."""
+            right now its just a 30D vector."""
 
         observation = np.zeros(self.observation_space.shape, dtype=np.float32)
 
-        observation[np.array([0, 1, 2, 3, 20, 21, 22])] = self._ant.get_pos_vel_and_facing_direction()
-        observation[4:20] = self._ant.get_joint_state()
+        observation[0:12] = self._ant.get_pos_orientation_velocity()
+        observation[12:28] = self._ant.get_joint_state()
 
         # last two elements are angel and distance from target
         ant_loc = observation[0:2]
         target_loc = np.array(self._target_loc[0:2])
         relative_target = target_loc - ant_loc
 
-        observation[23] = np.linalg.norm(relative_target)
-        observation[24] = np.arctan2(relative_target[1], relative_target[0])
+        observation[28] = np.linalg.norm(relative_target)
+        observation[29] = np.arctan2(relative_target[1], relative_target[0])
 
         desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
 
