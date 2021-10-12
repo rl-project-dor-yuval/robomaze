@@ -89,6 +89,9 @@ class BaseEvalAndSaveCallback(BaseCallback):
         return True
 
     def _on_training_end(self) -> None:
+        # reset env to save last video:
+        _ = self.eval_env.reset()
+
         # save results to csv file
         steps_arr = np.expand_dims(np.array(self.step), 1)
         mean_reward_arr = np.expand_dims(np.array(self.mean_reward), 1)

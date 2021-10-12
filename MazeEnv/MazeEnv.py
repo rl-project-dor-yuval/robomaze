@@ -212,9 +212,10 @@ class MazeEnv(gym.Env):
         target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
 
         if self._collision_manager.check_hit_floor():
+            self.is_done = True
             return self.rewards.fall
 
-        if target_distance < self.hit_target_epsilon: # or info['hit_target']:
+        if target_distance < self.hit_target_epsilon:  # or info['hit_target']:
             self.is_done = True
             return self.rewards.target_arrival
 
