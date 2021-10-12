@@ -195,17 +195,17 @@ def moving_average(x, kernel_size=7):
     if kernel_size > len(x):
         kernel_size = len(x)
     res = np.convolve(x, np.ones(kernel_size), 'valid') / kernel_size
-    res = np.concatenate([np.zeros(kernel_size - 1), res])
+    res = np.concatenate([x[0] * np.ones(kernel_size - 1), res])
     return res
 
 
 def plot_train_eval_results(log_dir, n_eval_episodes):
     """
     plots 4 graphs:
-    - Trainning Episodes Reward Moving Average
-    - Trainning Episodes Episode Length
-    - Evaluation Reward
-    - Evaluation Reward Moving Average
+    - Evaluation success rate
+    - Evaluation avg Reward
+    - Evaluation avg episode length
+    - Evaluation avg episode length moving average
 
     :param log_dir: the log dir that passed to the model. must contain:
         results.monitor.csv and eval_results.csv
@@ -214,32 +214,24 @@ def plot_train_eval_results(log_dir, n_eval_episodes):
     """
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
-    results_df = pd.read_csv(os.path.join(log_dir, "results.monitor.csv"), header=1)
     eval_results_df = pd.read_csv(os.path.join(log_dir, "eval_results.csv"),
-                                  names=["Step", "Avg Reward", "Avg Episode Length"],
+                                  names=["Step", "Avg Reward", "Avg Episode Length", "Success Rate"],
                                   index_col=0)
 
-    episode = results_df.index.to_numpy()
-    reward = results_df["r"].to_numpy()
-    reward_moving_avg = moving_average(reward, kernel_size=10)
-    episode_length = results_df["l"].to_numpy()
+    eval_results_df.plot(y="Avg Reward", ax=axes[0, 0], legend=None)
+    axes[0, 0].set_title("Evaluation Reward (avg over {eval_episodes} Episodes)".format(eval_episodes=n_eval_episodes))
 
-    axes[0, 0].plot(episode, reward_moving_avg)
-    axes[0, 0].set_title("Trainning Episodes Reward Moving Average")
-    axes[0, 0].set_xlabel("Episode")
+    eval_results_df.plot(y="Success Rate", ax=axes[0, 1], legend=None)
+    axes[0, 1].set_title("Evaluation Success Rate Over {eval_episodes} Episodes)".format(eval_episodes=n_eval_episodes))
 
-    axes[1, 0].plot(episode, episode_length)
-    axes[1, 0].set_title("Trainning Episodes Episode Length")
-    axes[1, 0].set_xlabel("Episode")
-
-    eval_results_df.plot(y="Avg Reward", ax=axes[0, 1], legend=None)
-    axes[0, 1].set_title("Evaluation Reward (avg over {eval_episodes} episodes)".format(eval_episodes=n_eval_episodes))
+    eval_results_df.plot(y="Avg Episode Length", ax=axes[1, 0], legend=None)
+    axes[1, 0].set_title("Evaluation Avg Episode Length")
 
     steps = eval_results_df.index.to_numpy()
-    eval_reward = eval_results_df["Avg Reward"].to_numpy()
-    eval_reward_moving_avg = moving_average(eval_reward, kernel_size=10)
-    axes[1, 1].plot(steps, eval_reward_moving_avg)
-    axes[1, 1].set_title("Evaluation Reward Moving Average")
+    eval_length = eval_results_df["Avg Episode Length"].to_numpy()
+    eval_length_moving_avg = moving_average(eval_length, kernel_size=20)
+    axes[1, 1].plot(steps, eval_length_moving_avg)
+    axes[1, 1].set_title("Evaluation Avg Episode Length Moving Average")
     axes[1, 1].set_xlabel("Step")
 
 
