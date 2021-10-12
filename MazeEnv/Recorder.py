@@ -56,8 +56,12 @@ class Recorder:
         :param custom_path: if true, then file name will be used as a full path to
                             the saved video, instead of the default path.
         """
-        os.makedirs(self._directory_path, exist_ok=True)
-        path = file_name if custom_path else self._directory_path + file_name
+        if custom_path:
+            path = file_name
+        else:
+            os.makedirs(self._directory_path, exist_ok=True)
+            path = self._directory_path + file_name
+
         self._video = cv2.VideoWriter(path,
                                       self._fourcc,
                                       self._fps,
