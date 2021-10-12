@@ -27,7 +27,7 @@ class MazeEnv(gym.Env):
     is_reset: bool
     episode_count: int
 
-    recording_video_size: Tuple[int, int] = (400, 400)
+    recording_video_size: Tuple[int, int] = (300, 300)
     video_skip_frames: int = 4
     zoom: float = 1.2  # is also relative to maze size
 
