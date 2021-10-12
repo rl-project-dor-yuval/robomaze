@@ -31,7 +31,7 @@ class Maze:
                                     self._maze_frame_corners_uids,
                                     [self._maze_tiles_uid]])
 
-        return maze_uids, self._target_sphereUid
+        return maze_uids, self._target_sphereUid, self._floorUid
 
     def _load_maze_edges(self):
         """load the blocks for the edges of the maze"""

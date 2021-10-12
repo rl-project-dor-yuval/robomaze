@@ -19,7 +19,7 @@ class Recorder:
     """
     is_recording: bool
 
-    def __init__(self, pybullet_client,maze_size, fps=24, video_size=(800, 600), zoom=1):
+    def __init__(self, pybullet_client, maze_size, fps=24, video_size=(800, 600), zoom=1):
         self._pclient = pybullet_client
         self._maze_size = maze_size
         self._video_size = video_size

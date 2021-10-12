@@ -119,11 +119,12 @@ class MazeEnv(gym.Env):
         self._ant = Ant(self._pclient, self._start_loc)
 
         # create collision detector and pass relevant uids:
-        maze_uids, target_sphere_uid = self._maze.get_maze_objects_uids()
+        maze_uids, target_sphere_uid, floorUid = self._maze.get_maze_objects_uids()
         self._collision_manager = CollisionManager(self._pclient,
                                                    maze_uids,
                                                    target_sphere_uid,
-                                                   self._ant.uid)
+                                                   self._ant.uid,
+                                                   floorUid)
 
         # setup camera for a bird view:
         self._pclient.resetDebugVisualizerCamera(cameraDistance=self._maze.maze_size[1] / self.zoom,
@@ -209,6 +210,9 @@ class MazeEnv(gym.Env):
         # check if hit target and return reward if it does return positive reward
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
+
+        if self._collision_manager.check_hit_floor():
+            return self.rewards.fall
 
         if target_distance < self.hit_target_epsilon: # or info['hit_target']:
             self.is_done = True
