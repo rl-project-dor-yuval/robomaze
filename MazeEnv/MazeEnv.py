@@ -210,7 +210,7 @@ class MazeEnv(gym.Env):
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
 
-        if target_distance < self.hit_target_epsilon or info['hit_target']:
+        if target_distance < self.hit_target_epsilon: # or info['hit_target']:
             self.is_done = True
             return self.rewards.target_arrival
 
