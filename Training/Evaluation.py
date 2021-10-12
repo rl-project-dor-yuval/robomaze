@@ -47,6 +47,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
         self.step = []
         self.mean_reward = []
         self.mean_ep_len = []
+        self.success_rate = []
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -58,15 +59,16 @@ class BaseEvalAndSaveCallback(BaseCallback):
             self.evals_count += 1
 
             # evaluate the model
-            rewards, lengths = self.get_policy_evaluation()
+            rewards, lengths, success_rate = self.get_policy_evaluation()
 
             self.step.append(self.n_calls)
             self.mean_reward.append(sum(rewards) / float(len(rewards)))
             self.mean_ep_len.append(sum(lengths) / float(len(lengths)))
+            self.success_rate.append(success_rate)
 
             if self.verbose > 0:
-                print("{steps} Steps evaluation, avg reward:{reward}, avg episode length: {length}".format(
-                    steps=self.n_calls, reward=self.mean_reward[-1], length=self.mean_ep_len[-1]))
+                print(f"{self.n_calls:.2f} Steps evaluation, avg reward:{self.mean_reward[-1]:.2f},"
+                      f" avg episode length: {self.mean_ep_len[-1]:.2f}, success rate: {self.success_rate[-1]:.2f}")
             if self.verbose > 1:
                 print("rewards:", rewards)
                 print("episode lengths:", lengths)
@@ -91,8 +93,9 @@ class BaseEvalAndSaveCallback(BaseCallback):
         steps_arr = np.expand_dims(np.array(self.step), 1)
         mean_reward_arr = np.expand_dims(np.array(self.mean_reward), 1)
         mean_ep_len_arr = np.expand_dims(np.array(self.mean_ep_len), 1)
+        success_rate_arr = np.expand_dims(np.array(self.success_rate), 1)
 
-        results = np.concatenate((steps_arr, mean_reward_arr, mean_ep_len_arr), axis=1)
+        results = np.concatenate((steps_arr, mean_reward_arr, mean_ep_len_arr, success_rate_arr), axis=1)
 
         np.savetxt(self.result_save_path, results, delimiter=',')
 
@@ -115,8 +118,30 @@ class BaseEvalAndSaveCallback(BaseCallback):
 
 class EvalAndSaveCallback(BaseEvalAndSaveCallback):
     def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
-        evaluate_policy(self.model, self.eval_env, self.eval_episodes,
-                        deterministic=True, return_episode_rewards=True)
+        rewards = []
+        episodes_length = []
+        success_rate_cnt = 0
+
+        # evaluate on all targets
+        for _ in range(self.eval_episodes):
+            # play episode:
+            obs = self.eval_env.reset()
+            step_count = 0
+            total_reward = 0
+            done = False
+            while not done:
+                action, _ = self.model.predict(obs, deterministic=True)
+                obs, reward, done, info = self.eval_env.step(action)
+                step_count += 1
+                total_reward += reward
+
+            # save results:
+            rewards.append(total_reward)
+            episodes_length.append(step_count)
+            success_rate_cnt += float(info['hit_target'])
+
+        success_rate = success_rate_cnt / self.eval_episodes
+        return rewards, episodes_length, success_rate
 
 
 class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
@@ -135,6 +160,7 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
     def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
         rewards = []
         episodes_length = []
+        success_rate_cnt = 0
 
         # evaluate on all targets
         for i in range(self.eval_episodes):
@@ -145,15 +171,17 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
             done = False
             while not done:
                 action, _ = self.model.predict(obs, deterministic=True)
-                obs, reward, done, _ = self.eval_env.step(action)
+                obs, reward, done, info = self.eval_env.step(action)
                 step_count += 1
                 total_reward += reward
 
             # save results:
             rewards.append(total_reward)
             episodes_length.append(step_count)
+            success_rate_cnt += float(info['hit_target'])
 
-        return rewards, episodes_length
+        success_rate = success_rate_cnt / self.eval_episodes
+        return rewards, episodes_length, success_rate
 
 
 
