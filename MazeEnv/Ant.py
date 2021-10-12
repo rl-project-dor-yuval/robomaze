@@ -78,17 +78,18 @@ class Ant:
 
     def get_pos_vel_and_facing_direction(self):
         """
-        return 5d vector,
+        return 7d vector,
         2 first values are ant position
         2 next values are ant velocity
-        last value the facing direction of the ant
+        last 3 values are the euler orientation of the ant
         """
         position, orientation_quat = self._pclient.getBasePositionAndOrientation(self.uid)
         orientation = self._pclient.getEulerFromQuaternion(orientation_quat)
         vel, _ = self._pclient.getBaseVelocity(self.uid)
         # we only take x and y velocity and position
         # yaw (rotation around z) is in index 2 of the orientation
-        return np.array([position[0], position[1], vel[0], vel[1], orientation[2]])
+        return np.array([position[0], position[1], vel[0], vel[1],
+                         orientation[0], orientation[1], orientation[2]])
 
     def get_joint_state(self):
         """
