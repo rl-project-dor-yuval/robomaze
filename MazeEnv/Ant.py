@@ -33,6 +33,12 @@ class Ant:
         # load ant and save it's initial orientation,
         # for now this will be the initial orientation always
         self.uid = self._pclient.loadMJCF("ant.xml")[0]
+
+        # color ant:
+        for link in range(self._pclient.getNumJoints(self.uid)):
+            self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
+        self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
+
         self.initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
         self.reset()
 
