@@ -52,6 +52,7 @@ class MazeEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
+                 action_force=2000,
                  observations: ObservationsDefinition = ObservationsDefinition(), ):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -116,7 +117,7 @@ class MazeEnv(gym.Env):
         self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc)
 
         # load ant robot:
-        self._ant = Ant(self._pclient, self._start_loc)
+        self._ant = Ant(self._pclient, self._start_loc, action_force)
 
         # create collision detector and pass relevant uids:
         maze_uids, target_sphere_uid, floorUid = self._maze.get_maze_objects_uids()

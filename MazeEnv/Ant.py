@@ -26,10 +26,11 @@ def scale(value, old_high, old_low, new_high, new_low):
 
 
 class Ant:
-    def __init__(self, pybullet_client, position3d):
+    def __init__(self, pybullet_client, position3d, action_force):
         self.start_position = position3d
-
+        self.action_force = action_force
         self._pclient = pybullet_client
+
         # load ant and save it's initial orientation,
         # for now this will be the initial orientation always
         self.uid = self._pclient.loadMJCF("ant.xml")[0]
@@ -40,6 +41,7 @@ class Ant:
         self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
 
         self.initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
+
         self.reset()
 
         # Initializing ant's action space, for 8 joint ranging -1 to 1.
@@ -79,7 +81,8 @@ class Ant:
         action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
 
         # perform the move
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action, forces=[2000]*8)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode,
+                                                action, forces=[self.action_force]*8)
 
     def get_pos_orientation_velocity(self):
         """
