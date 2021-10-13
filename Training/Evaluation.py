@@ -85,7 +85,9 @@ class BaseEvalAndSaveCallback(BaseCallback):
                 self._create_video()
                 # The video that is being created here is different from the
                 # case that made the `rewards` above
-                
+
+            self.logger.record("success_rate", success_rate)
+
         return True
 
     def _on_training_end(self) -> None:
