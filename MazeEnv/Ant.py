@@ -4,8 +4,8 @@ import numpy as np
 import math
 
 # the indices of the joints in the built model
-ANKLE_IDX = np.array([3, 8, 13, 18])
-SHOULDER_IDX = np.array([1, 6, 11, 16])
+# ANKLE_IDX = np.array([3, 8, 13, 18])
+# SHOULDER_IDX = np.array([1, 6, 11, 16])
 JOINTS_INDICES = np.array([1, 3, 6, 8, 11, 13, 16, 18])
 # Practical joints motors ranges
 SHOULDER_HIGH = 0.698
@@ -68,11 +68,10 @@ class Ant:
         # assert in_action.dtype == 'float64', "action dtype is not float64"
 
         mode = self._pclient.POSITION_CONTROL
-        action = np.copy(in_action)
+        action = np.array(in_action, dtype=np.float32)
         # scale the given values from the input range to the practical range
         # scale the shoulder position values in the odd indices
         action[::2] = scale(action[::2], 1, -1, SHOULDER_HIGH, SHOULDER_LOW)
-
         # handle ankles Position
         action[1] = scale(-1 * action[1], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
         action[7] = scale(-1 * action[7], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
