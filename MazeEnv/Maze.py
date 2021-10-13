@@ -15,7 +15,10 @@ class Maze:
         self.maze_size = maze_size
 
         self._pclient = pybullet_client
+
         self._floorUid = self._pclient.loadURDF("floor.urdf")
+        self._pclient.changeDynamics(self._floorUid, -1, lateralFriction=10)
+
         self._maze_frame_uids = np.zeros([4])
         self._maze_frame_corners_uids = np.zeros([4])
         self._load_maze_edges()
