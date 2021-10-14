@@ -40,15 +40,15 @@ class Recorder:
 
         self._view_matrix = self._pclient.computeViewMatrixFromYawPitchRoll(distance=camera_distance,
                                                                 yaw=90,
-                                                                pitch=-90,
+                                                                pitch=-60,
                                                                 roll=0,
                                                                 upAxisIndex=2,
                                                                 cameraTargetPosition=focal_point
                                                                 )
         self._projection_matrix = self._pclient.computeProjectionMatrixFOV(fov=70,
                                                                aspect=aspect,
-                                                               nearVal=camera_distance - 4,
-                                                               farVal=camera_distance + 1)
+                                                               nearVal=camera_distance - 3,
+                                                               farVal=camera_distance + 5)
 
     def start_recording(self, file_name, custom_path=False):
         """

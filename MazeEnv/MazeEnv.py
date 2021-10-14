@@ -27,9 +27,9 @@ class MazeEnv(gym.Env):
     is_reset: bool
     episode_count: int
 
-    recording_video_size: Tuple[int, int] = (300, 300)
-    video_skip_frames: int = 4
-    zoom: float = 1.2  # is also relative to maze size
+    recording_video_size: Tuple[int, int] = (400, 400)
+    video_skip_frames: int = 1
+    zoom: float = 1.75  # is also relative to maze size
 
     _collision_manager: CollisionManager
     _maze: Maze
@@ -147,7 +147,9 @@ class MazeEnv(gym.Env):
 
         # pass actions through the ant object and run simulation step:
         self._ant.action(action)
-        self._pclient.stepSimulation()
+        for _ in range(10):
+            self._pclient.stepSimulation()
+
         self.step_count += 1
 
         observation = self._get_observation()
