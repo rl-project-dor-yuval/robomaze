@@ -137,7 +137,8 @@ class MazeEnv(gym.Env):
         self._recorder = Recorder(self._pclient,
                                   maze_size=maze_size,
                                   video_size=self.recording_video_size,
-                                  zoom=self.zoom)
+                                  zoom=self.zoom,
+                                  fps=16)
 
     def step(self, action):
         if not self.is_reset:
@@ -147,7 +148,7 @@ class MazeEnv(gym.Env):
 
         # pass actions through the ant object and run simulation step:
         self._ant.action(action)
-        for _ in range(10):
+        for _ in range(5):
             self._pclient.stepSimulation()
 
         self.step_count += 1
