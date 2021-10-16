@@ -26,9 +26,8 @@ def scale(value, old_high, old_low, new_high, new_low):
 
 
 class Ant:
-    def __init__(self, pybullet_client, position3d, action_force):
+    def __init__(self, pybullet_client, position3d):
         self.start_position = position3d
-        self.action_force = action_force
         self._pclient = pybullet_client
 
         # load ant and save it's initial orientation,
@@ -82,7 +81,7 @@ class Ant:
 
         # perform the move
         self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode,
-                                                action, forces=[self.action_force]*8)
+                                                action, forces=[1000]*8)
 
     def get_pos_orientation_velocity(self):
         """

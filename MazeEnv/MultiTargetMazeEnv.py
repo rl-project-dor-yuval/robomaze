@@ -14,7 +14,6 @@ class MultiTargetMazeEnv(MazeEnv):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 action_force=1000,
                  observations: ObservationsDefinition = ObservationsDefinition(), ):
         """
         The only different argument is target_log_list which is a list of targets for this envrionment
@@ -27,7 +26,7 @@ class MultiTargetMazeEnv(MazeEnv):
         self.target_count = len(target_loc_list)
 
         super().__init__(maze_size, maze_map, tile_size, start_loc, target_loc_list[0],
-                         rewards, timeout_steps, show_gui, action_force, observations)
+                         rewards, timeout_steps, show_gui, observations)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, target_index=None):
         """
