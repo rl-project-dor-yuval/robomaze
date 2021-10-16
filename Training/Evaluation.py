@@ -143,7 +143,7 @@ class EvalAndSaveCallback(BaseEvalAndSaveCallback):
             # save results:
             rewards.append(total_reward)
             episodes_length.append(step_count)
-            success_rate_cnt += float(info['hit_target'])
+            success_rate_cnt += float(info['success'])
 
         success_rate = success_rate_cnt / self.eval_episodes
         return rewards, episodes_length, success_rate
@@ -161,6 +161,8 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
         eval_episodes = eval_env.target_count
         super().__init__(log_dir, eval_env, eval_freq, eval_episodes,
                          eval_video_freq, verbose)
+
+        self.per_target_success = np.zeros(eval_episodes)
 
     def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
         rewards = []
@@ -183,10 +185,20 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
             # save results:
             rewards.append(total_reward)
             episodes_length.append(step_count)
-            success_rate_cnt += float(info['hit_target'])
+            success_rate_cnt += float(info['success'])
+            self.per_target_success[i] += float(info['success'])
 
         success_rate = success_rate_cnt / self.eval_episodes
         return rewards, episodes_length, success_rate
+
+    def _on_training_end(self) -> None:
+        super().on_training_end()
+
+        # save per target success rate as well :
+        per_target_success_rate = self.per_target_success / self.evals_count
+        np.savetxt(os.path.join(self.log_dir, 'per_target_success_rate.csv'),
+                   per_target_success_rate)
+
 
 
 

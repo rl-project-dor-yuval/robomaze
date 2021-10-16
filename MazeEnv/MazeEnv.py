@@ -162,6 +162,7 @@ class MazeEnv(gym.Env):
                                      observation['desired_goal'],
                                      compute_reward_info)
         info = compute_reward_info
+        info["success"] = self.is_done and reward == self.rewards.target_arrival
 
         # handle recording
         if self._recorder.is_recording and \
