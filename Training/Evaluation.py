@@ -256,6 +256,7 @@ def record_model(model, env, video_path):
         obs, reward, done, _ = env.step(action)
         episode_reward += reward
         if done:
+            env.reset()
             return episode_reward
 
 
