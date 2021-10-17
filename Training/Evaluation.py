@@ -36,7 +36,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
         self.log_dir = log_dir
         self.eval_env = eval_env
         self.eval_video_freq = eval_video_freq
-        
+
         self.evals_count = 0
 
         self.model_save_path = os.path.join(log_dir, 'best_model')
@@ -78,7 +78,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
                 if self.verbose > 0:
                     print("--Saving new best model--")
                 self.model.save(self.model_save_path)
-                
+
             if self.eval_video_freq != -1 and self.evals_count % self.eval_video_freq == 0:
                 if self.verbose > 0:
                     print("creating video")
@@ -192,7 +192,7 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
         return rewards, episodes_length, success_rate
 
     def _on_training_end(self) -> None:
-        super().on_training_end()
+        super()._on_training_end()
 
         # save per target success rate as well :
         per_target_success_rate = self.per_target_success / self.evals_count
@@ -285,4 +285,4 @@ def create_gifs_from_avi(log_directory_path):
             writer.append_data(im)
 
         writer.close()
-        
+
