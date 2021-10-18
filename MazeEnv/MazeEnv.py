@@ -11,7 +11,7 @@ import numpy as np
 import math
 import os
 from MazeEnv.Recorder import Recorder
-from MazeEnv.EnvAttributes import Rewards, ObservationsDefinition, MazeSize
+from MazeEnv.EnvAttributes import Rewards, MazeSize
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
@@ -26,6 +26,7 @@ class MazeEnv(gym.Env):
     step_count: int
     is_reset: bool
     episode_count: int
+    xy_in_obs: bool
 
     recording_video_size: Tuple[int, int] = (400, 400)
     video_skip_frames: int = 1
@@ -52,7 +53,7 @@ class MazeEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 observations: ObservationsDefinition = ObservationsDefinition(), ):
+                 xy_in_obs:bool = True):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -62,10 +63,11 @@ class MazeEnv(gym.Env):
         :param start_loc: the location the ant starts at
         :param target_loc: the location of the target sphere center
         :param rewards: definition of reward values for events
-        :param timeout_steps: maximum steps until getting timeout reward
+        :param timeout_steps: maximum steps until getting timeout reward and episode ends
          (if a timeout reward is defined)
         :param show_gui: if set to true, the simulation will be shown in a GUI window
-        :param observations: definition of the desired observations for the agent
+        :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
+                if True, the two first elements of the observation are X and Y
 
         :return: Maze Environment object
 
@@ -92,10 +94,12 @@ class MazeEnv(gym.Env):
         self._target_loc = (target_loc[0], target_loc[1], 0)
         self.rewards = rewards
         self.timeout_steps = timeout_steps
+        self.xy_in_obs = xy_in_obs
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
-        self.observation_space = Box(-np.inf, np.inf, (30,))
+        obs_space_size = 30 if xy_in_obs else 28
+        self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # setup simulation:
         if show_gui:
@@ -254,10 +258,8 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
 
     def _get_observation(self):
-        """in the future the observation space is going to be configurable,
-            right now its just a 30D vector."""
-
-        observation = np.zeros(self.observation_space.shape, dtype=np.float32)
+        # if xy not in observation it will be cut later
+        observation = np.zeros(30, dtype=np.float32)
 
         observation[0:12] = self._ant.get_pos_orientation_velocity()
         observation[12:28] = self._ant.get_joint_state()
@@ -271,6 +273,8 @@ class MazeEnv(gym.Env):
         observation[29] = np.arctan2(relative_target[1], relative_target[0])
 
         desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
+        if not self.xy_in_obs:
+            observation = observation[2:]
 
         return OrderedDict([
             ('observation', observation),

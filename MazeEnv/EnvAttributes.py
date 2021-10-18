@@ -29,13 +29,3 @@ class Rewards:
         self.fall = fall
 
 
-class ObservationsDefinition:
-    observations_opts = {"joint_state", "robot_loc", "robot_target_loc"}
-
-    def __init__(self, observations: list = ["joint_state", "robot_loc", "robot_target_loc"]):
-        for ob in observations:
-            if ob not in self.observations_opts:
-                raise ValueError
-
-        self.observations = observations
-
