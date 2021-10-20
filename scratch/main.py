@@ -17,7 +17,7 @@ maze_map = make_circular_map(map_size, 2.9 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
-targets_loc = np.genfromtxt("TestTargets/test_coords.csv", delimiter=',')
+targets_loc = np.genfromtxt("../Training/TestTargets/test_coords.csv", delimiter=',')
 print(targets_loc)
 
 maze = mz.MultiTargetMazeEnv(maze_size=maze_size,
@@ -26,11 +26,11 @@ maze = mz.MultiTargetMazeEnv(maze_size=maze_size,
                              start_loc=START_LOC,
                              target_loc_list=targets_loc,
                              timeout_steps=500,
-                             action_force=1000,
-                             show_gui=True,)
+                             show_gui=True,
+                             xy_in_obs=False)
 
 for i in range(1):
-    maze.reset(target_index=i, create_video=False)
+    print(maze.reset(target_index=i, create_video=False))
 
     for i in range(200):
         action = [-1, 1] * 4

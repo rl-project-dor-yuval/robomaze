@@ -12,7 +12,7 @@ from stable_baselines3.common.env_checker import check_env
 
 import matplotlib.pyplot as plt
 
-sys.path.append('..')
+sys.path.append('../..')
 
 import MazeEnv.MazeEnv as mz
 from MazeEnv.MazeEnv import Rewards
