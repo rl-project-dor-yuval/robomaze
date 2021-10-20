@@ -30,7 +30,7 @@ class MazeEnv(gym.Env):
 
     recording_video_size: Tuple[int, int] = (400, 400)
     video_skip_frames: int = 1
-    zoom: float = 1.75  # is also relative to maze size
+    zoom: float = 1.4  # is also relative to maze size
 
     _collision_manager: CollisionManager
     _maze: Maze
@@ -39,7 +39,7 @@ class MazeEnv(gym.Env):
 
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
-    hit_target_epsilon = 1
+    hit_target_epsilon = 0.5
 
     _physics_server: int
     _pclient: bc.BulletClient
