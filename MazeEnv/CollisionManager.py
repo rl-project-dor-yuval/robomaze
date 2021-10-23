@@ -19,30 +19,28 @@ class CollisionManager:
         # "transparent for collisions" (ant can get inside)
         self._pclient.setCollisionFilterGroupMask(target_uid, -1, 0, 0)
 
-    def check_ant_collisions(self):
+    def check_hit_maze(self) -> bool:
         """
-        checks if there were collision between the ant and the maze or target
-        in the last pubullet.step() call
-
-        :return: hit_target, hit_maze
+        checks if there were collision between the ant and the maze in the last step
         """
-        hit_target = False
-        hit_maze = False
-
         contact_points = self._pclient.getContactPoints(bodyA=self.ant_uid)
         # each point is a tuple, the object the ant collided with is in
         # place 2 in the tuple
         for point in contact_points:
             if point[2] in self.maze_uids:
-                hit_maze = True
-                break
+                return True
 
+        return False
+
+    def check_ant_target_collision(self) -> bool:
+        """
+        checks if there were a collision between the ant and  the target in the last step.
+        this method was seperated from check maze collision since we don't use ant-target
+        collision anymore for reward, but we want to preserve this code.
+        """
         # since target sphere is masked for collision, we need to use
         # getClosestPoints to know if the ant is inside the sphere
-        if self._pclient.getClosestPoints(self.ant_uid, self.target_uid, distance=0):
-            hit_target = True
-
-        return hit_target, hit_maze
+        return self._pclient.getClosestPoints(self.ant_uid, self.target_uid, distance=0)
 
     def check_hit_floor(self):
         """

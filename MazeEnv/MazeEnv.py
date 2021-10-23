@@ -87,7 +87,6 @@ class MazeEnv(gym.Env):
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.is_reset = False
-        self.is_done = False
         self.step_count = 0
         self.episode_count = 0
         self._start_loc = (start_loc[0], start_loc[1], _ANT_START_Z_COORD)
@@ -149,24 +148,42 @@ class MazeEnv(gym.Env):
         if not self.action_space.contains(action):
             raise Exception("Expected shape (8,) and value in [-1,1] ")
 
-        # pass actions through the ant object and run simulation step:
+        # perform step: pass actions through the ant object and run simulation step:
         self._ant.action(action)
         for _ in range(5):
             self._pclient.stepSimulation()
 
         self.step_count += 1
 
+        # resolve observation:
         observation = self._get_observation()
+        ant_xy = observation[0:2]
+        if not self.xy_in_obs:
+            observation = observation[2:]
 
-        # compute reward and is_done (self.is_done is updated in compute_reward)
-        # check for ant collision in the last step and update reward:
-        hit_target, hit_maze = self._collision_manager.check_ant_collisions()
-        compute_reward_info = dict(hit_target=hit_target, hit_maze=hit_maze, )
-        reward = self.compute_reward(observation['achieved_goal'],
-                                     observation['desired_goal'],
-                                     compute_reward_info)
-        info = compute_reward_info
-        info["success"] = self.is_done and reward == self.rewards.target_arrival
+        # check status and resolve reward and is_done:
+        reward = 0
+        is_done = False
+        info = dict(success=False, fell=False, hit_maze=False, timeout=False)
+
+        if self._collision_manager.check_hit_floor():
+            is_done = info['fell'] = True
+            reward += self.rewards.fall
+        if self._collision_manager.check_hit_maze():
+            is_done = info['hit_maze'] = True
+            reward += self.rewards.collision
+
+        target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
+        target_distance = np.linalg.norm(target_loc_xy-ant_xy)
+        if target_distance < self.hit_target_epsilon:
+            is_done = info['success'] = True
+            reward += self.rewards.target_arrival
+
+        if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
+            is_done = info['timeout'] = True
+            reward += self.rewards.timeout
+
+        reward += self.rewards.idle
 
         # handle recording
         if self._recorder.is_recording and \
@@ -174,10 +191,10 @@ class MazeEnv(gym.Env):
             self._recorder.insert_current_frame()
 
         # if done and recording save video
-        if self.is_done and self._recorder.is_recording:
+        if is_done and self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
 
-        return observation['observation'], reward, self.is_done, info
+        return observation, reward, is_done, info
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False):
         """
@@ -207,38 +224,11 @@ class MazeEnv(gym.Env):
         self.episode_count += 1
         self.step_count = 0
         self.is_reset = True
-        self.is_done = False
 
-        return self._get_observation()['observation']
-
-    def compute_reward(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info):
-        """
-            TODO: complete
-        """
-        # check if hit target and return reward if it does return positive reward
-        target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
-        target_distance = np.linalg.norm(target_loc_xy-achieved_goal)
-
-        if self._collision_manager.check_hit_floor():
-            self.is_done = True
-            return self.rewards.fall
-
-        if target_distance < self.hit_target_epsilon:  # or info['hit_target']:
-            self.is_done = True
-            return self.rewards.target_arrival
-
-        # check if hit wall and return negative reward
-        if info['hit_maze']:
-            self.is_done = True
-            return self.rewards.collision
-
-        # check if timeout and return negative reward
-        if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            self.is_done = True
-            return self.rewards.timeout
-
-        # if none of the above, return idle reward
-        return self.rewards.idle
+        observation = self._get_observation()
+        if not self.xy_in_obs:
+            observation = observation[2:]
+        return observation
 
     def set_start_loc(self, start_loc):
         """
@@ -272,15 +262,7 @@ class MazeEnv(gym.Env):
         observation[28] = np.linalg.norm(relative_target)
         observation[29] = np.arctan2(relative_target[1], relative_target[0])
 
-        desired_goal = np.array([self._target_loc[0], self._target_loc[1]])
-        if not self.xy_in_obs:
-            observation = observation[2:]
-
-        return OrderedDict([
-            ('observation', observation),
-            ('achieved_goal', ant_loc),
-            ('desired_goal', desired_goal)
-        ])
+        return observation
 
     @staticmethod
     def _check_start_state(maze_size, start_loc, target_loc):
