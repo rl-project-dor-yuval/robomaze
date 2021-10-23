@@ -5,7 +5,7 @@ from os import path
 import math
 
 
-_BLOCK_Z_COORD = 0.5  # half of block size so they won't be inside the floor
+_BLOCK_Z_COORD = 0  # half of the block is inside the floor, but it looks better
 
 
 class Maze:
