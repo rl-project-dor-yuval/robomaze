@@ -1,4 +1,5 @@
 import matplotlib
+import csv
 matplotlib.use('agg')
 
 from matplotlib import pyplot
@@ -10,6 +11,7 @@ from shapely import speedups
 from shapely.geometry import Polygon, Point, LineString
 from shapely.ops import unary_union
 from PIL import Image
+import os
 
 
 class Maze:
@@ -188,7 +190,7 @@ class Maze:
         # img = Image.fromarray(data, 'RGB')
         # img_grey = img.convert('L')
         # img_grey = img.convert('1')
-        binary_data = data.sum(axis=-1) == 255*3
+        binary_data = data.sum(axis=-1) == 255 * 3
         img_grey = Image.fromarray(binary_data)
         if size is not None:
             img_grey = img_grey.resize((size, size))
@@ -275,30 +277,39 @@ def load_maze_from_data(data_from_get_data) -> Maze:
     maze.grid_size, maze.free_tiles, maze.occupied_tiles, maze.points = data_from_get_data
     return maze
 
+
 if __name__ == '__main__':
-    m = generate_random_maze(20, 0.3, 0.99, 0.25)
-    s = m.sample_free_state()
-    g = m.sample_free_state()
+    mz = generate_random_maze(8, 0.5, 0.99, 0.25)
+    s = mz.sample_free_state()
+    g = mz.sample_free_state()
     paths = [
         [(0., 0.), (0.5, 0.5)],
-        [s, g]
+        [s, g],
+        [(0, 0), (5, 0.25)]
     ]
-    _, data = m.plot(paths=paths, save_path='/home/tom/temp/data.png')
+    _, data = mz.plot(paths=paths, save_path=".\\data.png")
     print(data.shape)
 
-    data1 = m.create_visual_context()
-    data2 = m.create_state_map(s)
-    data3 = m.create_state_map(g)
-    Image.fromarray(data1, 'L').save('/home/tom/temp/data1.png')
-    Image.fromarray(data2, 'L').save('/home/tom/temp/data2.png')
-    Image.fromarray(data3, 'L').save('/home/tom/temp/data3.png')
+    data1 = mz.create_visual_context()
+    data2 = mz.create_state_map(s)
+    data3 = mz.create_state_map(g)
+    Image.fromarray(data1, 'L').save('.\\data1.png')
+    Image.fromarray(data2, 'L').save('.\\data2.png')
+    Image.fromarray(data3, 'L').save('.\\data3.png')
 
-    data4 = m.create_visual_context(size=84)
-    data5 = m.create_state_map(s, size=84)
-    data6 = m.create_state_map(g, size=84)
-    Image.fromarray(data4, 'L').save('/home/tom/temp/data4.png')
-    Image.fromarray(data5, 'L').save('/home/tom/temp/data5.png')
-    Image.fromarray(data6, 'L').save('/home/tom/temp/data6.png')
+    data4 = mz.create_visual_context(size=200)
+    data5 = mz.create_state_map(s, size=200)
+    data6 = mz.create_state_map(g, size=200)
+    Image.fromarray(data4, 'L').save('.\\data4.png')
+    Image.fromarray(data5, 'L').save('.\\data5.png')
+    Image.fromarray(data6, 'L').save('.\\data6.png')
+
+    # Saving the matrices with the start & goal locations
+    # with open(os.path.join(os.path.curdir, "start_loc_data.csv"), 'w') as f:
+    #     writer = csv.writer(f)
+    #     writer.writerows(data5)
+    # with open(os.path.join(os.path.curdir, "goal_loc_data.csv"), 'w') as f:
+    #     writer = csv.writer(f)
+    #     writer.writerows(data6)
+
     print('here')
-
-

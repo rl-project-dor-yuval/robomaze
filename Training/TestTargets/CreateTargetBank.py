@@ -44,11 +44,11 @@ ax.plot(center[0], center[1], 'ro', label="Initial Center of Ant")
 ax.margins(0.3)
 
 fig = plt.gcf()
-fig.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "TestTargets", "test_coords_plot"))
+fig.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_plot"))
 plt.legend()
 plt.show()
 
 # Saving the Points Coordinates in CSV file
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "TestTargets", "test_coords.csv"), 'w') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords.csv"), 'w') as f:
     writer = csv.writer(f)
     writer.writerows(points)
