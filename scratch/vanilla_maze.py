@@ -10,7 +10,6 @@ from TrainingNavigator.StepperAgent import StepperAgent
 
 maze_map = - (cv2.imread("vanilla_map.png", cv2.IMREAD_GRAYSCALE) / 255) + 1
 maze_map = maze_map.T
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 env = mz.MazeEnv(maze_size=mz.MazeSize.SQUARE10,
                  maze_map=maze_map,
@@ -20,6 +19,7 @@ env = mz.MazeEnv(maze_size=mz.MazeSize.SQUARE10,
                  xy_in_obs=False,
                  show_gui=True)  # missing, timeout, rewards
 
+device = 'auto'
 # naively try to solve it:
 agent = StepperAgent("../TrainingNavigator/WalkerAgent.pt", device=device)
 obs = env.reset()
