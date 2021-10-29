@@ -1,7 +1,6 @@
 import torch
 
 
-
 class StepperAgent:
     """
      A wrapper for an agent, used to infer a trained actor network
@@ -15,7 +14,6 @@ class StepperAgent:
         self.agent_nn = torch.load(agent_path, map_location=_device)
         self.agent_nn.eval()
         self.device = device
-        print(self.agent_nn)
 
     def step(self, obs):
         obs = torch.from_numpy(obs).unsqueeze(0)
@@ -24,6 +22,3 @@ class StepperAgent:
             actions = actions.squeeze(0).numpy()
 
         return actions
-
-    # def __call__(self, *args, **kwargs):
-    #     return self.step(*args,**kwargs)
