@@ -12,7 +12,7 @@ from TrainingNavigator.Utils import cart2pol, pol2cart
 
 class NavigatorEnv(gym.Env):
     """
-    :param maze_env: mz.MazeEnv object - with observation space of 28d - without ant x,y location
+    :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
     :param stepper_agent: stepper agent object
     :param max_stepper_steps: maximum steps allowed to the stepper towards subgoal.
     :param stepper_radius_range: defined by the reachable
@@ -31,8 +31,8 @@ class NavigatorEnv(gym.Env):
                  epsilon_to_hit_subgoal=0.5):
 
         if not maze_env.xy_in_obs:
-            raise Exception(" Navigator's env has to get agent's position in env - please provide proper env object")
-            exit()
+            raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
+
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
@@ -71,8 +71,9 @@ class NavigatorEnv(gym.Env):
             r_theta_to_subgoal = cart2pol(self.curr_subgoal - ant_xy)
             # we used subgoal-ant_loc and not the opposite just like in mazeEnv._get_observation
 
-            # stepper agent doesn't need x and y of the ant so make sure
+            # stepper agent doesn't need x and y of the ant
             stepper_obs = self.ant_curr_obs[2:]
+            # update r and theta for the subgoal (the environment returns for the main goal)
             stepper_obs[26:28] = r_theta_to_subgoal
             stepper_action = self.stepper_agent.step(stepper_obs)
 
@@ -87,7 +88,6 @@ class NavigatorEnv(gym.Env):
 
             # check if close enough to subgoal:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
-                is_done = True
                 break
 
         nav_observation = np.concatenate([ant_xy, self.target_goal])

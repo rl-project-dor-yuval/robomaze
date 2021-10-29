@@ -3,7 +3,7 @@ import glob
 import os
 import ipyplot
 
-import MazeEnv.MultiTargetMazeEnv as Mtmz
+import MazeEnv.MultiTargetMazeEnv as mtmz
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import DDPG
@@ -36,14 +36,14 @@ def make_circular_map(size, radius):
 def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monitor_dir, xy_in_obs):
     # create environment :
     tile_size = 0.1
-    maze_size = Mtmz.MazeSize.SQUARE10
+    maze_size = mtmz.MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
     circle_radius = radius
     maze_map = make_circular_map(map_size, circle_radius / tile_size)
 
     start_loc = (5, 5)
 
-    maze_env = Mtmz.MultiTargetMazeEnv(maze_size=maze_size,
+    maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                        maze_map=maze_map,
                                        tile_size=tile_size,
                                        start_loc=start_loc,
@@ -57,7 +57,7 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monit
     check_env(maze_env)
 
     # create separete evaluation environment:
-    eval_maze_env = Mtmz.MultiTargetMazeEnv(maze_size=maze_size,
+    eval_maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                             maze_map=maze_map,
                                             tile_size=tile_size,
                                             start_loc=start_loc,
@@ -69,7 +69,7 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monit
     return maze_env, eval_maze_env
 
 
-def visualize_model(model_path, targets_n, video_dir, eval_env: Mtmz):
+def visualize_model(model_path, targets_n, video_dir, eval_env: mtmz):
     """
     evaluate trained model and make videos of it on targets_n targets.
     
