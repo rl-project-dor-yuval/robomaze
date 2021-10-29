@@ -17,7 +17,7 @@ env = mz.MazeEnv(maze_size=mz.MazeSize.SQUARE10,
                  tile_size=0.05,
                  start_loc=(1., 7.5),
                  target_loc=(4.8, 4.2),
-                 xy_in_obs=False,
+                 xy_in_obs=True,
                  show_gui=True)  # missing, timeout, rewards
 
 device = 'auto'

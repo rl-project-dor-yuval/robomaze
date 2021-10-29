@@ -30,8 +30,8 @@ class NavigatorEnv(gym.Env):
                  stepper_radius_range=(0.7, 3.),
                  epsilon_to_hit_subgoal=0.5):
 
-        if maze_env.xy_in_obs:
-            raise Exception(" Stepper doesn't need x and y of the ant - please provide proper env object")
+        if not maze_env.xy_in_obs:
+            raise Exception(" Navigator's env has to get agent's position in env - please provide proper env object")
             exit()
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
@@ -72,7 +72,7 @@ class NavigatorEnv(gym.Env):
             # we used subgoal-ant_loc and not the opposite just like in mazeEnv._get_observation
 
             # stepper agent doesn't need x and y of the ant so make sure
-            stepper_obs = self.ant_curr_obs
+            stepper_obs = self.ant_curr_obs[2:]
             stepper_obs[26:28] = r_theta_to_subgoal
             stepper_action = self.stepper_agent.step(stepper_obs)
 
