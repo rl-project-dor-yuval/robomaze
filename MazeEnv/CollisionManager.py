@@ -2,6 +2,7 @@ import numpy as np
 import pybullet as p
 from pybullet_utils import bullet_client as bc
 
+
 class CollisionManager:
     target_uid: int
     maze_uids: np.ndarray
@@ -54,4 +55,3 @@ class CollisionManager:
                 return True
 
         return False
-

@@ -6,7 +6,7 @@ if len(sys.argv) < 2 or len(sys.argv) > 3:
     print("Usage: ")
     print(">python ExtractStepperAgent.py <path to model> [save path]")
     print("if a save path is not specified, the agent is saved in the"
-          " current directory as WalkerAgent.pt")
+          " current directory as StepperAgent.pt")
     exit()
 
 model_path = sys.argv[1]

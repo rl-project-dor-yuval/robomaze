@@ -85,10 +85,11 @@ class Ant:
 
     def get_pos_orientation_velocity(self):
         """
-        return 12d vector,
+        :return: 12d vector
+
         3 first values are ant COM position
         3 next values are ant COM velocity
-        3 next values are ant euler oriantation
+        3 next values are ant euler orientation [Roll, Pitch, Yaw]
         last 3 values are angular velocity
         """
         position, orientation_quat = self._pclient.getBasePositionAndOrientation(self.uid)
@@ -99,7 +100,8 @@ class Ant:
 
     def get_joint_state(self):
         """
-         return 16d vector,
+        :return: 16d vector
+
         8 first values are joints position
         8 next values are joint velocity
         """

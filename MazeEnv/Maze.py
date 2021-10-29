@@ -3,14 +3,32 @@ from pybullet_utils import bullet_client as bc
 import numpy as np
 from os import path
 import math
-
+from MazeEnv.EnvAttributes import MazeSize
 
 _BLOCK_Z_COORD = 0  # half of the block is inside the floor, but it looks better
 
 
 class Maze:
+    pubullet_client: bc.BulletClient
+    maze_size: MazeSize
+    maze_map: np.ndarray
+    target_position3d: np.ndarray
 
-    def __init__(self, pybullet_client, maze_size, maze_map, tile_size, target_position3d):
+    def __init__(self,
+                 pybullet_client,
+                 maze_size,
+                 maze_map,
+                 tile_size,
+                 target_position3d):
+        """
+        :param pubullet_client:
+        :param maze_size: MazeSize object defining the maze size
+        :param maze_map: numpy array describing the Maze
+        :param tile_size: size of building block of the Maze
+        :param target_position: 3d position of Goal
+
+        :return Maze object
+        """
         from os import getcwd
         self.maze_size = maze_size
 

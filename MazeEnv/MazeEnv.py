@@ -195,13 +195,14 @@ class MazeEnv(gym.Env):
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False):
         """
-        reset the environment for the next episode
         :param create_video: weather to create video file from the next episode
         :param video_path: path to the video file. if None then the file will be saved
                             to the default path at "/videos/date-time/episode#.mp4
         :param reset_episode_count: weather to reset the MazeEnv.episode_count value
 
-        :return observation for the zeroth time step
+        :return: observation for the the first time step
+
+        reset the environment for the next episode
         """
         # move ant to start position:
         self._ant.reset()
@@ -245,6 +246,18 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
 
     def _get_observation(self):
+        """
+        get 30D/28D observation vector according to use of x,y
+        observation consists of:
+        [ 0:2 - ant COM position (x,y,z),
+          3:5 - ant COM velocity (x,y,z),
+          6:8 - ant euler orientation [Roll, Pitch, Yaw],
+          9:11 - ant angular velocity (x,y,z),
+          12:19 - ant joint position (8 joints),
+          20:27 - ant joint velocities (8 joints),
+          28 - relative distance from target,
+          29 - relative angle to target (in radians) ]
+        """
         # if xy not in observation it will be cut later
         observation = np.zeros(30, dtype=np.float32)
 
