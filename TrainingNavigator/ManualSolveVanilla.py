@@ -8,10 +8,12 @@ from Utils import get_vanilla_navigator_env
 
 
 nav_env = get_vanilla_navigator_env()
+nav_env.visualize_mode(True)
 
-actions = [(2, -math.pi/4)] * 3
+actions = [(3, -math.pi/6)] * 5
 
 obs = nav_env.reset()
-for i in range(3):
-    obs, _, _, _ = nav_env.step(actions[i])
+for i in range(4):
+    obs, reward, _, _ = nav_env.step(actions[i])
+    print("reward:", reward)
 
