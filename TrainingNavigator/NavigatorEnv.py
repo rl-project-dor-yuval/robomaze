@@ -1,12 +1,10 @@
-"""
- A wrapper around MazeEnv and a stepper agent
-"""
 import gym
 from gym.spaces import Box
 import MazeEnv.MazeEnv as mz
 from TrainingNavigator.StepperAgent import StepperAgent
 import numpy as np
 import math
+import time
 
 
 def cart2pol(vec):
@@ -29,17 +27,17 @@ class NavigatorEnv(gym.Env):
     :param stepper_radius_range: defined by the reachable
     :param epsilon_to_hit_subgoal: minimal distance to subgoal to be considered as goal arrival
 
-    The NavigatorEnv class will learn how to navigate the stepper agent in order to solve
-    a certain maze. Generally the navigator's purpose is given a certain Goal, generate a sequence
-    of subgoals (Navigator actions) all the way to it, whereas the stepperAgent knows how to reach close subgoals.
+    NavigatorEnv is a wrapper around MazeEnv and a stepper agent so that an action here is a command to the stepper.
+    Generally the navigator's purpose is given a certain Goal, generate a sequence of subgoals (Navigator actions)
+    all the way to it, whereas the stepperAgent knows how to reach close subgoals.
     """
 
     def __init__(self,
                  maze_env: mz.MazeEnv,
                  stepper_agent=None,
                  max_stepper_steps=200,
-                 stepper_radius_range=(0.7, 3.),
-                 epsilon_to_hit_subgoal=0.5):
+                 stepper_radius_range=(0.9, 3.),
+                 epsilon_to_hit_subgoal=0.8):
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
@@ -47,6 +45,9 @@ class NavigatorEnv(gym.Env):
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
+
+        self.visualize = False
+        self.visualize_fps = 60
 
         if stepper_agent is None:
             stepper_agent = StepperAgent('StepperAgent.pt', 'auto')
@@ -76,6 +77,9 @@ class NavigatorEnv(gym.Env):
         nav_reward = 0
 
         for i in range(self.max_stepper_steps):
+            if self.visualize:
+                time.sleep(1./float(self.visualize_fps))
+
             # compute the (r, theta) from the *current* ant location to the subgoal in order to put it
             # in the observation to the stepper this is different then the value passed in the action
             # to this env because it changes in each iteration in the loop
@@ -105,3 +109,13 @@ class NavigatorEnv(gym.Env):
         nav_info = info
 
         return nav_observation, nav_reward, is_done, nav_info
+
+    def visualize_mode(self, visualize: bool, fps: int = 60):
+        """
+        Change to (or change back from) visualize mode.
+        In visualize mode the simulation is slowed down in order to visualize it in real-time
+        :param visualize: weather to slow down the simulation to visualize
+        :param fps: number of frames per second, actual fps may be inaccurate
+        """
+        self.visualize = True
+        self.visualize_fps = fps
