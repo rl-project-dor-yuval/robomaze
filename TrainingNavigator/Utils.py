@@ -1,5 +1,5 @@
 import sys
-import os
+sys.path.append("../")
 import cv2
 import MazeEnv.MazeEnv as mz
 from TrainingNavigator.StepperAgent import StepperAgent
@@ -7,13 +7,12 @@ from TrainingNavigator.NavigatorEnv import NavigatorEnv
 from stable_baselines3.common.env_checker import check_env
 from gym.wrappers.rescale_action import RescaleAction
 
-def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3)):
+def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True):
     """
     create a navigator env with the vanilla maze to solve,
     NOT wrapped with RescaleAction
     """
-    map_path = os.path.join(os.path.dirname(sys.argv[0]), "vanilla_map.png")
-    print(map_path)
+    map_path = "vanilla_map.png"
     maze_map = - (cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     maze_map = maze_map.T
 
@@ -23,20 +22,20 @@ def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3)):
                      start_loc=start_loc,
                      target_loc=target_loc,
                      xy_in_obs=True,
-                     show_gui=True)  # missing, timeout, rewards
+                     show_gui=show_gui)  # missing, timeout, rewards
 
-    agent_path = os.path.join(os.path.dirname(sys.argv[0]), "StepperAgent.pt")
+    agent_path = "StepperAgent.pt"
     agent = StepperAgent(agent_path)
 
     return NavigatorEnv(maze_env=env, stepper_agent=agent, )
 
 
-def get_vanilla_navigator_env_scaled(start_loc=(1., 7.5), target_loc=(9, 3)):
+def get_vanilla_navigator_env_scaled(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True):
     """
     create a navigator env with the vanilla maze to solve,
     action space is scaled to [-1, 1]
     """
-    env = get_vanilla_navigator_env()
+    env = get_vanilla_navigator_env(start_loc, target_loc, show_gui)
     return RescaleAction(env, -1, 1)
 
 

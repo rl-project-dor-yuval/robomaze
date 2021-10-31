@@ -47,7 +47,7 @@ class NavigatorEnv(gym.Env):
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
 
         self.visualize = False
-        self.visualize_fps = 60
+        self.visualize_fps = 40
 
         if stepper_agent is None:
             stepper_agent = StepperAgent('StepperAgent.pt', 'auto')
@@ -110,7 +110,7 @@ class NavigatorEnv(gym.Env):
 
         return nav_observation, nav_reward, is_done, nav_info
 
-    def visualize_mode(self, visualize: bool, fps: int = 60):
+    def visualize_mode(self, visualize: bool, fps: int = 40):
         """
         Change to (or change back from) visualize mode.
         In visualize mode the simulation is slowed down in order to visualize it in real-time
