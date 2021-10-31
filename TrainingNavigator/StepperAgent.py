@@ -5,7 +5,7 @@ class StepperAgent:
     """
      A wrapper for an agent, used to infer a trained actor network
     """
-    def __init__(self, agent_path: str, device: str):
+    def __init__(self, agent_path: str, device: str = 'auto'):
         if device == 'auto':
             _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
