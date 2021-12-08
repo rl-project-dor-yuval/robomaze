@@ -16,7 +16,7 @@ actions = [(3, -math.pi/6)] * 5
 obs = nav_env.reset()
 nav_env.maze_env.reset(create_video=args.to_vid, video_path="manualVanilla.avi")
 
-for i in range(4):
+for i in range(len(actions)):
     obs, reward, _, _ = nav_env.step(actions[i])
     print("reward:", reward)
 
