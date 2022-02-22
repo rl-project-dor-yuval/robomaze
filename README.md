@@ -1,6 +1,6 @@
 <div id="top"></div>
 
-## Long Term planning with Deep RL agent ##
+## Long Term planning with Deep Reinforcement Learning agent ##
 
 ___
 <p align="center">
