@@ -12,7 +12,7 @@ ___
 <br />
 <div align="center">
   <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="assets/p5.gif" alt="Logo" >
+    <img src="assets/p5.gif" alt="Logo" height=200>
   </a>
 
 </div>
