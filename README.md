@@ -83,7 +83,7 @@ Our solution for solving a maze is built of 2 agents:
 Just install the requirements file to ensure you've got the needed libraries.
 
   ```sh
-  npm install requirements.txt -r
+  pip install requirements.txt -r
   ```
 
 ### Installation
@@ -100,7 +100,7 @@ rely on any external dependencies or services._
 2.Install required packages
 
    ```sh
-    npm install requirements.txt -r
+    pip install requirements.txt -r
    ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
