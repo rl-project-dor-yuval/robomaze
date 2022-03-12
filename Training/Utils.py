@@ -21,7 +21,7 @@ def clear_files(path: str):
 
 def make_circular_map(size, radius):
     """
-    :param size : size of the map (has to be in class mz.MazeSize)
+    :param size : size of the map
     :param radius : radius of the maze
 
     :return : bitmap numpy array of the maze to push to MazeEnv

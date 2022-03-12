@@ -2,6 +2,7 @@ import numpy as np
 import MazeEnv.MazeEnv as mz
 import cv2
 import time
+import matplotlib.pyplot as plt
 
 
 def get_freespace_map(maze_map, robot_cube_size):
@@ -34,12 +35,19 @@ free_space = get_freespace_map(maze_map, 24)
 free_space_rotated = cv2.rotate(free_space, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
 cv2.imwrite("bottleneck_freespace.png", (-free_space_rotated + 1) * 255)
 
-exit()
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.imshow(-maze_map+1, cmap='gray')
+ax1.set_title("Maze Map")
+ax2.imshow(-free_space+1, cmap='gray')
+ax2.set_title("Free Space For Robot")
+plt.show()
+
+
 env = mz.MazeEnv(maze_size=mz.MazeSize.SQUARE10,
                  maze_map=maze_map,
                  tile_size=0.1,
                  start_loc=(5, 1.4),
-                 target_loc=(2, 8),
+                 target_loc=(1.7, 8),
                  show_gui=True)  # missing, timeout, rewards
 
 env.reset()
