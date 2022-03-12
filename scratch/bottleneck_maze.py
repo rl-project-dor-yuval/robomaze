@@ -55,4 +55,5 @@ env.reset()
 for i in range(10**4):
     action = [0, 1] * 4
     env.step(action)
+    env.set_subgoal_marker((2, 2))
     time.sleep(0.05)

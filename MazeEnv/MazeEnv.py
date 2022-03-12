@@ -32,6 +32,7 @@ class MazeEnv(gym.Env):
     _collision_manager: CollisionManager
     _maze: Maze
     _ant: Ant
+    _subgoal_marker: int
     _recorder: Recorder
 
     _start_loc: Tuple[float, float, float]
@@ -125,6 +126,13 @@ class MazeEnv(gym.Env):
                                                    target_sphere_uid,
                                                    self._ant.uid,
                                                    floorUid)
+
+        # create subgoal marker:
+        self._subgoal_marker = self._pclient.loadURDF("goalSphere.urdf",
+                                                      basePosition=(0, 0, 0),
+                                                      globalScaling=0.5)
+        self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
+        self._pclient.setCollisionFilterGroupMask(self._subgoal_marker, -1, 0, 0)  # disable collisions
 
         # setup camera for a bird view:
         self._pclient.resetDebugVisualizerCamera(cameraDistance=self._maze.maze_size[1] / self.zoom,
@@ -227,6 +235,19 @@ class MazeEnv(gym.Env):
         if not self.xy_in_obs:
             observation = observation[2:]
         return observation
+
+    def set_subgoal_marker(self, position=(0, 0), visible=True):
+        """
+        put a marker on the given position
+        :param visible: set to false in order to remove the marker
+        :param position: the position of the marker
+        """
+        if visible:
+            position = (*position, 0)
+            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
+            self._pclient.resetBasePositionAndOrientation(self._subgoal_marker, position, [0, 0, 0, 1])
+        else:
+            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
 
     def set_start_loc(self, start_loc):
         """

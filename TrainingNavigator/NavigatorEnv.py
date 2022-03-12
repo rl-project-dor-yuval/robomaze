@@ -69,10 +69,15 @@ class NavigatorEnv(gym.Env):
         self.ant_curr_obs = self.maze_env.reset()
         return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
 
-    def step(self, action):
+    def step(self, action, visualize_subgoal=True):
         ant_xy = self.ant_curr_obs[0:2]
         # 2 first elements of action are range and direction to the subgoal
         self.curr_subgoal = ant_xy + pol2cart(action[0:2])
+
+        if visualize_subgoal:
+            self.maze_env.set_subgoal_marker(self.curr_subgoal)
+        else:
+            self.maze_env.set_subgoal_marker(visible=False)
 
         nav_reward = 0
 
