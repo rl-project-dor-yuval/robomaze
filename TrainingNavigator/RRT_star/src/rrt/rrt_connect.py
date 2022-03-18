@@ -2,8 +2,8 @@ import enum
 
 import numpy as np
 
-from TrainingNavigator.RRT.src.rrt.rrt_base import RRTBase
-from TrainingNavigator.RRT.src.utilities.geometry import steer
+from TrainingNavigator.RRT_star.src.rrt.rrt_base import RRTBase
+from TrainingNavigator.RRT_star.src.utilities.geometry import steer
 
 
 class Status(enum.Enum):

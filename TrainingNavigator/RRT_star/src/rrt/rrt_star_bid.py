@@ -3,8 +3,8 @@
 
 import random
 
-from TrainingNavigator.RRT.src.rrt.heuristics import path_cost
-from TrainingNavigator.RRT.src.rrt.rrt_star import RRTStar
+from TrainingNavigator.RRT_star.src.rrt.heuristics import path_cost
+from TrainingNavigator.RRT_star.src.rrt.rrt_star import RRTStar
 
 
 class RRTStarBidirectional(RRTStar):

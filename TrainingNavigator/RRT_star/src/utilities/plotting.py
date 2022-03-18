@@ -138,7 +138,8 @@ class Plot(object):
                     color="red",
                     width=4
                 ),
-                mode="lines"
+                mode="lines",
+                name="Optimal Path"
             )
 
             self.data.append(trace)
@@ -177,7 +178,8 @@ class Plot(object):
                     color="orange",
                     width=10
                 ),
-                mode="markers"
+                mode="markers",
+                name="Start"
             )
 
             self.data.append(trace)
@@ -190,7 +192,9 @@ class Plot(object):
                     color="orange",
                     width=10
                 ),
-                mode="markers"
+                mode="markers",
+                name="Start"
+
             )
 
             self.data.append(trace)
@@ -211,7 +215,8 @@ class Plot(object):
                     color="green",
                     width=10
                 ),
-                mode="markers"
+                mode="markers",
+                name="Goal"
             )
 
             self.data.append(trace)
@@ -224,7 +229,7 @@ class Plot(object):
                     color="green",
                     width=10
                 ),
-                mode="markers"
+                mode="markers",
             )
 
             self.data.append(trace)

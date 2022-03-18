@@ -1,4 +1,4 @@
-from TrainingNavigator.RRT.src.rrt.rrt_base import RRTBase
+from TrainingNavigator.RRT_star.src.rrt.rrt_base import RRTBase
 
 
 class RRT(RRTBase):

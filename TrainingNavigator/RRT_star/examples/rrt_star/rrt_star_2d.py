@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import cv2
 import time
 
-from TrainingNavigator.RRT.src.rrt.rrt_star import RRTStar
-from TrainingNavigator.RRT.src.search_space.search_space import SearchSpace, ImgSearchSpace
-from TrainingNavigator.RRT.src.utilities.plotting import Plot
+from TrainingNavigator.RRT_star.src.rrt.rrt_star import RRTStar
+from TrainingNavigator.RRT_star.src.search_space.search_space import ImgSearchSpace
+from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
 
 x_init = (82, 80)  # starting location (0,0) is bottom left
 x_goal = (15, 80)  # goal location (0,0) is bottom left
@@ -20,7 +20,7 @@ rewire_count = 32  # optional, number of nearby branches to rewire
 prc = 0.1  # probability of checking for a connection to goal
 
 # create Search Space
-map_path = "../../../../scratch/bottleneck_freespace.png"
+map_path = "../../../maps/bottleneck_freespace.png"
 
 maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
 maze_map = cv2.rotate(maze_map, cv2.cv2.ROTATE_90_CLOCKWISE)

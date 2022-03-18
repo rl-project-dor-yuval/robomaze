@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE', which is part of this source code package.
 
-from TrainingNavigator.RRT.src.utilities.geometry import dist_between_points
+from TrainingNavigator.RRT_star.src.utilities.geometry import dist_between_points
 
 
 def cost_to_go(a: tuple, b: tuple) -> float:
