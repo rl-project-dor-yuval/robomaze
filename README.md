@@ -69,6 +69,7 @@ Our solution for solving a maze is built of 2 agents:
 * [Pytorch](https://pytorch.org/)
 * [Stable-baselines3](https://stable-baselines3.readthedocs.io/en/master/)
 * [Pybullet](https://pybullet.org/)
+* [Tensorboard](https://www.tensorflow.org/tensorboard/get_started)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -151,6 +152,9 @@ Out work is mainly based on the following papers
 
 * [Continuous Control With Deep Reinforcement Learning](https://arxiv.org/pdf/1509.02971.pdf)
 * [Playing Atari With Deep Reinforcement Learning](https://arxiv.org/pdf/1312.5602.pdf)
+
+Second part will be extending the following paper:
+* [Harnessing Reinforcement Learning for Neural Motion Planning](https://arxiv.org/abs/1906.00214)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
