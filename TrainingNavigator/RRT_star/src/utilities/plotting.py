@@ -17,7 +17,7 @@ class Plot(object):
         Create a plot
         :param filename: filename0
         """
-        self.filename = "../../visualizations/" + filename + ".html"
+        self.filename = "../RRT_Star/visualizations/" + filename + ".html"
         self.data = []
         self.layout = {'title': 'Plot',
                        'showlegend': False
