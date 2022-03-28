@@ -123,10 +123,10 @@ class RRTBase(object):
         :return: path if possible, None otherwise
         """
         if self.can_connect_to_goal(0):
-            print("Can connect to goal")
+            # print("Can connect to goal")
             self.connect_to_goal(0)
             return self.reconstruct_path(0, self.x_init, self.x_goal)
-        print("Could not connect to goal")
+        # print("Could not connect to goal")
         return None
 
     def connect_to_goal(self, tree):
@@ -160,7 +160,7 @@ class RRTBase(object):
     def check_solution(self):
         # probabilistically check if solution found
         if self.prc and random.random() < self.prc:
-            print("Checking if can connect to goal at", str(self.samples_taken), "samples")
+            # print("Checking if can connect to goal at", str(self.samples_taken), "samples")
             path = self.get_path()
             if path is not None:
                 return True, path

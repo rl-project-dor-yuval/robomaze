@@ -28,15 +28,15 @@ class TrajGenerator:
 
         self.Q = np.array([(8, 4)])  # length of tree edges
         self.r = 1  # length of smallest edge to check for intersection with obstacles
-        self.max_samples = 2048  # max number of samples to take before timing out
+        self.max_samples = 10**6  # max number of samples to take before timing out
         self.rewire_count = 32  # optional, number of nearby branches to rewire
         self.prc = 0.1  # probability of checking for a connection to goal
 
-    def findOptimalTrajs(self,
-                         xInit: Tuple[int, int],
-                         xGoal: Tuple[int, int],
-                         numOfTrajs: int,
-                         plot: bool) -> Dict[int, List[Tuple[int, int]]]:
+    def find_optimal_trajectories(self,
+                                  xInit: Tuple[int, int],
+                                  xGoal: Tuple[int, int],
+                                  numOfTrajs: int,
+                                  plot: bool) -> Dict[int, List[Tuple[int, int]]]:
         """
         This method generates a dictionary of optimal paths.
         :param xInit: initial location
@@ -45,7 +45,7 @@ class TrajGenerator:
         :param plot: plot trajectories and map flag
         return: dict(key= traj idx, value= list([(x1,y1),...(xn,yn)])
         """
-        optimalTrajs = {}
+        optimal_trajs = {}
 
         for i in range(numOfTrajs):
 
@@ -60,7 +60,7 @@ class TrajGenerator:
                 # convert trajectory to integers, and fixing the origin to be on
                 # top left corner, since origin of algorithm is buttom left corner
                 # plot is still done related to buttom left origin.
-                optimalTrajs[i] = [(self.map.shape[0] - int(y), int(x)) for (x, y) in path]
+                optimal_trajs[i] = [(self.map.shape[0] - int(y), int(x)) for (x, y) in path]
             else:
                 print(f"No path for Traj {i}")
 
@@ -79,15 +79,15 @@ class TrajGenerator:
                 plot.plot_goal(self.X, x_goal)
                 plot.draw(auto_open=True)
 
-        return optimalTrajs
+        return optimal_trajs
 
-        def trajToTransitions():
+        def traj_to_transitions():
             # TODO: implement a method that creates the trajectory's experiences to enter the RB
             pass
 
 
 # create Search Space
-map_path = "../maps/bottleneck_freespace.png"
+map_path = "maps/bottleneck_freespace.png"
 
 #
 # fig, ax1 = plt.subplots(1, 1)
@@ -95,30 +95,26 @@ map_path = "../maps/bottleneck_freespace.png"
 
 
 if __name__ == "__main__":
-    NUM_WORKSPACES = 100
     trajGen = TrajGenerator(map_path)
 
-    initGoalList = np.load("bottleneck.npy")
-    wsTrajDict = {}  # workspaces Trajectory Dictionary key = workspace idx, value= dictionary of
-    # numOfTrajs optimal Trajectories in the current workspace.
+    ws_list = np.load("workspaces/bottleneck.npy")
+    num_workspaces = ws_list.shape[0]
+    ws_traj_dict = {}  # workspaces Trajectory Dictionary key = workspace idx, value= dictionary of
 
-    with open("optimalPaths.csv", "w") as file_out:
-        writer = csv.writer(file_out)
+    for i in range(num_workspaces):
+        # coords when origin is bottom left (this is how RRTstar algo works)
+        x_init = (ws_list[i, 0, 1], trajGen.map.shape[0] - ws_list[i, 0, 0] - 1)
+        x_goal = (ws_list[i, 1, 1], trajGen.map.shape[0] - ws_list[i, 1, 0] - 1)
 
-        for i in range(NUM_WORKSPACES):
-            # coords when origin is on top left
-            x_init = (initGoalList[i, 0, :])
-            x_goal = (initGoalList[i, 1, :])
+        traj = trajGen.find_optimal_trajectories(xInit=x_init, xGoal=x_goal, numOfTrajs=1, plot=False)
+        # TODO: meanwhile saving only the first Traj for each workspace
+        ws_traj_dict[str(i)] = np.array(traj[0])
 
-            # coords when origin is bottom left (this is how RRTstar algo works)
-            x_init = (initGoalList[i, 0, 1], trajGen.map.shape[0] - initGoalList[i, 0, 0])
-            x_goal = (initGoalList[i, 1, 1], trajGen.map.shape[0] - initGoalList[i, 1, 0])
+        print(i, traj[0])
 
-            wsTrajDict[i] = trajGen.findOptimalTrajs(xInit=x_init, xGoal=x_goal, numOfTrajs=1, plot=False)
-            # if wsTrajDict[i] is not None:
-            #     np.save(f"bottleneck_paths/wp_{i}_path", wsTrajDict[i][0])
-            # TODO: meanwhile saving only the first Traj for each workspace
-            if wsTrajDict[i]:
-                writer.writerows(zip(*[(f"x_{i}", f"y_{i}")] + wsTrajDict[i][0]))
+    np.savez('workspaces/botttleneck_trajectories.npz', **ws_traj_dict)
 
-    print(wsTrajDict)
+    # test loading
+    trajectories = np.load('workspaces/botttleneck_trajectories.npz')
+    assert np.all(trajectories[str(num_workspaces-1)] == traj[0])
+
