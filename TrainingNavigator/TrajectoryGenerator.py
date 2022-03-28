@@ -13,15 +13,18 @@ from TrainingNavigator.RRT_star.src.search_space.search_space import ImgSearchSp
 from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
 
 
+# noinspection PyUnreachableCode
 class TrajGenerator:
     """
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self, mapPath: str):
+    def __init__(self, mapPath: str, max_section_len=25):
 
         self.map = -(cv2.imread(mapPath, cv2.IMREAD_GRAYSCALE) / 255) + 1
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
+
+        self.max_section_len = max_section_len
 
         X_dimensions = np.array([[0, self.map.shape[0] - 1], [0, self.map.shape[1] - 1]])  # dimensions of Search Space
         self.X = ImgSearchSpace(dimension_lengths=X_dimensions, O=None, Im=self.map)
@@ -32,6 +35,7 @@ class TrajGenerator:
         self.rewire_count = 32  # optional, number of nearby branches to rewire
         self.prc = 0.1  # probability of checking for a connection to goal
 
+    # noinspection PyUnreachableCode
     def find_optimal_trajectories(self,
                                   xInit: Tuple[int, int],
                                   xGoal: Tuple[int, int],
@@ -60,7 +64,8 @@ class TrajGenerator:
                 # convert trajectory to integers, and fixing the origin to be on
                 # top left corner, since origin of algorithm is buttom left corner
                 # plot is still done related to buttom left origin.
-                optimal_trajs[i] = [(self.map.shape[0] - int(y), int(x)) for (x, y) in path]
+                path = self._cut_long_sections(path)
+                optimal_trajs[i] = [(self.map.shape[0] - y, x) for (x, y) in path]
             else:
                 print(f"No path for Traj {i}")
 
@@ -81,9 +86,28 @@ class TrajGenerator:
 
         return optimal_trajs
 
-        def traj_to_transitions():
-            # TODO: implement a method that creates the trajectory's experiences to enter the RB
-            pass
+    def _cut_long_sections(self, trajectory):
+        """
+        given a trajectory, checks if there are sections shorter then self.max_section_len
+        and replace them with multiple shorter sections
+        """
+        new_traj = [trajectory[0]]
+
+        for i in range(len(trajectory) - 1):
+            sec_distance = np.linalg.norm(np.array(trajectory[i]) - np.array(trajectory[i+1]))
+            if sec_distance < self.max_section_len:
+                new_traj.append(trajectory[i+1])
+            else:
+                n_subsections = int(np.ceil(sec_distance / self.max_section_len))
+                new_points_x = np.linspace(trajectory[i][0]+0.1, trajectory[i+1][0]+0.1, n_subsections).tolist()
+                new_points_y = np.linspace(trajectory[i][1], trajectory[i+1][1], n_subsections).tolist()
+                new_traj.extend(list(zip(new_points_x, new_points_y)))
+
+        return new_traj
+
+    def traj_to_transitions(self):
+        # TODO: implement a method that creates the trajectory's experiences to enter the RB
+        pass
 
 
 # create Search Space
@@ -93,8 +117,9 @@ map_path = "maps/bottleneck_freespace.png"
 # fig, ax1 = plt.subplots(1, 1)
 # ax1.imshow(-maze_map + 1, cmap='gray')
 
-
 if __name__ == "__main__":
+    np.set_printoptions(precision=1)
+
     trajGen = TrajGenerator(map_path)
 
     ws_list = np.load("workspaces/bottleneck.npy")
@@ -110,7 +135,8 @@ if __name__ == "__main__":
         # TODO: meanwhile saving only the first Traj for each workspace
         ws_traj_dict[str(i)] = np.array(traj[0])
 
-        print(i, traj[0])
+        np.set_printoptions(precision=1)
+        print(i, '\n', ws_traj_dict[str(i)])
 
     np.savez('workspaces/botttleneck_trajectories.npz', **ws_traj_dict)
 
