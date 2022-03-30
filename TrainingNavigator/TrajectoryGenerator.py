@@ -105,10 +105,6 @@ class TrajGenerator:
 
         return new_traj
 
-    def traj_to_transitions(self):
-        # TODO: implement a method that creates the trajectory's experiences to enter the RB
-        pass
-
 
 # create Search Space
 map_path = "maps/bottleneck_freespace.png"
