@@ -14,7 +14,7 @@ class MazeSize:
 
 
 class Rewards:
-    def __init__(self, target_arrival=1, collision=-1, timeout=0, idle=0, fall=-20):
+    def __init__(self, target_arrival=1, collision=-1, timeout=0, idle=0, fall=-1):
         """
         :param target_arrival: the reward's value for arriving the target
         :param collision: the reward's value for a collision
