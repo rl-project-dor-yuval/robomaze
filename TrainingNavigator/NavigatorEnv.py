@@ -27,7 +27,7 @@ class NavigatorEnv(gym.Env):
     :param stepper_radius_range: defined by the reachable
     :param epsilon_to_hit_subgoal: minimal distance to subgoal to be considered as goal arrival
 
-    NavigatorEnv is a wrapper around MazeEnv and a stepper agent so that an action here is a command to the stepper.
+    NavigatorEnv is a wrapper around MazeEnv and a stepper agent so that an s here is a command to the stepper.
     Generally the navigator's purpose is given a certain Goal, generate a sequence of subgoals (Navigator actions)
     all the way to it, whereas the stepperAgent knows how to reach close subgoals.
     """
@@ -37,7 +37,7 @@ class NavigatorEnv(gym.Env):
                  stepper_agent=None,
                  max_stepper_steps=200,
                  stepper_radius_range=(0.9, 3.),
-                 epsilon_to_hit_subgoal=0.8):
+                 epsilon_to_hit_subgoal=0.7):
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")

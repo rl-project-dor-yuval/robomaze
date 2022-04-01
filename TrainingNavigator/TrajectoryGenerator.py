@@ -19,7 +19,7 @@ class TrajGenerator:
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self, mapPath: str, max_section_len=25):
+    def __init__(self, mapPath: str, max_section_len=20):
 
         self.map = -(cv2.imread(mapPath, cv2.IMREAD_GRAYSCALE) / 255) + 1
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -99,8 +99,9 @@ class TrajGenerator:
                 new_traj.append(trajectory[i+1])
             else:
                 n_subsections = int(np.ceil(sec_distance / self.max_section_len))
-                new_points_x = np.linspace(trajectory[i][0]+0.1, trajectory[i+1][0]+0.1, n_subsections).tolist()
-                new_points_y = np.linspace(trajectory[i][1], trajectory[i+1][1], n_subsections).tolist()
+                # we take [1:0] because we dont want the first point, it is already the previous point
+                new_points_x = np.linspace(trajectory[i][0], trajectory[i+1][0], n_subsections + 1)[1:].tolist()
+                new_points_y = np.linspace(trajectory[i][1], trajectory[i+1][1], n_subsections + 1)[1:].tolist()
                 new_traj.extend(list(zip(new_points_x, new_points_y)))
 
         return new_traj
@@ -116,7 +117,7 @@ map_path = "maps/bottleneck_freespace.png"
 if __name__ == "__main__":
     np.set_printoptions(precision=1)
 
-    trajGen = TrajGenerator(map_path)
+    trajGen = TrajGenerator(map_path, max_section_len=18)
 
     ws_list = np.load("workspaces/bottleneck.npy")
     num_workspaces = ws_list.shape[0]

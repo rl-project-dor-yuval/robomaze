@@ -3,6 +3,7 @@ sys.path.append("../")
 import numpy as np
 import cv2
 import MazeEnv.MazeEnv as mz
+import matplotlib.pyplot as plt
 from TrainingNavigator.StepperAgent import StepperAgent
 from TrainingNavigator.NavigatorEnv import NavigatorEnv
 from stable_baselines3.common.env_checker import check_env
@@ -70,4 +71,13 @@ def test_navigator_envrionment():
     """
 
     check_env(get_vanilla_navigator_env_scaled())
+
+
+def plot_trajectory(trajectory, map):
+    """
+    plot the trajectory in the map
+    """
+    plt.imshow(map, cmap='gray')
+    plt.scatter( trajectory[:, 1], trajectory[:, 0], c='b')
+    plt.show()
 
