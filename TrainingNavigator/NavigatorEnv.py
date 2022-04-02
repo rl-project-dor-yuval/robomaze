@@ -108,6 +108,7 @@ class NavigatorEnv(gym.Env):
 
             # check if close enough to subgoal:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
+                is_done = True
                 break
 
         nav_observation = np.concatenate([ant_xy, self.target_goal])
@@ -122,5 +123,5 @@ class NavigatorEnv(gym.Env):
         :param visualize: weather to slow down the simulation to visualize
         :param fps: number of frames per second, actual fps may be inaccurate
         """
-        self.visualize = True
+        self.visualize = visualize
         self.visualize_fps = fps
