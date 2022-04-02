@@ -81,6 +81,7 @@ def plot_trajectory(trajectory, map, save_loc=None):
     plt.scatter( trajectory[:, 1], trajectory[:, 0], c='b')
     if save_loc is not None:
         plt.savefig(save_loc)
+        plt.clf()
     else:
         plt.show()
 
