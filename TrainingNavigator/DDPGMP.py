@@ -1,25 +1,80 @@
-from typing import Optional
-
+import os
+from typing import Optional, Union, Type, Tuple, Dict, Any
+import torch as th
 import numpy as np
+
 from stable_baselines3 import DDPG
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
-from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn
+from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn, GymEnv, Schedule
 from stable_baselines3.common.utils import should_collect_more_steps
 from stable_baselines3.common.vec_env import VecEnv
+from stable_baselines3.td3.policies import TD3Policy
 
 
 class DDPGMP(DDPG):
+    def __init__(
+            self,
+            policy: Union[str, Type[TD3Policy]],
+            env: Union[GymEnv, str],
+            learning_rate: Union[float, Schedule] = 1e-3,
+            buffer_size: int = 1000000,  # 1e6
+            learning_starts: int = 100,
+            batch_size: int = 100,
+            tau: float = 0.005,
+            gamma: float = 0.99,
+            train_freq: Union[int, Tuple[int, str]] = (1, "episode"),
+            gradient_steps: int = -1,
+            action_noise: Optional[ActionNoise] = None,
+            replay_buffer_class: Optional[ReplayBuffer] = None,
+            replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
+            optimize_memory_usage: bool = False,
+            tensorboard_log: Optional[str] = None,
+            create_eval_env: bool = False,
+            policy_kwargs: Optional[Dict[str, Any]] = None,
+            verbose: int = 0,
+            seed: Optional[int] = None,
+            device: Union[th.device, str] = "auto",
+            _init_setup_model: bool = True,
+            demonstrations_path: os.path = None
+    ):
+        super(DDPGMP, self).__init__(
+            policy=policy,
+            env=env,
+            learning_rate=learning_rate,
+            buffer_size=buffer_size,
+            learning_starts=learning_starts,
+            batch_size=batch_size,
+            tau=tau,
+            gamma=gamma,
+            train_freq=train_freq,
+            gradient_steps=gradient_steps,
+            action_noise=action_noise,
+            replay_buffer_class=replay_buffer_class,
+            replay_buffer_kwargs=replay_buffer_kwargs,
+            policy_kwargs=policy_kwargs,
+            tensorboard_log=tensorboard_log,
+            verbose=verbose,
+            device=device,
+            create_eval_env=create_eval_env,
+            seed=seed,
+            optimize_memory_usage=optimize_memory_usage,
+        )
+
+        self.demonstrations = np.load(demonstrations_path)
+        if verbose:
+            print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
+
     def collect_rollouts(
-        self,
-        env: VecEnv,
-        callback: BaseCallback,
-        train_freq: TrainFreq,
-        replay_buffer: ReplayBuffer,
-        action_noise: Optional[ActionNoise] = None,
-        learning_starts: int = 0,
-        log_interval: Optional[int] = None,
+            self,
+            env: VecEnv,
+            callback: BaseCallback,
+            train_freq: TrainFreq,
+            replay_buffer: ReplayBuffer,
+            action_noise: Optional[ActionNoise] = None,
+            learning_starts: int = 0,
+            log_interval: Optional[int] = None,
     ) -> RolloutReturn:
         """
         Same as original implementation in OffPolicyAlgorithm but with the addition

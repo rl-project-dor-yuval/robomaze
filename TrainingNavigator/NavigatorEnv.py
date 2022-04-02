@@ -60,7 +60,7 @@ class NavigatorEnv(gym.Env):
         self.curr_subgoal = np.zeros(2)
         self.target_goal = np.array(self.maze_env._target_loc[0:2], dtype=np.float32)
 
-        # Action -> [radius, azimuth (in degrees)]
+        # Action -> [radius, azimuth (in radian)]
         self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi], dtype=np.float32),
                                 high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
                                 shape=(2,))
