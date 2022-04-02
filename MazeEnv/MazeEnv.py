@@ -25,9 +25,9 @@ class MazeEnv(gym.Env):
     episode_count: int
     xy_in_obs: bool
 
-    recording_video_size: Tuple[int, int] = (400, 400)
-    video_skip_frames: int = 1
-    zoom: float = 1.4  # is also relative to maze size
+    recording_video_size: Tuple[int, int] = (300, 300)
+    video_skip_frames: int = 2
+    zoom: float = 1.1 # is also relative to maze size
 
     _collision_manager: CollisionManager
     _maze: Maze
@@ -37,7 +37,7 @@ class MazeEnv(gym.Env):
 
     _start_loc: Tuple[float, float, float]
     _target_loc: Tuple[float, float, float]
-    hit_target_epsilon = 0.5
+    hit_target_epsilon: float
 
     _physics_server: int
     _pclient: bc.BulletClient
@@ -51,7 +51,8 @@ class MazeEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 xy_in_obs:bool = True):
+                 xy_in_obs:bool = True,
+                 hit_target_epsilon=0.6):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -92,6 +93,7 @@ class MazeEnv(gym.Env):
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
+        self.hit_target_epsilon = hit_target_epsilon
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 

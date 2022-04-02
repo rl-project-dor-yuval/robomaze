@@ -73,11 +73,14 @@ def test_navigator_envrionment():
     check_env(get_vanilla_navigator_env_scaled())
 
 
-def plot_trajectory(trajectory, map):
+def plot_trajectory(trajectory, map, save_loc=None):
     """
     plot the trajectory in the map
     """
     plt.imshow(map, cmap='gray')
     plt.scatter( trajectory[:, 1], trajectory[:, 0], c='b')
-    plt.show()
+    if save_loc is not None:
+        plt.savefig(save_loc)
+    else:
+        plt.show()
 

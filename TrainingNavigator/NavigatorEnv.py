@@ -45,6 +45,8 @@ class NavigatorEnv(gym.Env):
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
+        # make sure:
+        maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
 
         self.visualize = False
         self.visualize_fps = 40
@@ -108,7 +110,6 @@ class NavigatorEnv(gym.Env):
 
             # check if close enough to subgoal:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
-                is_done = True
                 break
 
         nav_observation = np.concatenate([ant_xy, self.target_goal])

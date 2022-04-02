@@ -35,12 +35,13 @@ class Recorder:
 
         # setup camera:
         camera_distance = max(self._maze_size) / self._zoom  # depends on the longer axis
-        focal_point = (maze_size[0] / 2, maze_size[1] / 2, 0)  # middle
+        focal_point = [maze_size[0] / 2, maze_size[1] / 2, 0]  # middle
+        focal_point[0] += 2
         aspect = video_size[0]/video_size[1]
 
         self._view_matrix = self._pclient.computeViewMatrixFromYawPitchRoll(distance=camera_distance,
                                                                 yaw=90,
-                                                                pitch=-60,
+                                                                pitch=-65,
                                                                 roll=0,
                                                                 upAxisIndex=2,
                                                                 cameraTargetPosition=focal_point
