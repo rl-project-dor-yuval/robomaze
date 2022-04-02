@@ -139,6 +139,11 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         self.start_goal_pairs_count = len(self.target_goal_pairs)
 
     def reset(self, start_goal_pair_idx: int = None):
+        """
+        Reset the environment to a new start-goal pair
+        :param start_goal_pair_idx: idx of the start-goal pair, if none a random one is chosen
+        :return: observation
+        """
         if start_goal_pair_idx is None:
             start_goal_pair_idx = np.random.randint(0, self.start_goal_pairs_count)
         if start_goal_pair_idx >= self.start_goal_pairs_count:
@@ -150,6 +155,10 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         return super(MultiStartgoalNavigatorEnv, self).reset()
 
     def step(self, action, visualize_subgoal=True):
+        """
+        same as NavigatorEnv.step. only difference is that info contains the start-goal pair idx
+
+        """
         obs, reward, is_done, info = super(MultiStartgoalNavigatorEnv, self).step(action, visualize_subgoal)
         info['start_goal_pair_idx'] = self.maze_env.start_goal_pair_idx
         return obs, reward, is_done, info
