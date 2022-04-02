@@ -148,3 +148,8 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         self.maze_env.set_start_loc(self.target_goal_pairs[start_goal_pair_idx][0])
 
         return super(MultiStartgoalNavigatorEnv, self).reset()
+
+    def step(self, action, visualize_subgoal=True):
+        obs, reward, is_done, info = super(MultiStartgoalNavigatorEnv, self).step(action, visualize_subgoal)
+        info['start_goal_pair_idx'] = self.maze_env.start_goal_pair_idx
+        return obs, reward, is_done, info
