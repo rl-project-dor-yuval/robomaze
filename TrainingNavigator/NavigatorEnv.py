@@ -126,3 +126,25 @@ class NavigatorEnv(gym.Env):
         """
         self.visualize = visualize
         self.visualize_fps = fps
+
+
+class MultiStartgoalNavigatorEnv(NavigatorEnv):
+    """
+     Navigator Environment with multiple start and goal pairs, varying every episode
+    """
+    def __init__(self, target_goal_pairs: np.ndarray, **navigator_kwargs):
+        super(MultiStartgoalNavigatorEnv, self).__init__(**navigator_kwargs)
+
+        self.target_goal_pairs = target_goal_pairs
+        self.start_goal_pairs_count = len(self.target_goal_pairs)
+
+    def reset(self, start_goal_pair_idx: int = None):
+        if start_goal_pair_idx is None:
+            start_goal_pair_idx = np.random.randint(0, self.start_goal_pairs_count)
+        if start_goal_pair_idx >= self.start_goal_pairs_count:
+            raise ValueError("start_goal_pair_idx is out of range")
+
+        self.maze_env.set_target_loc(self.target_goal_pairs[start_goal_pair_idx][1])
+        self.maze_env.set_start_loc(self.target_goal_pairs[start_goal_pair_idx][0])
+
+        return super(MultiStartgoalNavigatorEnv, self).reset()

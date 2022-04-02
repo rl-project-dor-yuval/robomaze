@@ -251,6 +251,17 @@ class MazeEnv(gym.Env):
         else:
             self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
 
+    def set_target_loc(self, new_loc):
+        """
+        set the target location. Call this Only Before reset()!
+        :param position: the position of the target
+        """
+        self._target_loc[0], self._start_loc[1] = new_loc
+
+        _, target_uid, _ = self._maze.get_maze_objects_uids()
+        _, old_orientation = self._pclient.getBasePositionAndOrientation(target_uid)
+        self._pclient.resetBasePositionAndOrientation(target_uid, self._target_loc, old_orientation)
+
     def set_start_loc(self, start_loc):
         """
         change the start location of the ant in the next reset
@@ -259,6 +270,7 @@ class MazeEnv(gym.Env):
         """
         self._check_start_state(self.maze.maze_size, start_loc, self._target_loc)
         self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
+        self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
 
     def set_timeout_steps(self, timeout_steps):
         """

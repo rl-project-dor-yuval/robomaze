@@ -38,13 +38,16 @@ class MultiTargetMazeEnv(MazeEnv):
         if target_index > self.target_count:
             raise Exception("Target index out of bound")
 
-        new_target_xy = self.target_list[target_index]
-        self._target_loc = (new_target_xy[0], new_target_xy[1], 0)
+        self.set_target_loc(self.target_list[target_index])
 
-        # move target sphere for visual and collision detection:
-        _, target_uid, _ = self._maze.get_maze_objects_uids()
-        _, old_orientation = self._pclient.getBasePositionAndOrientation(target_uid)
-        self._pclient.resetBasePositionAndOrientation(target_uid, self._target_loc, old_orientation)
+        # TODO: delete this after making sure set_target_loc works
+        # new_target_xy = self.target_list[target_index]
+        # self._target_loc = (new_target_xy[0], new_target_xy[1], 0)
+        #
+        # # move target sphere for visual and collision detection:
+        # _, target_uid, _ = self._maze.get_maze_objects_uids()
+        # _, old_orientation = self._pclient.getBasePositionAndOrientation(target_uid)
+        # self._pclient.resetBasePositionAndOrientation(target_uid, self._target_loc, old_orientation)
 
         return super().reset(create_video, video_path, reset_episode_count)
 
