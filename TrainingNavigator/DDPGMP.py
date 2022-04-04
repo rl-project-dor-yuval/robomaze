@@ -2,6 +2,7 @@ import os
 from typing import Optional, Union, Type, Tuple, Dict, Any
 import torch as th
 import numpy as np
+from NavigatorEnv import MultiStartgoalNavigatorEnv
 
 from stable_baselines3 import DDPG
 from stable_baselines3.common.buffers import ReplayBuffer
@@ -17,7 +18,7 @@ class DDPGMP(DDPG):
     def __init__(
             self,
             policy: Union[str, Type[TD3Policy]],
-            env: Union[GymEnv, str],
+            env: MultiStartgoalNavigatorEnv,
             learning_rate: Union[float, Schedule] = 1e-3,
             buffer_size: int = 1000000,  # 1e6
             learning_starts: int = 100,
