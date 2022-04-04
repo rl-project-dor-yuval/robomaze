@@ -137,6 +137,7 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         self.target_goal_pairs = target_goal_pairs
         self.start_goal_pairs_count = len(self.target_goal_pairs)
+        self.curr_startgoal_pair_idx = None
 
     def reset(self, start_goal_pair_idx: int = None):
         """
@@ -149,6 +150,8 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         if start_goal_pair_idx >= self.start_goal_pairs_count:
             raise ValueError("start_goal_pair_idx is out of range")
 
+        self.curr_startgoal_pair_idx = start_goal_pair_idx
+
         self.maze_env.set_target_loc(self.target_goal_pairs[start_goal_pair_idx][1])
         self.maze_env.set_start_loc(self.target_goal_pairs[start_goal_pair_idx][0])
 
@@ -160,5 +163,5 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         """
         obs, reward, is_done, info = super(MultiStartgoalNavigatorEnv, self).step(action, visualize_subgoal)
-        info['start_goal_pair_idx'] = self.maze_env.start_goal_pair_idx
+        info['start_goal_pair_idx'] = self.curr_startgoal_pair_idx
         return obs, reward, is_done, info

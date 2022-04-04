@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import gym
 from gym.spaces import Box, Dict
 import pybullet
@@ -35,8 +35,8 @@ class MazeEnv(gym.Env):
     _subgoal_marker: int
     _recorder: Recorder
 
-    _start_loc: Tuple[float, float, float]
-    _target_loc: Tuple[float, float, float]
+    _start_loc: List
+    _target_loc: List
     hit_target_epsilon: float
 
     _physics_server: int
@@ -88,8 +88,8 @@ class MazeEnv(gym.Env):
         self.is_reset = False
         self.step_count = 0
         self.episode_count = 0
-        self._start_loc = (start_loc[0], start_loc[1], _ANT_START_Z_COORD)
-        self._target_loc = (target_loc[0], target_loc[1], 0)
+        self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
+        self._target_loc = [target_loc[0], target_loc[1], 0]
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
@@ -268,7 +268,7 @@ class MazeEnv(gym.Env):
         :param start_loc: tuple of the start location
         :return: None
         """
-        self._check_start_state(self.maze.maze_size, start_loc, self._target_loc)
+        self._check_start_state(self._maze.maze_size, start_loc, self._target_loc)
         self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
         self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
 
