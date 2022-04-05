@@ -172,16 +172,17 @@ class DDPGMP(DDPG):
 
     def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj):
         for i in range(len(demo_traj) - 1):
+            obs = np.concatenate([demo_traj[i], demo_traj[-1]])
+            new_obs = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
+            # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
+            action =
             # important - rescale action!
             # scaled_action = self.policy.scale_action(unscaled_action)
-            obs = demo_traj[i]
-            new_obs = demo_traj[i + 1]
-            action =
 
             if i == len(demo_traj) - 2:  # last transition:
-                pass # reward, done, info
+                pass # reward, done, info = ...
             else:
-                pass
+                pass # reward, done, info = ...
 
             replay_buffer.add(...)
 
