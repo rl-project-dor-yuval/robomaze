@@ -38,7 +38,8 @@ class DDPGMP(DDPG):
             seed: Optional[int] = None,
             device: Union[th.device, str] = "auto",
             _init_setup_model: bool = True,
-            demonstrations_path: os.path = None
+            demonstrations_path: os.path = None,
+            demo_on_fail_brob: float = 0.5,
     ):
         super(DDPGMP, self).__init__(
             policy=policy,
@@ -64,8 +65,9 @@ class DDPGMP(DDPG):
         )
 
         self.demonstrations = np.load(demonstrations_path)
-        if verbose:
+        if verbose > 0:
             print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
+        self.demo_on_fail_brob = demo_on_fail_brob
 
     def collect_rollouts(
             self,
@@ -155,15 +157,32 @@ class DDPGMP(DDPG):
                 if infos['hit_maze'] or infos['fell'] or infos['timeout']:
                     # insert demonstration to replay buffer with probability self.demo_on_fail_prob
                     if np.random.rand() < self.demo_on_fail_prob:
+                        if self.verbose > 0:
+                            print("Failed Episode. Inserting demonstration to replay buffer.")
                         demo_traj = self.demonstrations[infos['start_goal_pair_idx']]
-                        for t in demo_traj:
-                            pass
-                            # important - rescale action! look inside self._sample_action() how to do it
-                            # self._store_transition(....)
-                            # TODO - consider training on normalized action
+                        self._insert_demo_to_replay_buffer(replay_buffer, demo_traj)
+                    elif self.verbose > 0:
+                        print("Failed Episode, but not inserting demonstration to replay buffer.")
 
         mean_reward = np.mean(episode_rewards) if num_collected_episodes > 0 else 0.0
 
         callback.on_rollout_end()
 
         return RolloutReturn(mean_reward, num_collected_steps, num_collected_episodes, continue_training)
+
+    def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj):
+        for i in range(len(demo_traj) - 1):
+            # important - rescale action!
+            # scaled_action = self.policy.scale_action(unscaled_action)
+            obs = demo_traj[i]
+            new_obs = demo_traj[i + 1]
+            action =
+
+            if i == len(demo_traj) - 2:  # last transition:
+                pass # reward, done, info
+            else:
+                pass
+
+            replay_buffer.add(...)
+
+            # TODO - consider training on normalized action
