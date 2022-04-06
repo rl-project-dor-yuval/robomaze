@@ -3,6 +3,7 @@ from typing import Optional, Union, Type, Tuple, Dict, Any
 import torch as th
 import numpy as np
 from NavigatorEnv import MultiStartgoalNavigatorEnv
+import math
 
 from stable_baselines3 import DDPG
 from stable_baselines3.common.buffers import ReplayBuffer
@@ -39,7 +40,7 @@ class DDPGMP(DDPG):
             device: Union[th.device, str] = "auto",
             _init_setup_model: bool = True,
             demonstrations_path: os.path = None,
-            demo_on_fail_brob: float = 0.5,
+            demo_on_fail_prob: float = 0.5,
     ):
         super(DDPGMP, self).__init__(
             policy=policy,
@@ -67,7 +68,7 @@ class DDPGMP(DDPG):
         self.demonstrations = np.load(demonstrations_path)
         if verbose > 0:
             print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
-        self.demo_on_fail_brob = demo_on_fail_brob
+        self.demo_on_fail_prob = demo_on_fail_prob
 
     def collect_rollouts(
             self,
@@ -154,14 +155,15 @@ class DDPGMP(DDPG):
                 if log_interval is not None and self._episode_num % log_interval == 0:
                     self._dump_logs()
 
-                if infos['hit_maze'] or infos['fell'] or infos['timeout']:
+                info = infos[0]
+                if info['hit_maze'] or info['fell'] or info['timeout']:
                     # insert demonstration to replay buffer with probability self.demo_on_fail_prob
                     if np.random.rand() < self.demo_on_fail_prob:
                         if self.verbose > 0:
                             print("Failed Episode. Inserting demonstration to replay buffer.")
-                        demo_traj = self.demonstrations[infos['start_goal_pair_idx']]
+                        demo_traj = self.demonstrations[str(info['start_goal_pair_idx'])]
                         self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
-                                                           infos['start_goal_pair_idx'])
+                                                           info['start_goal_pair_idx'])
                     elif self.verbose > 0:
                         print("Failed Episode, but not inserting demonstration to replay buffer.")
 
@@ -182,12 +184,12 @@ class DDPGMP(DDPG):
             # TODO - consider training on normalized action
 
             if i == len(demo_traj) - 2:  # last transition:
-                reward = self.get_env().maze_env.rewards.target_arrival
+                reward = self.env.envs[0].maze_env.rewards.target_arrival
                 done = True
                 info = {'hit_maze': False, 'fell': False, 'timeout': False,
                         'start_goal_pair_idx': demo_traj_idx, 'success': True}
             else:
-                reward = self.get_env().maze_env.rewards.idle
+                reward = self.env.envs[0].maze_env.rewards.idle
                 done = False
                 info = {'hit_maze': False, 'fell': False, 'timeout': False,
                         'start_goal_pair_idx': demo_traj_idx, 'success': False}
@@ -198,11 +200,11 @@ class DDPGMP(DDPG):
                 action,
                 reward,
                 done,
-                info,
+                [info],
             )
 
     @staticmethod
     def _compute_fake_action(obs, new_obs):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
-        r, theta = np.sqrt(dx ** 2 + dy ** 2), np.atan2(dy, dx)
+        r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         return np.array([r, theta])
