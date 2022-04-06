@@ -38,7 +38,7 @@ class NavigatorEnv(gym.Env):
                  stepper_agent=None,
                  max_stepper_steps=200,
                  max_steps=50,
-                 stepper_radius_range=(0.8, 1.8),
+                 stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.8,
                  rewards: Rewards = Rewards(),
                  done_on_collision=True):
