@@ -162,6 +162,8 @@ class DDPGMP(DDPG):
                         if self.verbose > 0:
                             print("Failed Episode. Inserting demonstration to replay buffer.")
                         demo_traj = self.demonstrations[str(info['start_goal_pair_idx'])]
+                        # convert to simulation coordinates TODO: move it from here!!
+                        demo_traj = demo_traj/10
                         self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
                                                            info['start_goal_pair_idx'])
                     elif self.verbose > 0:

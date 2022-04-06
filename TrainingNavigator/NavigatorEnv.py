@@ -36,8 +36,8 @@ class NavigatorEnv(gym.Env):
                  maze_env: mz.MazeEnv,
                  stepper_agent=None,
                  max_stepper_steps=200,
-                 max_steps=25,
-                 stepper_radius_range=(0.7, 3.),
+                 max_steps=50,
+                 stepper_radius_range=(0.7, 1.8),
                  epsilon_to_hit_subgoal=0.7):
 
         if not maze_env.xy_in_obs:
