@@ -13,12 +13,12 @@ class StepperAgent:
 
         self.agent_nn = torch.load(agent_path, map_location=_device)
         self.agent_nn.eval()
-        self.device = device
+        self.device = _device
 
     def step(self, obs):
-        obs = torch.from_numpy(obs).unsqueeze(0)
+        obs = torch.from_numpy(obs).unsqueeze(0).to(self.device)
         with torch.no_grad():
             actions = self.agent_nn(obs)
-            actions = actions.squeeze(0).numpy()
+            actions = actions.squeeze(0).to('cpu').numpy()
 
         return actions

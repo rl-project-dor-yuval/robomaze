@@ -36,7 +36,8 @@ class NavigatorEnv(gym.Env):
                  maze_env: mz.MazeEnv,
                  stepper_agent=None,
                  max_stepper_steps=200,
-                 stepper_radius_range=(0.9, 3.),
+                 max_steps=25,
+                 stepper_radius_range=(0.7, 3.),
                  epsilon_to_hit_subgoal=0.7):
 
         if not maze_env.xy_in_obs:
@@ -44,6 +45,7 @@ class NavigatorEnv(gym.Env):
 
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
+        self.max_steps = max_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
         # make sure:
         maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
@@ -52,7 +54,7 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('StepperAgent.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'auto')
         self.stepper_agent = stepper_agent
 
         # Ant's current state
@@ -67,7 +69,10 @@ class NavigatorEnv(gym.Env):
         # Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
         self.observation_space = Box(-np.inf, np.inf, (4,))
 
+        self.curr_step = 0
+
     def reset(self):
+        self.curr_step = 0
         self.ant_curr_obs = self.maze_env.reset()
         return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
 
@@ -82,6 +87,7 @@ class NavigatorEnv(gym.Env):
             self.maze_env.set_subgoal_marker(visible=False)
 
         nav_reward = 0
+        is_done = False
 
         for i in range(self.max_stepper_steps):
             if self.visualize:
@@ -114,6 +120,10 @@ class NavigatorEnv(gym.Env):
 
         nav_observation = np.concatenate([ant_xy, self.target_goal])
         nav_info = info
+
+        self.curr_step += 1
+        if self.curr_step >= self.max_steps:
+            is_done = True
 
         return nav_observation, nav_reward, is_done, nav_info
 
