@@ -12,7 +12,9 @@ import cv2
 from Utils import plot_trajectory
 from DDPGMP import DDPGMP
 import torch
+from MazeEnv.EnvAttributes import Rewards
 
+# --- Parameters
 RUN_NAME = "DDPGMP_FixTrajCoords"
 SEED = 42 ** 2
 
@@ -20,8 +22,10 @@ LEARNING_RATE = 1e-5
 BUFFER_SIZE = 10 ** 5
 EXPLORATION_NOISE_STD = 0.1
 EPSILON_TO_SUBGOAL = 0.7
+REWARDS = Rewards(target_arrival=1, collision=-1, fall=-1, idle=0,)
 DEMONSTRATION_PATH = 'TrainingNavigator/workspaces/botttleneck_trajectories.npz'
 DEMO_ON_FAIL_PROB = 0.5
+# ---
 
 maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
 start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneck.npy') / 10
@@ -30,7 +34,8 @@ maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, start_loc=start_goal_p
                    target_loc=start_goal_pairs[0][-1], xy_in_obs=True, show_gui=True)
 nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                      maze_env=maze_env,
-                                     epsilon_to_hit_subgoal=EPSILON_TO_SUBGOAL)
+                                     epsilon_to_hit_subgoal=EPSILON_TO_SUBGOAL,
+                                     rewards=REWARDS,)
 nav_env.visualize_mode(False)
 
 exploration_noise = NormalActionNoise(mean=np.array([0] * 2), sigma=np.array([EXPLORATION_NOISE_STD] * 2))

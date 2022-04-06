@@ -5,6 +5,7 @@ from TrainingNavigator.StepperAgent import StepperAgent
 import numpy as np
 import math
 import time
+from MazeEnv.EnvAttributes import Rewards
 
 
 def cart2pol(vec):
@@ -37,8 +38,10 @@ class NavigatorEnv(gym.Env):
                  stepper_agent=None,
                  max_stepper_steps=200,
                  max_steps=50,
-                 stepper_radius_range=(0.7, 1.8),
-                 epsilon_to_hit_subgoal=0.7):
+                 stepper_radius_range=(0.8, 1.8),
+                 epsilon_to_hit_subgoal=0.8,
+                 rewards: Rewards = Rewards(),
+                 done_on_collision=True):
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
@@ -49,6 +52,8 @@ class NavigatorEnv(gym.Env):
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
         # make sure:
         maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
+        self.rewards = rewards
+        self.done_on_collision = done_on_collision
 
         self.visualize = False
         self.visualize_fps = 40
@@ -86,9 +91,6 @@ class NavigatorEnv(gym.Env):
         else:
             self.maze_env.set_subgoal_marker(visible=False)
 
-        nav_reward = 0
-        is_done = False
-
         for i in range(self.max_stepper_steps):
             if self.visualize:
                 time.sleep(1./float(self.visualize_fps))
@@ -108,8 +110,6 @@ class NavigatorEnv(gym.Env):
             self.ant_curr_obs, reward, is_done, info = self.maze_env.step(stepper_action)
             ant_xy = self.ant_curr_obs[0:2]
 
-            nav_reward += reward
-
             # check main goal arrival
             if is_done:
                 break
@@ -121,11 +121,31 @@ class NavigatorEnv(gym.Env):
         nav_observation = np.concatenate([ant_xy, self.target_goal])
         nav_info = info
 
+        # determine nav reward and nav done according to info:
+        nav_reward = 0
+        nav_is_done = False
+        if info['hit_maze']:
+            nav_reward = self.rewards.collision
+            nav_is_done = self.done_on_collision
+        elif info['fell']:
+            nav_reward = self.rewards.fall
+            nav_is_done = True
+        elif info['success']:
+            nav_reward = self.rewards.target_arrival
+            nav_is_done = True
+        else:
+            nav_reward = self.rewards.idle
+
         self.curr_step += 1
         if self.curr_step >= self.max_steps:
-            is_done = True
+            nav_info['navigator_timeout'] = True
+            nav_is_done = True
+        else:
+            nav_info['navigator_timeout'] = False
 
-        return nav_observation, nav_reward, is_done, nav_info
+        nav_info['stepper_timeout'] = nav_info.pop('timeout')
+
+        return nav_observation, nav_reward, nav_is_done, nav_info
 
     def visualize_mode(self, visualize: bool, fps: int = 40):
         """
