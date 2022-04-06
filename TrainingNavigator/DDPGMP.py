@@ -160,7 +160,8 @@ class DDPGMP(DDPG):
                         if self.verbose > 0:
                             print("Failed Episode. Inserting demonstration to replay buffer.")
                         demo_traj = self.demonstrations[infos['start_goal_pair_idx']]
-                        self._insert_demo_to_replay_buffer(replay_buffer, demo_traj)
+                        self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
+                                                           infos['start_goal_pair_idx'])
                     elif self.verbose > 0:
                         print("Failed Episode, but not inserting demonstration to replay buffer.")
 
@@ -170,20 +171,38 @@ class DDPGMP(DDPG):
 
         return RolloutReturn(mean_reward, num_collected_steps, num_collected_episodes, continue_training)
 
-    def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj):
+    def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj, demo_traj_idx):
         for i in range(len(demo_traj) - 1):
             obs = np.concatenate([demo_traj[i], demo_traj[-1]])
             new_obs = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
             # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
-            action =
+            action = self._compute_fake_action(obs, new_obs)
             # important - rescale action!
-            # scaled_action = self.policy.scale_action(unscaled_action)
+            action = self.policy.scale_action(action)
+            # TODO - consider training on normalized action
 
             if i == len(demo_traj) - 2:  # last transition:
-                pass # reward, done, info = ...
+                reward = self.get_env().maze_env.rewards.target_arrival
+                done = True
+                info = {'hit_maze': False, 'fell': False, 'timeout': False,
+                        'start_goal_pair_idx': demo_traj_idx, 'success': True}
             else:
-                pass # reward, done, info = ...
+                reward = self.get_env().maze_env.rewards.idle
+                done = False
+                info = {'hit_maze': False, 'fell': False, 'timeout': False,
+                        'start_goal_pair_idx': demo_traj_idx, 'success': False}
 
-            replay_buffer.add(...)
+            replay_buffer.add(
+                obs,
+                new_obs,
+                action,
+                reward,
+                done,
+                info,
+            )
 
-            # TODO - consider training on normalized action
+    @staticmethod
+    def _compute_fake_action(obs, new_obs):
+        dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
+        r, theta = np.sqrt(dx ** 2 + dy ** 2), np.atan2(dy, dx)
+        return np.array([r, theta])

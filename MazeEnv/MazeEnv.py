@@ -24,6 +24,7 @@ class MazeEnv(gym.Env):
     is_reset: bool
     episode_count: int
     xy_in_obs: bool
+    rewards: Rewards
 
     recording_video_size: Tuple[int, int] = (300, 300)
     video_skip_frames: int = 2
