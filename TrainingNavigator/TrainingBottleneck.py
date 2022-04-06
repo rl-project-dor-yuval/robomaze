@@ -18,10 +18,10 @@ from MazeEnv.EnvAttributes import Rewards
 RUN_NAME = "DDPGMP_SomeImprovements"
 SHOW_GUI = True
 SEED = 42 ** 2
-TRAIN_STEPS = 10**5
+TRAIN_STEPS = 10**7
 
 LEARNING_RATE = 1e-5
-BUFFER_SIZE = 3 * 10 ** 4
+BUFFER_SIZE = 5 * 10 ** 5
 EXPLORATION_NOISE_STD = 0.1
 EPSILON_TO_SUBGOAL = 0.8
 REWARDS = Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01,)
@@ -72,4 +72,4 @@ model = DDPGMP(policy="MlpPolicy",
 #              learning_starts=16,
 #              seed=SEED, )
 
-model.learn(total_timesteps=50000, tb_log_name=RUN_NAME)
+model.learn(total_timesteps=TRAIN_STEPS, tb_log_name=RUN_NAME)

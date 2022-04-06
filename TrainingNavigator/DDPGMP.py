@@ -184,12 +184,12 @@ class DDPGMP(DDPG):
             # TODO - consider training on normalized action
 
             if i == len(demo_traj) - 2:  # last transition:
-                reward = self.env.envs[0].maze_env.rewards.target_arrival
+                reward = self.env.envs[0].rewards_config.target_arrival
                 done = True
                 info = {'hit_maze': False, 'fell': False, 'timeout': False,
                         'start_goal_pair_idx': demo_traj_idx, 'success': True}
             else:
-                reward = self.env.envs[0].maze_env.rewards.idle
+                reward = self.env.envs[0].rewards_config.idle
                 done = False
                 info = {'hit_maze': False, 'fell': False, 'timeout': False,
                         'start_goal_pair_idx': demo_traj_idx, 'success': False}

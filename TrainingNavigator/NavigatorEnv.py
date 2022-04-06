@@ -52,7 +52,7 @@ class NavigatorEnv(gym.Env):
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
         # make sure:
         maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
-        self.rewards = rewards
+        self.rewards_config = rewards
         self.done_on_collision = done_on_collision
 
         self.visualize = False
@@ -125,16 +125,16 @@ class NavigatorEnv(gym.Env):
         nav_reward = 0
         nav_is_done = False
         if info['hit_maze']:
-            nav_reward = self.rewards.collision
+            nav_reward = self.rewards_config.collision
             nav_is_done = self.done_on_collision
         elif info['fell']:
-            nav_reward = self.rewards.fall
+            nav_reward = self.rewards_config.fall
             nav_is_done = True
         elif info['success']:
-            nav_reward = self.rewards.target_arrival
+            nav_reward = self.rewards_config.target_arrival
             nav_is_done = True
         else:
-            nav_reward = self.rewards.idle
+            nav_reward = self.rewards_config.idle
 
         self.curr_step += 1
         if self.curr_step >= self.max_steps:
