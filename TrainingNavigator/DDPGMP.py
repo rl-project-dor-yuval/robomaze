@@ -156,7 +156,7 @@ class DDPGMP(DDPG):
                     self._dump_logs()
 
                 info = infos[0]
-                if info['hit_maze'] or info['fell'] or info['timeout']:
+                if info['hit_maze'] or info['fell'] or info['stepper_timeout']:
                     # insert demonstration to replay buffer with probability self.demo_on_fail_prob
                     if np.random.rand() < self.demo_on_fail_prob:
                         if self.verbose > 0:

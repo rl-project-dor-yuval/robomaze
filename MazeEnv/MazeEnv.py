@@ -257,7 +257,7 @@ class MazeEnv(gym.Env):
         set the target location. Call this Only Before reset()!
         :param position: the position of the target
         """
-        self._target_loc[0], self._start_loc[1] = new_loc
+        self._target_loc[0], self._target_loc[1] = new_loc
 
         _, target_uid, _ = self._maze.get_maze_objects_uids()
         _, old_orientation = self._pclient.getBasePositionAndOrientation(target_uid)

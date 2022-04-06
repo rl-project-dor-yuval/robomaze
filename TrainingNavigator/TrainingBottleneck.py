@@ -15,14 +15,16 @@ import torch
 from MazeEnv.EnvAttributes import Rewards
 
 # --- Parameters
-RUN_NAME = "DDPGMP_FixTrajCoords"
+RUN_NAME = "DDPGMP_SomeImprovements"
+SHOW_GUI = True
 SEED = 42 ** 2
+TRAIN_STEPS = 10**5
 
 LEARNING_RATE = 1e-5
-BUFFER_SIZE = 10 ** 5
+BUFFER_SIZE = 3 * 10 ** 4
 EXPLORATION_NOISE_STD = 0.1
-EPSILON_TO_SUBGOAL = 0.7
-REWARDS = Rewards(target_arrival=1, collision=-1, fall=-1, idle=0,)
+EPSILON_TO_SUBGOAL = 0.8
+REWARDS = Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01,)
 DEMONSTRATION_PATH = 'TrainingNavigator/workspaces/botttleneck_trajectories.npz'
 DEMO_ON_FAIL_PROB = 0.5
 # ---
@@ -31,7 +33,7 @@ maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRA
 start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneck.npy') / 10
 
 maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, start_loc=start_goal_pairs[0][0],
-                   target_loc=start_goal_pairs[0][-1], xy_in_obs=True, show_gui=True)
+                   target_loc=start_goal_pairs[0][-1], xy_in_obs=True, show_gui=SHOW_GUI,)
 nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                      maze_env=maze_env,
                                      epsilon_to_hit_subgoal=EPSILON_TO_SUBGOAL,
