@@ -25,6 +25,7 @@ class MazeEnv(gym.Env):
     episode_count: int
     xy_in_obs: bool
     rewards: Rewards
+    done_on_collision: bool
 
     recording_video_size: Tuple[int, int] = (300, 300)
     video_skip_frames: int = 2
@@ -53,7 +54,8 @@ class MazeEnv(gym.Env):
                  timeout_steps: int = 0,
                  show_gui: bool = False,
                  xy_in_obs:bool = True,
-                 hit_target_epsilon=0.6):
+                 hit_target_epsilon=0.8,
+                 done_on_collision=True,):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -95,6 +97,7 @@ class MazeEnv(gym.Env):
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
+        self.done_on_collision = done_on_collision
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -178,7 +181,8 @@ class MazeEnv(gym.Env):
             is_done = info['fell'] = True
             reward += self.rewards.fall
         if self._collision_manager.check_hit_maze():
-            is_done = info['hit_maze'] = True
+            is_done = self.done_on_collision
+            info['hit_maze'] = True
             reward += self.rewards.collision
 
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])

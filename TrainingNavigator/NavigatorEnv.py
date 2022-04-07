@@ -50,10 +50,17 @@ class NavigatorEnv(gym.Env):
         self.max_stepper_steps = max_stepper_steps
         self.max_steps = max_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
-        # make sure:
-        maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
+
+        # make sure:
+        if not self.maze_env.done_on_collision == done_on_collision:
+            print("WARNING: done_on_collision is different in mazeEnv and navigatorEnv, changing mazeEnv")
+            self.maze_env.done_on_collision = done_on_collision
+        # make sure:
+        if not  maze_env.hit_target_epsilon == epsilon_to_hit_subgoal:
+            print("WARNING: epsilon_to_hit_subgoal is different in mazeEnv and navigatorEnv, changing mazeEnv")
+            maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
 
         self.visualize = False
         self.visualize_fps = 40
@@ -91,6 +98,8 @@ class NavigatorEnv(gym.Env):
         else:
             self.maze_env.set_subgoal_marker(visible=False)
 
+        _hit_maze = False
+
         for i in range(self.max_stepper_steps):
             if self.visualize:
                 time.sleep(1./float(self.visualize_fps))
@@ -107,13 +116,17 @@ class NavigatorEnv(gym.Env):
             stepper_obs[26:28] = r_theta_to_subgoal
             stepper_action = self.stepper_agent.step(stepper_obs)
 
-            self.ant_curr_obs, reward, is_done, info = self.maze_env.step(stepper_action)
+            # play ant step, reward is not required and is_done is determined using info
+            self.ant_curr_obs, _, _, info = self.maze_env.step(stepper_action)
             ant_xy = self.ant_curr_obs[0:2]
 
-            # check main goal arrival
-            if is_done:
+            # use info to check if finished (may override mazeEnv is_done in some cases):
+            if info['success'] or info['fell'] or info['timeout']:
                 break
-
+            if info['hit_maze']:
+                _hit_maze = True
+                if self.done_on_collision:
+                    break
             # check if close enough to subgoal:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
                 break
@@ -124,17 +137,17 @@ class NavigatorEnv(gym.Env):
         # determine nav reward and nav done according to info:
         nav_reward = 0
         nav_is_done = False
-        if info['hit_maze']:
-            nav_reward = self.rewards_config.collision
+        if _hit_maze:
+            nav_reward += self.rewards_config.collision
             nav_is_done = self.done_on_collision
         elif info['fell']:
-            nav_reward = self.rewards_config.fall
+            nav_reward += self.rewards_config.fall
             nav_is_done = True
         elif info['success']:
-            nav_reward = self.rewards_config.target_arrival
+            nav_reward += self.rewards_config.target_arrival
             nav_is_done = True
         else:
-            nav_reward = self.rewards_config.idle
+            nav_reward += self.rewards_config.idle
 
         self.curr_step += 1
         if self.curr_step >= self.max_steps:
