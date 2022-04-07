@@ -181,6 +181,7 @@ class DDPGMP(DDPG):
             action = self._compute_fake_action(obs, new_obs)
             # important - rescale action!
             action = self.policy.scale_action(action)
+            action = np.clip(action, -1, 1)
             # TODO - consider training on normalized action
 
             if i == len(demo_traj) - 2:  # last transition:
