@@ -187,13 +187,15 @@ class DDPGMP(DDPG):
             if i == len(demo_traj) - 2:  # last transition:
                 reward = self.env.envs[0].rewards_config.target_arrival
                 done = True
-                info = {'hit_maze': False, 'fell': False, 'timeout': False,
-                        'start_goal_pair_idx': demo_traj_idx, 'success': True}
+                info = {'hit_maze': False, 'fell': False,  'stepper_timeout': False,
+                        'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                        'success': True}
             else:
                 reward = self.env.envs[0].rewards_config.idle
                 done = False
-                info = {'hit_maze': False, 'fell': False, 'timeout': False,
-                        'start_goal_pair_idx': demo_traj_idx, 'success': False}
+                info = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
+                        'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                        'success': False}
 
             replay_buffer.add(
                 obs,
