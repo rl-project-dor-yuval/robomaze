@@ -5,6 +5,7 @@ sys.path.append('.')
 import time
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
+from stable_baselines3.common.monitor import Monitor
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 import cv2
@@ -18,17 +19,17 @@ from wandb.integration.sb3 import WandbCallback
 
 # --- Parameters
 config = {
-    "run_name": "NoKillOnWallHit",
-    "show_gui": False,
+    "run_name": "TestingW&BFromRemote",
+    "show_gui": True,
     "seed": 42 ** 2,
-    "train_steps": 10**6,
+    "train_steps": 10**4,
 
     "learning_rate": 1e-5,
     "batch_size": 1024,
     "buffer_size": 5 * 10 ** 5,
     "exploration_noise_std": 0.1,
     "epsilon_to_subgoal": 0.8,
-    "done_on_collision": False,
+    "done_on_collision": True,
     "rewards": Rewards(target_arrival=1, collision=-0.01, fall=-0.01, idle=-0.01,),
     "demonstration_path": 'TrainingNavigator/workspaces/botttleneck_trajectories.npz',
     "demo_on_fail_prob": 0.5,
@@ -38,7 +39,7 @@ config = {
 }
 # ---
 wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
-                    config=config, sync_tensorboard=True, tensorboard=True)
+                    config=config, sync_tensorboard=True)
 wb_callback = WandbCallback(model_save_path=f"TrainingNavigator/checkpoints/{config['run_name']}",
                             model_save_freq=config["train_steps"] // 10,
                             gradient_save_freq=config["train_steps"] // 10,)
@@ -57,6 +58,7 @@ nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                      max_stepper_steps=config["max_stepper_steps"],
                                      max_steps=config["max_navigator_steps"],)
 nav_env.visualize_mode(False)
+nav_env = Monitor(env=nav_env)
 
 exploration_noise = NormalActionNoise(mean=np.array([0] * 2),
                                       sigma=np.array([config["exploration_noise_std"]] * 2))
@@ -74,7 +76,7 @@ model = DDPGMP(policy="MlpPolicy",
                train_freq=(4, "episode"),
                verbose=0,
                tensorboard_log="./TrainingNavigator/logs/tb",
-               learning_starts=16,
+               learning_starts=1000,
                seed=config["seed"],
                demonstrations_path=config["demonstration_path"],
                demo_on_fail_prob=config["demo_on_fail_prob"], )

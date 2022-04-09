@@ -209,3 +209,13 @@ class DDPGMP(DDPG):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         return np.array([r, theta])
+
+# import torch
+# class CustomPolicy(...):
+#     def __init__(self, *args, **kwargs):
+#         ...
+#     def forward(self, obs):
+#         dx, dy = self.network(obs)
+#         r, theta = torch.sqrt(dx ** 2 + dy ** 2), torch.atan2(dy, dx)
+#         r = torch.clamp(r, 0, 1)
+#         return np.array([r, theta])

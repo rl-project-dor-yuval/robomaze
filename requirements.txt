@@ -107,3 +107,9 @@ webencodings==0.5.1
 websocket-client==1.2.1
 Werkzeug==2.0.2
 widgetsnbextension==3.5.1
+
+descartes~=1.1.0
+Shapely~=1.8.0
+Rtree~=0.9.7
+plotly~=5.6.0
+wandb~=0.12.13
