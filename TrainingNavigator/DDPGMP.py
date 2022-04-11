@@ -12,7 +12,8 @@ from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn, GymEnv, Schedule
 from stable_baselines3.common.utils import should_collect_more_steps
 from stable_baselines3.common.vec_env import VecEnv
-from stable_baselines3.td3.policies import TD3Policy
+from stable_baselines3.td3.policies import TD3Policy, Actor
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 
 class DDPGMP(DDPG):
@@ -212,8 +213,9 @@ class DDPGMP(DDPG):
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         return np.array([r, theta])
 
-# import torch
-# class CustomPolicy(...):
+
+#
+# class DDPGMPPolicy(MLPPo    ):
 #     def __init__(self, *args, **kwargs):
 #         ...
 #     def forward(self, obs):
@@ -221,3 +223,34 @@ class DDPGMP(DDPG):
 #         r, theta = torch.sqrt(dx ** 2 + dy ** 2), torch.atan2(dy, dx)
 #         r = torch.clamp(r, 0, 1)
 #         return np.array([r, theta])
+
+
+class CustomActor(Actor):
+    """
+    Actor network (policy) for TD3.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(CustomActor, self).__init__(*args, **kwargs)
+        # Define custom network with r, theta output
+        # WARNING: it must end with a tanh activation to squash the output
+        # self.mu = th.nn.Sequential(...)
+
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        # assert deterministic, 'The TD3 actor only outputs deterministic actions'
+        features = self.extract_features(obs)
+        out = self.mu(features)
+        # dx, dy = out
+        # r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
+        # r = th.clamp(r, 0, 1)
+        # return r, theta
+        return out
+
+
+class CustomTD3Policy(TD3Policy):
+    def __init__(self, *args, **kwargs):
+        super(CustomTD3Policy, self).__init__(*args, **kwargs)
+
+    def make_actor(self, features_extractor: Optional[BaseFeaturesExtractor] = None) -> CustomActor:
+        actor_kwargs = self._update_features_extractor(self.actor_kwargs, features_extractor)
+        return CustomActor(**actor_kwargs).to(self.device)
