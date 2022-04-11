@@ -48,6 +48,7 @@ wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"
                     config=config, )
 wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
+# Setup Training Environment
 maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
 start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneck.npy') / 10
 
@@ -63,6 +64,20 @@ nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                      max_steps=config["max_navigator_steps"],)
 nav_env.visualize_mode(False)
 nav_env = Monitor(env=nav_env)
+
+# set up separate evaluation environment:
+eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
+                        target_loc=start_goal_pairs[0][-1], xy_in_obs=True, show_gui=False)
+eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
+                                          maze_env=eval_maze_env,
+                                          epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
+                                          rewards=config["rewards"],
+                                          done_on_collision=config["done_on_collision"],
+                                          max_stepper_steps=config["max_stepper_steps"],
+                                          max_steps=config["max_navigator_steps"], )
+nav_env.visualize_mode(False)
+
+# set up model and run:
 
 exploration_noise = NormalActionNoise(mean=np.array([0] * 2),
                                       sigma=np.array([config["exploration_noise_std"]] * 2))
