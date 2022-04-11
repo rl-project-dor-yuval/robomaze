@@ -23,12 +23,12 @@ config = {
     "seed": 42 ** 2,
     "train_steps": 10 ** 5,
 
-    # Training Parameters
+    # Training and environment parameters
     "learning_rate": 1e-5,
     "batch_size": 512,
     "buffer_size": 5 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
-    "critic_arch": [64, 64], # Should not be changed or explored
+    "critic_arch": [64, 64],  # Should not be changed or explored
     "exploration_noise_std": 0.1,
     "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
     "done_on_collision": True,  # modify rewards in case you change this
@@ -38,14 +38,19 @@ config = {
     "max_stepper_steps": 150,
     "max_navigator_steps": 30,
 
+    # logging parameters
+    "eval_freq": 200,
+    "video_freq": 2,
+
     # Constants:
     "maze_size": (10, 10)
 }
+config["dir"] = "./TrainingNavigator/logs/" + config["run_name"]
 # ---
 
 # setup W&B:
 wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
-                    config=config, )
+                    config=config)
 wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
 # Setup Training Environment
@@ -115,10 +120,11 @@ model = DDPGMP(policy=CustomTD3Policy,
 #              learning_starts=16,
 #              seed=SEED, )
 
-callback = NavEvalCallback(dir="./TrainingNavigator/logs/" + config["run_name"],
+callback = NavEvalCallback(dir=config["dir"],
                            eval_env=eval_nav_env,
                            wandb_run=wb_run,
-                           eval_freq=200, )
+                           eval_freq=config["eval_freq"],
+                           eval_video_freq=config["video_freq"],)
 
 model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 

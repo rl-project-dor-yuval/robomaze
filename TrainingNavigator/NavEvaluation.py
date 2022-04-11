@@ -1,5 +1,5 @@
 import os
-
+import pathlib
 import torch
 from stable_baselines3.common.callbacks import BaseCallback
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
@@ -29,7 +29,11 @@ class NavEvalCallback(BaseCallback):
         wandb_run.define_metric('eval_avg_reward', step_metric='step')
         wandb_run.define_metric('eval_avg_length', step_metric='step')
         wandb_run.define_metric('eval_success_rate', step_metric='step')
+        wandb_run.define_metric('eval_success_rate', step_metric='step')
         # self.model_save_path = os.path.join(dir, 'best_model')
+
+        self.video_dir = dir + '/videos'
+        pathlib.Path(self.video_dir).mkdir(parents=True, exist_ok=True)
 
     def _init_callback(self) -> None:
         super(NavEvalCallback, self)._init_callback()
@@ -38,19 +42,22 @@ class NavEvalCallback(BaseCallback):
         super(NavEvalCallback, self)._on_step()
         if self.n_calls % self.eval_freq == 0:
             avg_reward, avg_length, success_rate = self._evaluate_all_workspaces()
-            wandb.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
+            self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
                        'eval_success_rate': success_rate, 'step': self.n_calls})
 
-            # TODO : save model
-            # TODO : save video
+        if self.eval_video_freq > 0 and \
+                self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
+            vid_path = self._record_video()
+            self.wandb_run.log({'eval_video': wandb.Video(vid_path, fps=24)})
 
+            # TODO : save model
 
 
     def _on_training_end(self) -> None:
         super(NavEvalCallback, self)._on_training_end()
 
     def _on_insert_demo(self) -> None:
-        pass # use this?
+        pass  # use this?
 
     def _evaluate_all_workspaces(self):
         rewards = []
@@ -80,3 +87,19 @@ class NavEvalCallback(BaseCallback):
 
         return avg_reward, avg_length, success_rate
 
+    def _record_video(self) -> str:
+        """
+        Record a video of the current model
+        :return: path to the video
+        """
+        video_path = os.path.join(self.video_dir, str(self.n_calls) + '.mp4')
+        obs = self.eval_env.reset(create_video=True, video_path=video_path)
+        while True:
+            with torch.no_grad():
+                action, _ = self.model.predict(obs, deterministic=True)
+            obs, _, done, _ = self.eval_env.step(action)
+            if done:
+                break
+        self.eval_env.reset()  # to make sure video is saved
+
+        return video_path
