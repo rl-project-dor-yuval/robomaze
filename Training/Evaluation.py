@@ -1,14 +1,10 @@
-# TODO: explain what this file is
-
 import os
 import abc
 from typing import Tuple, List
 import numpy as np
-from dataclasses import dataclass
 import pandas as pd
 from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.evaluation import evaluate_policy
 import imageio
 import glob
 import sys
