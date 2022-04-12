@@ -1,5 +1,7 @@
 import os
 import pathlib
+import time
+
 import torch
 from stable_baselines3.common.callbacks import BaseCallback
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
@@ -30,6 +32,8 @@ class NavEvalCallback(BaseCallback):
         wandb_run.define_metric('eval_avg_length', step_metric='step')
         wandb_run.define_metric('eval_success_rate', step_metric='step')
         wandb_run.define_metric('eval_success_rate', step_metric='step')
+
+        wandb_run.define_metric('eval_video', step_metric='step')
         # self.model_save_path = os.path.join(dir, 'best_model')
 
         self.video_dir = dir + '/videos'
@@ -48,7 +52,7 @@ class NavEvalCallback(BaseCallback):
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
             vid_path = self._record_video()
-            self.wandb_run.log({'eval_video': wandb.Video(vid_path, fps=24)})
+            self.wandb_run.log({'eval_video': wandb.Video(vid_path, fps=24), 'step': self.n_calls})
 
             # TODO : save model
 
@@ -60,6 +64,8 @@ class NavEvalCallback(BaseCallback):
         pass  # use this?
 
     def _evaluate_all_workspaces(self):
+        t_start = time.time()
+
         rewards = []
         episodes_length = []
         success_count = 0
@@ -85,6 +91,9 @@ class NavEvalCallback(BaseCallback):
         avg_length = sum(episodes_length) / num_workspaces
         success_rate = success_count / num_workspaces
 
+        if self.verbose > 0:
+            print("All workspaces evaluation done in %.4f secs: " % (time.time() - t_start))
+
         return avg_reward, avg_length, success_rate
 
     def _record_video(self) -> str:
@@ -92,7 +101,9 @@ class NavEvalCallback(BaseCallback):
         Record a video of the current model
         :return: path to the video
         """
-        video_path = os.path.join(self.video_dir, str(self.n_calls) + '.mp4')
+        t_start = time.time()
+
+        video_path = os.path.join(self.video_dir, str(self.n_calls) + '.gif')
         obs = self.eval_env.reset(create_video=True, video_path=video_path)
         while True:
             with torch.no_grad():
@@ -101,5 +112,8 @@ class NavEvalCallback(BaseCallback):
             if done:
                 break
         self.eval_env.reset()  # to make sure video is saved
+
+        if self.verbose > 0:
+            print("Video recorded in %.4f secs: " % (time.time() - t_start))
 
         return video_path

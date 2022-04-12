@@ -39,8 +39,8 @@ config = {
     "max_navigator_steps": 30,
 
     # logging parameters
-    "eval_freq": 200,
-    "video_freq": 2,
+    "eval_freq": 100,
+    "video_freq": 1,
 
     # Constants:
     "maze_size": (10, 10)
@@ -124,7 +124,8 @@ callback = NavEvalCallback(dir=config["dir"],
                            eval_env=eval_nav_env,
                            wandb_run=wb_run,
                            eval_freq=config["eval_freq"],
-                           eval_video_freq=config["video_freq"],)
+                           eval_video_freq=config["video_freq"],
+                           verbose=1)
 
 model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
