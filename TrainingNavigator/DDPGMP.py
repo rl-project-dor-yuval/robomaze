@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, Type, Tuple, Dict, Any
+from typing import Optional, Union, Type, Tuple, Dict, Any, List
 import torch as th
 import numpy as np
 from NavigatorEnv import MultiStartgoalNavigatorEnv
@@ -212,6 +212,9 @@ class DDPGMP(DDPG):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         return np.array([r, theta])
+
+    def _excluded_save_params(self) -> List[str]:
+        return super(DDPGMP, self)._excluded_save_params() + ["demonstrations"]
 
 
 #

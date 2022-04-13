@@ -10,7 +10,7 @@ import wandb
 
 class NavEvalCallback(BaseCallback):
     def __init__(self, dir: str, eval_env: MultiStartgoalNavigatorEnv, wandb_run: wandb.run,
-                 eval_freq: int = 200, eval_video_freq=-1, verbose=1):
+                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000 , verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
         :param eval_env: separate envrionment to evaluate the model on
@@ -25,6 +25,7 @@ class NavEvalCallback(BaseCallback):
         self.wandb_run = wandb_run
         self.eval_freq = eval_freq
         self.eval_video_freq = eval_video_freq
+        self.save_model_freq = save_model_freq
         self.verbose = verbose
 
         wandb_run.define_metric('step', hidden=True)
@@ -34,8 +35,9 @@ class NavEvalCallback(BaseCallback):
         wandb_run.define_metric('eval_success_rate', step_metric='step')
 
         wandb_run.define_metric('eval_video', step_metric='step')
-        # self.model_save_path = os.path.join(dir, 'best_model')
 
+        self.model_save_path = dir + '/saved_model'
+        pathlib.Path(self.model_save_path).mkdir(parents=True, exist_ok=True)
         self.video_dir = dir + '/videos'
         pathlib.Path(self.video_dir).mkdir(parents=True, exist_ok=True)
 
@@ -54,11 +56,14 @@ class NavEvalCallback(BaseCallback):
             vid_path = self._record_video()
             self.wandb_run.log({'eval_video': wandb.Video(vid_path, fps=24), 'step': self.n_calls})
 
-            # TODO : save model
-
+        if self.n_calls % self.save_model_freq == 0:
+            if self.verbose > 0:
+                print('--- Saving model to {}'.format(self.model_save_path))
+            self.model.save(self.model_save_path + '/model_' + str(self.n_calls))
 
     def _on_training_end(self) -> None:
         super(NavEvalCallback, self)._on_training_end()
+        self.model.save(self.model_save_path + '/last_model_' + str(self.n_calls))
 
     def _on_insert_demo(self) -> None:
         pass  # use this?
