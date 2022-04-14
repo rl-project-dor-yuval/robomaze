@@ -128,6 +128,7 @@ callback = NavEvalCallback(dir=config["dir"],
                            eval_freq=config["eval_freq"],
                            eval_video_freq=config["video_freq"],
                            save_model_freq=config["save_model_freq"],
+                           maze_map=maze_map,
                            verbose=1)
 
 model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)

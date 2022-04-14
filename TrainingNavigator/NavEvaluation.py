@@ -1,8 +1,11 @@
 import os
 import pathlib
 import time
+from typing import Tuple
 
+import numpy as np
 import torch
+from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 import wandb
@@ -10,7 +13,8 @@ import wandb
 
 class NavEvalCallback(BaseCallback):
     def __init__(self, dir: str, eval_env: MultiStartgoalNavigatorEnv, wandb_run: wandb.run,
-                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000 , verbose=1):
+                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000,
+                 maze_map: np.ndarray = None, verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
         :param eval_env: separate environment to evaluate the model on
@@ -26,6 +30,7 @@ class NavEvalCallback(BaseCallback):
         self.eval_freq = eval_freq
         self.eval_video_freq = eval_video_freq
         self.save_model_freq = save_model_freq
+        self.maze_map = maze_map
         self.verbose = verbose
 
         wandb_run.define_metric('step', hidden=True)
@@ -49,12 +54,17 @@ class NavEvalCallback(BaseCallback):
         if self.n_calls % self.eval_freq == 0:
             avg_reward, avg_length, success_rate = self._evaluate_all_workspaces()
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
-                       'eval_success_rate': success_rate, 'step': self.n_calls})
+                                'eval_success_rate': success_rate, 'step': self.n_calls})
 
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
-            vid_path = self._record_video()
-            self.wandb_run.log({'eval_video': wandb.Video(vid_path, fps=24), 'step': self.n_calls})
+            vid_path, walked_trajectory, ws_id = self._record_video()
+
+            log_item = {'eval_video': wandb.Video(vid_path, fps=24), 'step': self.n_calls}
+            if self.maze_map is not None:
+                log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory, ws_id)
+
+            self.wandb_run.log(log_item)
 
         if self.n_calls % self.save_model_freq == 0:
             if self.verbose > 0:
@@ -101,24 +111,49 @@ class NavEvalCallback(BaseCallback):
 
         return avg_reward, avg_length, success_rate
 
-    def _record_video(self) -> str:
+    def _record_video(self) -> Tuple[str, np.ndarray, int]:
         """
         Record a video of the current model
-        :return: path to the video
+        :return: path to the video, array of the walked trajectory, workspace id
         """
         t_start = time.time()
 
         video_path = os.path.join(self.video_dir, str(self.n_calls) + '.gif')
         obs = self.eval_env.reset(create_video=True, video_path=video_path)
+        walked_traj = []
         while True:
             with torch.no_grad():
                 action, _ = self.model.predict(obs, deterministic=True)
-            obs, _, done, _ = self.eval_env.step(action)
+            obs, _, done, info = self.eval_env.step(action)
+            walked_traj.append(obs[:2])
             if done:
                 break
+        ws_id = info['start_goal_pair_idx']
         self.eval_env.reset()  # to make sure video is saved
 
         if self.verbose > 0:
             print("Video recorded in %.4f secs: " % (time.time() - t_start))
 
-        return video_path
+        return video_path, np.array(walked_traj), ws_id
+
+    def _get_trajectory_plot(self, walked_traj: np.ndarray, ws_id: int) -> plt.Figure:
+        """
+        returns a plot of the walked trajectory near the RRT planned
+         trajectory for that workspace
+        """
+        walked_traj = walked_traj * 10
+        planned_traj = self.model.demonstrations[str(ws_id)] * 10
+        start, goal = planned_traj[0], planned_traj[-1]
+
+        fig, axes = plt.subplots(1, 2)
+        for ax in axes:
+            ax.imshow(self.maze_map, cmap='gray')
+            ax.plot(start[1], start[0], 'go')
+            ax.plot(goal[1], goal[0], 'g+')
+
+        axes[0].set_title('Walked trajectory')
+        axes[0].plot(walked_traj[:, 1], walked_traj[:, 0], 'ro')
+        axes[1].set_title('RRT planned trajectory')
+        axes[1].plot(planned_traj[:, 1], planned_traj[:, 0], 'ro')
+
+        return fig

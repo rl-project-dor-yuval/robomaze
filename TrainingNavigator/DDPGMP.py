@@ -176,8 +176,8 @@ class DDPGMP(DDPG):
 
     def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj, demo_traj_idx):
         for i in range(len(demo_traj) - 1):
-            obs = np.concatenate([demo_traj[i], demo_traj[-1]])
-            new_obs = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
+            obs = np.concatenate([np.flip(demo_traj[i]), demo_traj[-1]])
+            new_obs = np.concatenate([np.flip(demo_traj[i + 1]), demo_traj[-1]])
             # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
             action = self._compute_fake_action(obs, new_obs)
             # important - rescale action!
