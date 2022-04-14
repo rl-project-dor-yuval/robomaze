@@ -83,9 +83,9 @@ class NavigatorEnv(gym.Env):
 
         self.curr_step = 0
 
-    def reset(self):
+    def reset(self, **maze_env_kwargs):
         self.curr_step = 0
-        self.ant_curr_obs = self.maze_env.reset()
+        self.ant_curr_obs = self.maze_env.reset(**maze_env_kwargs)
         return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
 
     def step(self, action, visualize_subgoal=True):
@@ -182,7 +182,7 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         self.start_goal_pairs_count = len(self.start_goal_pairs)
         self.curr_startgoal_pair_idx = None
 
-    def reset(self, start_goal_pair_idx: int = None):
+    def reset(self, start_goal_pair_idx: int = None, **kwargs):
         """
         Reset the environment to a new start-goal pair
         :param start_goal_pair_idx: idx of the start-goal pair, if none a random one is chosen
@@ -200,7 +200,7 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         self.target_goal = self.start_goal_pairs[start_goal_pair_idx][1]
 
-        return super(MultiStartgoalNavigatorEnv, self).reset()
+        return super(MultiStartgoalNavigatorEnv, self).reset(**kwargs)
 
     def step(self, action, visualize_subgoal=True):
         """
