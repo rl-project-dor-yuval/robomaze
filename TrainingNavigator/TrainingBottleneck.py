@@ -33,10 +33,11 @@ config = {
     "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
     "done_on_collision": True,  # modify rewards in case you change this
     "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01, ),
-    "demonstration_path": 'TrainingNavigator/workspaces/botttleneck_trajectories.npz',
+    "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_trajectories.npz',
     "demo_on_fail_prob": 0.5,
+
     "max_stepper_steps": 150,
-    "max_navigator_steps": 30,
+    "max_navigator_steps": 50,
 
     # logging parameters
     "eval_freq": 100,
@@ -56,7 +57,7 @@ wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
 # Setup Training Environment
 maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
-start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneck.npy') / 10
+start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneckXL.npy') / config["maze_size"][0]
 
 maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
                    target_loc=start_goal_pairs[0][-1], xy_in_obs=True,

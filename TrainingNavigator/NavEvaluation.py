@@ -13,7 +13,7 @@ class NavEvalCallback(BaseCallback):
                  eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000 , verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
-        :param eval_env: separate envrionment to evaluate the model on
+        :param eval_env: separate environment to evaluate the model on
         :param eval_freq: evaluate the model every eval_freq timesteps
         :param eval_video_freq: record videos every eval_video_freq*eval_freq timesteps
         :param verbose: verbosity

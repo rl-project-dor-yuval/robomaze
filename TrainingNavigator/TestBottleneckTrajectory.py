@@ -52,9 +52,9 @@ if __name__ == '__main__':
 
     # check the rest of workspaces :
     normal_ws_success = 0
-    for i in range(30, 100):
+    for i in range(30, 1000):
         res = test_trajectory(trajectories[str(i)], maze_map, i, create_video=True)
-        print (f"trajectory {i} success: {res}")
+        print(f"trajectory {i} success: {res}")
         normal_ws_success += res
 
     print(f"hard workspaces success: {hard_ws_success}/30")

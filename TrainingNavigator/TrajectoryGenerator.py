@@ -126,8 +126,8 @@ if __name__ == "__main__":
 
     for i in range(num_workspaces):
         # coords when origin is bottom left (this is how RRTstar algo works)
-        x_init = (ws_list[i, 0, 1] , trajGen.map.shape[0] - ws_list[i, 0, 0]-1)
-        x_goal = (ws_list[i, 1, 1], trajGen.map.shape[0] - ws_list[i, 1, 0]-1)
+        x_init = (ws_list[i, 0, 1], trajGen.map.shape[0] - ws_list[i, 0, 0] - 1)
+        x_goal = (ws_list[i, 1, 1], trajGen.map.shape[0] - ws_list[i, 1, 0] - 1)
 
         traj = trajGen.find_optimal_trajectories(xInit=x_init, xGoal=x_goal, numOfTrajs=1, plot=False)
         traj[0] = np.array(traj[0]) * map_granularity

@@ -183,7 +183,7 @@ class DDPGMP(DDPG):
             # important - rescale action!
             action = self.policy.scale_action(action)
             action = np.clip(action, -1, 1)
-            # TODO - consider training on normalized action
+            # TODO - consider training on normalized action, maybe tanh
 
             if i == len(demo_traj) - 2:  # last transition:
                 reward = self.env.envs[0].rewards_config.target_arrival
@@ -217,20 +217,9 @@ class DDPGMP(DDPG):
         return super(DDPGMP, self)._excluded_save_params() + ["demonstrations"]
 
 
-#
-# class DDPGMPPolicy(MLPPo    ):
-#     def __init__(self, *args, **kwargs):
-#         ...
-#     def forward(self, obs):
-#         dx, dy = self.network(obs)
-#         r, theta = torch.sqrt(dx ** 2 + dy ** 2), torch.atan2(dy, dx)
-#         r = torch.clamp(r, 0, 1)
-#         return np.array([r, theta])
-
-
 class CustomActor(Actor):
     """
-    Actor network (policy) for TD3.
+    Custom Actor network (policy) for TD3. applying a transformation to the output of the network to r,theta.
     """
 
     def __init__(self, *args, **kwargs):
@@ -242,11 +231,16 @@ class CustomActor(Actor):
     def forward(self, obs: th.Tensor) -> th.Tensor:
         # assert deterministic, 'The TD3 actor only outputs deterministic actions'
         features = self.extract_features(obs)
+        # Actor outputs learned delta x, delta y
         out = self.mu(features)
-        # dx, dy = out
-        # r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
+        # transforming to r,theta
+
+        dx, dy = out[:, 0], out[:, 1]
+        r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
         # r = th.clamp(r, 0, 1)
-        # return r, theta
+
+        out = th.cat([r.reshape(-1, 1), theta.reshape(-1, 1)], dim=1)
+        out = th.tanh(out)
         return out
 
 
