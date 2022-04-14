@@ -108,16 +108,19 @@ class TrajGenerator:
 
 
 if __name__ == "__main__":
+    workspaces_file_path = "workspaces/bottleneckXL.npy"  # path of numpy file with workspaces
+    filename = workspaces_file_path.split("/")[-1].split(".")[0]
+
     # create Search Space
     map_path = "maps/bottleneck_freespace.png"
     map_granularity = 0.1  # in simulation coordinates, which means that any pixel in the map
-                           # is map_granularity units in the simulation coordinates
+    # is map_granularity units in the simulation coordinates
 
     np.set_printoptions(precision=1)
 
     trajGen = TrajGenerator(map_path, max_section_len=16)
 
-    ws_list = np.load("workspaces/bottleneck.npy")
+    ws_list = np.load(workspaces_file_path)
     num_workspaces = ws_list.shape[0]
     ws_traj_dict = {}  # workspaces Trajectory Dictionary key = workspace idx, value= dictionary of
 
@@ -134,9 +137,9 @@ if __name__ == "__main__":
         np.set_printoptions(precision=1)
         print(i, '\n', ws_traj_dict[str(i)])
 
-    np.savez('workspaces/botttleneck_trajectories.npz', **ws_traj_dict)
+    np.savez(f'workspaces/{filename}_trajectories.npz', **ws_traj_dict)
 
     # test loading
-    trajectories = np.load('workspaces/botttleneck_trajectories.npz')
+    trajectories = np.load(f'workspaces/{filename}_trajectories.npz')
     assert np.all(trajectories[str(num_workspaces-1)] == traj[0])
 

@@ -4,8 +4,9 @@ import colorsys
 import seaborn as sns
 
 
-num_of_workspaces = 100
+num_of_workspaces = 1000
 min_num_hard_workspaces = 30
+workspaces_dir_name = "bottleneckXL"
 # minimum number of samples that are guaranteed to have start and goal in different
 # sides which makes the agent walk through the bottleneck to succeed
 min_distance = 15 # in maze pixels, for all targets
@@ -46,7 +47,7 @@ for i, w in enumerate(workspaces):
     cv2.circle(w_im, tuple(reversed(w[0])), 1, 0.2, -1)
     cv2.circle(w_im, tuple(reversed(w[1])), 2, 0.4, -1)
 
-    cv2.imwrite(f"workspaces/bottleneck_plots/{i}.png", w_im * 255)
+    cv2.imwrite(f"workspaces/{workspaces_dir_name}/{i}.png", w_im * 255)
 
 
 # create plot of all workspaces
@@ -55,9 +56,9 @@ color_freespace_map = cv2.imread("maps/bottleneck_freespace.png", cv2.IMREAD_COL
 
 for i, w in enumerate(workspaces):
      color_freespace_map[tuple(w[0])] = color_freespace_map[tuple(w[1])] = colors[i]
-cv2.imwrite(f"workspaces/bottleneck_plots/all.png", color_freespace_map * 255)
+cv2.imwrite(f"workspaces/{workspaces_dir_name}/all.png", color_freespace_map * 255)
 
 
 # save workspaces to csv:
 workspaces = np.array(workspaces)
-np.save("workspaces/bottleneck", workspaces)
+np.save(f"workspaces/{workspaces_dir_name}", workspaces)
