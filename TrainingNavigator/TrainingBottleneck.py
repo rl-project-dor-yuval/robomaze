@@ -19,9 +19,9 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 # --- Parameters
 config = {
     "run_name": "LongRun_FixedPolicy",
-    "show_gui": True,
+    "show_gui": False,
     "seed": 42 ** 2,
-    "train_steps": 10 ** 5,
+    "train_steps": 5 * 10 ** 6,
 
     # Training and environment parameters
     "learning_rate": 1e-5,
@@ -44,7 +44,7 @@ config = {
     "eval_workspaces": 100,
     "eval_freq": 2000,
     "video_freq": 5,
-    "save_model_freq": 5000,
+    "save_model_freq": 10000,
 
     # Constants:
     "maze_size": (10, 10)

@@ -66,9 +66,10 @@ class DDPGMP(DDPG):
             optimize_memory_usage=optimize_memory_usage,
         )
 
-        self.demonstrations = np.load(demonstrations_path)
-        if verbose > 0:
-            print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
+        # self.demonstrations = np.load(demonstrations_path)
+        # if verbose > 0:
+        #     print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
+        self.demonstrations_path = demonstrations_path
         self.demo_on_fail_prob = demo_on_fail_prob
 
     def collect_rollouts(
@@ -162,7 +163,9 @@ class DDPGMP(DDPG):
                     if np.random.rand() < self.demo_on_fail_prob:
                         if self.verbose > 0:
                             print("Failed Episode. Inserting demonstration to replay buffer.")
-                        demo_traj = self.demonstrations[str(info['start_goal_pair_idx'])]
+
+                        with np.load(self.demonstrations_path) as demos:
+                            demo_traj = demos[str(info['start_goal_pair_idx'])]
                         self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
                                                            info['start_goal_pair_idx'])
                     elif self.verbose > 0:
