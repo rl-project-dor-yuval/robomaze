@@ -146,7 +146,10 @@ class NavEvalCallback(BaseCallback):
          trajectory for that workspace
         """
         walked_traj = walked_traj * 10
-        planned_traj = self.model.demonstrations[str(ws_id)] * 10
+
+        with np.load(self.model.demonstrations_path) as demos:
+            planned_traj = demos[str(ws_id)] * 10
+
         start, goal = planned_traj[0], planned_traj[-1]
 
         fig, axes = plt.subplots(1, 2)
