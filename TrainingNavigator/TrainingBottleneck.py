@@ -19,7 +19,7 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 # --- Parameters
 config = {
     "run_name": "TestingEvalCallback",
-    "show_gui": False,
+    "show_gui": True,
     "seed": 42 ** 2,
     "train_steps": 10 ** 5,
 
@@ -35,14 +35,16 @@ config = {
     "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01, ),
     "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_trajectories.npz',
     "demo_on_fail_prob": 0.5,
+    "learning_starts": 10 ** 4,
 
     "max_stepper_steps": 150,
     "max_navigator_steps": 50,
 
     # logging parameters
-    "eval_freq": 100,
-    "video_freq": 1,
-    "save_model_freq": 100,
+    "eval_workspaces": 100,
+    "eval_freq": 2000,
+    "video_freq": 5,
+    "save_model_freq": 5000,
 
     # Constants:
     "maze_size": (10, 10)
@@ -103,7 +105,7 @@ model = DDPGMP(policy=CustomTD3Policy,
                train_freq=(4, "episode"),
                verbose=0,
                tensorboard_log="./TrainingNavigator/logs/tb",
-               learning_starts=150,
+               learning_starts=config["learning_starts"],
                seed=config["seed"],
                demonstrations_path=config["demonstration_path"],
                demo_on_fail_prob=config["demo_on_fail_prob"],
@@ -128,6 +130,7 @@ callback = NavEvalCallback(dir=config["dir"],
                            eval_freq=config["eval_freq"],
                            eval_video_freq=config["video_freq"],
                            save_model_freq=config["save_model_freq"],
+                           eval_workspaces=config["eval_workspaces"],
                            maze_map=maze_map,
                            verbose=1)
 

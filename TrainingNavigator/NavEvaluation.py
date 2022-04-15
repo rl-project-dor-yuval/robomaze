@@ -13,13 +13,17 @@ import wandb
 
 class NavEvalCallback(BaseCallback):
     def __init__(self, dir: str, eval_env: MultiStartgoalNavigatorEnv, wandb_run: wandb.run,
-                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000,
+                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000, eval_workspaces=100,
                  maze_map: np.ndarray = None, verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
         :param eval_env: separate environment to evaluate the model on
+        :param wandb_run: W&B run object
         :param eval_freq: evaluate the model every eval_freq timesteps
         :param eval_video_freq: record videos every eval_video_freq*eval_freq timesteps
+        :param save_model_freq: frequency of saving the model
+        :param eval_workspaces: on each evaluation, evaluate just on the first eval_workspaces workspaces
+        :param maze_map: map of the maze, used to plot trajectories, if None, no plot is made
         :param verbose: verbosity
         """
         super(NavEvalCallback, self).__init__(verbose)
@@ -30,6 +34,7 @@ class NavEvalCallback(BaseCallback):
         self.eval_freq = eval_freq
         self.eval_video_freq = eval_video_freq
         self.save_model_freq = save_model_freq
+        self.eval_workspaces = eval_workspaces
         self.maze_map = maze_map
         self.verbose = verbose
 
@@ -85,8 +90,7 @@ class NavEvalCallback(BaseCallback):
         episodes_length = []
         success_count = 0
 
-        num_workspaces = self.eval_env.start_goal_pairs_count
-        for i in range(num_workspaces):
+        for i in range(self.eval_workspaces):
             obs = self.eval_env.reset(start_goal_pair_idx=i)
             curr_reward = 0
             steps = 0

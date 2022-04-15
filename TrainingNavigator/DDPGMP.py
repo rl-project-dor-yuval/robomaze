@@ -176,8 +176,8 @@ class DDPGMP(DDPG):
 
     def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj, demo_traj_idx):
         for i in range(len(demo_traj) - 1):
-            obs = np.concatenate([np.flip(demo_traj[i]), demo_traj[-1]])
-            new_obs = np.concatenate([np.flip(demo_traj[i + 1]), demo_traj[-1]])
+            obs = np.concatenate([demo_traj[i], demo_traj[-1]])
+            new_obs = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
             # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
             action = self._compute_fake_action(obs, new_obs)
             # important - rescale action!
@@ -237,11 +237,14 @@ class CustomActor(Actor):
 
         dx, dy = out[:, 0], out[:, 1]
         r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
-        # r = th.clamp(r, 0, 1)
 
-        out = th.cat([r.reshape(-1, 1), theta.reshape(-1, 1)], dim=1)
-        out = th.tanh(out)
-        return out
+        # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
+        low, high = self.action_space.low, self.action_space.high
+        r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
+        r_scaled.clip(-1, 1)
+        theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
+
+        return th.stack([r_scaled, theta_scaled], dim=1)
 
 
 class CustomTD3Policy(TD3Policy):
@@ -251,3 +254,8 @@ class CustomTD3Policy(TD3Policy):
     def make_actor(self, features_extractor: Optional[BaseFeaturesExtractor] = None) -> CustomActor:
         actor_kwargs = self._update_features_extractor(self.actor_kwargs, features_extractor)
         return CustomActor(**actor_kwargs).to(self.device)
+
+
+def replay_buffer_debug(replay_buffer):
+    import pandas as pd
+
