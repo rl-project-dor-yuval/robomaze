@@ -18,7 +18,7 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "TestingEvalCallback",
+    "run_name": "LongRun_FixedPolicy",
     "show_gui": True,
     "seed": 42 ** 2,
     "train_steps": 10 ** 5,

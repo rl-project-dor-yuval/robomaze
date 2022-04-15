@@ -106,9 +106,9 @@ class NavEvalCallback(BaseCallback):
             episodes_length.append(steps)
             success_count += info['success']
 
-        avg_reward = sum(rewards) / num_workspaces
-        avg_length = sum(episodes_length) / num_workspaces
-        success_rate = success_count / num_workspaces
+        avg_reward = sum(rewards) / self.eval_workspaces
+        avg_length = sum(episodes_length) / self.eval_workspaces
+        success_rate = success_count / self.eval_workspaces
 
         if self.verbose > 0:
             print("All workspaces evaluation done in %.4f secs: " % (time.time() - t_start))
