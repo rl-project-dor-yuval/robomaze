@@ -100,7 +100,7 @@ class DDPGMP(DDPG):
             # We use non-deterministic action in the case of SAC, for TD3, it does not matter
             unscaled_action, _ = self.predict(self._last_obs, deterministic=False)
             # rescale back to the original action space
-            unscaled_action = self.policy.unscale_action(unscaled_action)
+            # unscaled_action = self.policy.unscale_action(unscaled_action)
 
         # Rescale the action from [low, high] to [-1, 1]
         if isinstance(self.action_space, gym.spaces.Box):
@@ -294,7 +294,7 @@ class CustomActor(Actor):
         r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
         r_scaled = r_scaled.clip(-1, 1)
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
-        theta_scaled = theta_scaled.clip(-1, 1)
+        theta_scaled = theta_scaled.clip(-0.99, 0.99)
 
         # r_scaled = r.clip(low[0], high[0])
         # theta_scaled = theta.clip(low[1], high[1])
