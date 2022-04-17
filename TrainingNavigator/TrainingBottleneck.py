@@ -18,7 +18,7 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "LongRun_FixedPolicy",
+    "run_name": "FixedScaledAction?",
     "show_gui": False,
     "seed": 42 ** 2,
     "train_steps": 5 * 10 ** 6,
@@ -26,25 +26,26 @@ config = {
     # Training and environment parameters
     "learning_rate": 1e-5,
     "batch_size": 512,
-    "buffer_size": 5 * 10 ** 5,
+    "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
     "critic_arch": [64, 64],  # Should not be changed or explored
-    "exploration_noise_std": 0.1,
+    "exploration_noise_std": 0.03,
     "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
+    "stepper_radius_range": (1, 2.5),
     "done_on_collision": True,  # modify rewards in case you change this
     "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01, ),
     "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_trajectories.npz',
-    "demo_on_fail_prob": 0.5,
-    "learning_starts": 10 ** 4,
+    "demo_on_fail_prob": 1,
+    "learning_starts": 10**4,
 
     "max_stepper_steps": 150,
     "max_navigator_steps": 50,
 
     # logging parameters
     "eval_workspaces": 100,
-    "eval_freq": 2000,
-    "video_freq": 5,
-    "save_model_freq": 10000,
+    "eval_freq": 5000,
+    "video_freq": 4,
+    "save_model_freq": 50000,
 
     # Constants:
     "maze_size": (10, 10)
@@ -59,6 +60,7 @@ wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
 # Setup Training Environment
 maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
+
 start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneckXL.npy') / config["maze_size"][0]
 
 maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
@@ -70,7 +72,9 @@ nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                      rewards=config["rewards"],
                                      done_on_collision=config["done_on_collision"],
                                      max_stepper_steps=config["max_stepper_steps"],
-                                     max_steps=config["max_navigator_steps"],)
+                                     max_steps=config["max_navigator_steps"],
+                                     stepper_radius_range=config["stepper_radius_range"],
+                                     )
 nav_env.visualize_mode(False)
 nav_env = Monitor(env=nav_env)
 
@@ -136,4 +140,4 @@ callback = NavEvalCallback(dir=config["dir"],
 
 model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
-# wb_run.finish()
+wb_run.finish()

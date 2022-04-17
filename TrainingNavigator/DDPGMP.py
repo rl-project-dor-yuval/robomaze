@@ -241,11 +241,14 @@ class CustomActor(Actor):
         dx, dy = out[:, 0], out[:, 1]
         r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
 
-        # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
+        # # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
         low, high = self.action_space.low, self.action_space.high
-        r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
-        r_scaled.clip(-1, 1)
-        theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
+        # r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
+        # r_scaled.clip(-1, 1)
+        # theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
+
+        r_scaled = r.clip(low[0], high[0])
+        theta_scaled = theta.clip(low[1], high[1])
 
         return th.stack([r_scaled, theta_scaled], dim=1)
 
