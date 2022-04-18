@@ -1,15 +1,12 @@
-import math
 import sys
 sys.path.append('.')
 
-import time
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.monitor import Monitor
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 import cv2
-from Utils import plot_trajectory
 from DDPGMP import DDPGMP, CustomTD3Policy
 import torch
 from MazeEnv.EnvAttributes import Rewards
@@ -18,13 +15,13 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "FixedScaledActiontmp",
-    "show_gui": True,
+    "run_name": "AddEpsilonToR",
+    "show_gui": False,
     "seed": 42 ** 2,
     "train_steps": 5 * 10 ** 6,
 
     # Training and environment parameters
-    "learning_rate": 1e-5,
+    "learning_rate": 0.5e-5,
     "batch_size": 512,
     "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
@@ -34,12 +31,12 @@ config = {
     "stepper_radius_range": (1, 2.5),
     "done_on_collision": True,  # modify rewards in case you change this
     "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01, ),
-    "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_trajectories.npz',
+    "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
     "demo_on_fail_prob": 1,
-    "learning_starts": 1 ** 1,
+    "learning_starts": 10 ** 4,
 
-    "max_stepper_steps": 150,
-    "max_navigator_steps": 50,
+    "max_stepper_steps": 100,
+    "max_navigator_steps": 150,
 
     # logging parameters
     "eval_workspaces": 100,
@@ -54,9 +51,9 @@ config["dir"] = "./TrainingNavigator/logs/" + config["run_name"]
 # ---
 
 # setup W&B:
-# wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
-#                    config=config)
-# wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
+wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
+                    config=config)
+wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
 # Setup Training Environment
 maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
@@ -127,17 +124,17 @@ model = DDPGMP(policy=CustomTD3Policy,
 #              tensorboard_log="./TrainingNavigator/logs/tb",
 #              learning_starts=16,
 #              seed=SEED, )
-#
-# callback = NavEvalCallback(dir=config["dir"],
-#                            eval_env=eval_nav_env,
-#                            wandb_run= wb_run,
-#                            eval_freq=config["eval_freq"],
-#                            eval_video_freq=config["video_freq"],
-#                            save_model_freq=config["save_model_freq"],
-#                            eval_workspaces=config["eval_workspaces"],
-#                            maze_map=maze_map,
-#                            verbose=1)
 
-model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"])  # , callback=callback)
+callback = NavEvalCallback(dir=config["dir"],
+                           eval_env=eval_nav_env,
+                           wandb_run=wb_run,
+                           eval_freq=config["eval_freq"],
+                           eval_video_freq=config["video_freq"],
+                           save_model_freq=config["save_model_freq"],
+                           eval_workspaces=config["eval_workspaces"],
+                           maze_map=maze_map,
+                           verbose=1)
+
+model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
 wb_run.finish()

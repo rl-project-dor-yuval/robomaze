@@ -14,12 +14,15 @@ from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
 
 
 # noinspection PyUnreachableCode
+from TrainingNavigator.Utils import plot_trajectory
+
+
 class TrajGenerator:
     """
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self, mapPath: str, max_section_len=20):
+    def __init__(self,mapPath: str, max_section_len=20):
 
         self.map = -(cv2.imread(mapPath, cv2.IMREAD_GRAYSCALE) / 255) + 1
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -29,7 +32,7 @@ class TrajGenerator:
         X_dimensions = np.array([[0, self.map.shape[0] - 1], [0, self.map.shape[1] - 1]])  # dimensions of Search Space
         self.X = ImgSearchSpace(dimension_lengths=X_dimensions, O=None, Im=self.map)
 
-        self.Q = np.array([(8, 4)])  # length of tree edges
+        self.Q = np.array([(3, 5, 10, 20)])  # length of tree edges
         self.r = 1  # length of smallest edge to check for intersection with obstacles
         self.max_samples = 10**6  # max number of samples to take before timing out
         self.rewire_count = 32  # optional, number of nearby branches to rewire
@@ -109,16 +112,18 @@ class TrajGenerator:
 
 if __name__ == "__main__":
     workspaces_file_path = "workspaces/bottleneckXL.npy"  # path of numpy file with workspaces
-    filename = workspaces_file_path.split("/")[-1].split(".")[0]
+    map_path = "maps/bottleneck_freespace.png"
+    filename = "bottleneckXL_short1.5"
+    plots_save_path = "workspaces/bottleneckXL_short1.5_plots/"  # path to save plots
 
     # create Search Space
-    map_path = "maps/bottleneck_freespace.png"
+    maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     map_granularity = 0.1  # in simulation coordinates, which means that any pixel in the map
     # is map_granularity units in the simulation coordinates
 
     np.set_printoptions(precision=1)
 
-    trajGen = TrajGenerator(map_path, max_section_len=16)
+    trajGen = TrajGenerator(map_path, max_section_len=15)
 
     ws_list = np.load(workspaces_file_path)
     num_workspaces = ws_list.shape[0]
@@ -130,7 +135,11 @@ if __name__ == "__main__":
         x_goal = (ws_list[i, 1, 1], trajGen.map.shape[0] - ws_list[i, 1, 0] - 1)
 
         traj = trajGen.find_optimal_trajectories(xInit=x_init, xGoal=x_goal, numOfTrajs=1, plot=False)
-        traj[0] = np.array(traj[0]) * map_granularity
+        traj[0] = np.array(traj[0])
+        # anyway plot manually:
+        plot_trajectory(traj[0], maze_map, save_loc=plots_save_path + str(i) + "._traj_plot.png")
+
+        traj[0] = traj[0] * map_granularity
         # TODO: meanwhile saving only the first Traj for each workspace
         ws_traj_dict[str(i)] = np.array(traj[0])
 
