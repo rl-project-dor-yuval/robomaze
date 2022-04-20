@@ -214,7 +214,7 @@ class DDPGMP(DDPG):
     def _compute_fake_action(self, obs, new_obs):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
-        r += 0.8  # add target epsilon offset
+        r = r + 0.8  # add target epsilon offset
         return np.array([r, theta])
 
     def _excluded_save_params(self) -> List[str]:
@@ -244,10 +244,12 @@ class CustomActor(Actor):
 
         # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
         low, high = self.action_space.low, self.action_space.high
-        r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
-        r_scaled = r_scaled.clip(-1, 1)
+        # r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
+        # r_scaled = r_scaled.clip(-1, 1)
+        r_scaled = th.tanh(r)
+        # r_scaled = r_scaled + 0.8  # add target epsilon offset
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
-        theta_scaled = theta_scaled.clip(-1, 1)
+        # theta_scaled = theta_scaled.clip(-1, 1)
 
         return th.stack([r_scaled, theta_scaled], dim=1)
 

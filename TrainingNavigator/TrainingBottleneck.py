@@ -15,33 +15,33 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "AddEpsilonToR",
+    "run_name": "tanhOnR",
     "show_gui": False,
-    "seed": 42 ** 2,
+    "seed": 42 ** 3,
     "train_steps": 5 * 10 ** 6,
 
     # Training and environment parameters
     "learning_rate": 0.5e-5,
-    "batch_size": 512,
+    "batch_size": 2048,
     "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
     "critic_arch": [64, 64],  # Should not be changed or explored
-    "exploration_noise_std": 0.03,
+    "exploration_noise_std": 0.1,
     "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
     "stepper_radius_range": (1, 2.5),
     "done_on_collision": True,  # modify rewards in case you change this
-    "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.01, ),
+    "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.005, ),
     "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
-    "demo_on_fail_prob": 1,
+    "demo_on_fail_prob": 0.5,
     "learning_starts": 10 ** 4,
 
-    "max_stepper_steps": 100,
-    "max_navigator_steps": 150,
+    "max_stepper_steps": 75,
+    "max_navigator_steps": 60,
 
     # logging parameters
-    "eval_workspaces": 100,
-    "eval_freq": 5000,
-    "video_freq": 4,
+    "eval_workspaces": 50,  # will take the first workspaces
+    "eval_freq": 20000,
+    "video_freq": 1,
     "save_model_freq": 50000,
 
     # Constants:
@@ -103,7 +103,7 @@ model = DDPGMP(policy=CustomTD3Policy,
                batch_size=config["batch_size"],
                action_noise=exploration_noise,
                device=device,
-               train_freq=(4, "episode"),
+               train_freq=(1, "episode"),
                verbose=0,
                tensorboard_log="./TrainingNavigator/logs/tb",
                learning_starts=config["learning_starts"],

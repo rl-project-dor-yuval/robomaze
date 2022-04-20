@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     np.set_printoptions(precision=1)
 
-    trajGen = TrajGenerator(map_path, max_section_len=15)
+    trajGen = TrajGenerator(map_path, max_section_len=5)
 
     ws_list = np.load(workspaces_file_path)
     num_workspaces = ws_list.shape[0]
