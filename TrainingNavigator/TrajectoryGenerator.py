@@ -11,18 +11,15 @@ from typing import Tuple, Dict, List
 from TrainingNavigator.RRT_star.src.rrt.rrt_star import RRTStar
 from TrainingNavigator.RRT_star.src.search_space.search_space import ImgSearchSpace
 from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
-
+from Utils import plot_trajectory
 
 # noinspection PyUnreachableCode
-from TrainingNavigator.Utils import plot_trajectory
-
-
 class TrajGenerator:
     """
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self,mapPath: str, max_section_len=20):
+    def __init__(self, mapPath: str, max_section_len=20):
 
         self.map = -(cv2.imread(mapPath, cv2.IMREAD_GRAYSCALE) / 255) + 1
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -32,7 +29,7 @@ class TrajGenerator:
         X_dimensions = np.array([[0, self.map.shape[0] - 1], [0, self.map.shape[1] - 1]])  # dimensions of Search Space
         self.X = ImgSearchSpace(dimension_lengths=X_dimensions, O=None, Im=self.map)
 
-        self.Q = np.array([(3, 5, 10, 20)])  # length of tree edges
+        self.Q = np.array([(8, 4)])  # length of tree edges
         self.r = 1  # length of smallest edge to check for intersection with obstacles
         self.max_samples = 10**6  # max number of samples to take before timing out
         self.rewire_count = 32  # optional, number of nearby branches to rewire
@@ -112,9 +109,13 @@ class TrajGenerator:
 
 if __name__ == "__main__":
     workspaces_file_path = "workspaces/bottleneckXL.npy"  # path of numpy file with workspaces
-    map_path = "maps/bottleneck_freespace.png"
-    filename = "bottleneckXL_short1.5"
+    workspaces_filename = workspaces_file_path.split("/")[-1].split(".")[0]
+
+    trajs_filename = "bottleneckXL_short1.5"
     plots_save_path = "workspaces/bottleneckXL_short1.5_plots/"  # path to save plots
+
+    # create Search Space
+    map_path = "maps/bottleneck_freespace.png"
 
     # create Search Space
     maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
@@ -146,9 +147,8 @@ if __name__ == "__main__":
         np.set_printoptions(precision=1)
         print(i, '\n', ws_traj_dict[str(i)])
 
-    np.savez(f'workspaces/{filename}_trajectories.npz', **ws_traj_dict)
+    np.savez(f'workspaces/{trajs_filename}_trajectories.npz', **ws_traj_dict)
 
     # test loading
-    trajectories = np.load(f'workspaces/{filename}_trajectories.npz')
-    assert np.all(trajectories[str(num_workspaces-1)] == traj[0])
-
+    trajectories = np.load(f'workspaces/{trajs_filename}_trajectories.npz')
+    assert np.all(trajectories[str(num_workspaces - 1)] == traj[0])

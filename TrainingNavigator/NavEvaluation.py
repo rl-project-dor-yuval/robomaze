@@ -53,6 +53,7 @@ class NavEvalCallback(BaseCallback):
 
     def _init_callback(self) -> None:
         super(NavEvalCallback, self)._init_callback()
+        wandb.watch(self.model.actor, "gradients")
 
     def _on_step(self) -> bool:
         super(NavEvalCallback, self)._on_step()
@@ -79,6 +80,7 @@ class NavEvalCallback(BaseCallback):
     def _on_training_end(self) -> None:
         super(NavEvalCallback, self)._on_training_end()
         self.model.save(self.model_save_path + '/last_model_' + str(self.n_calls))
+        # wandb.log({'grad_norm':self.model.actor., 'step': self.n_calls})
 
     def _on_insert_demo(self) -> None:
         pass  # use this?
