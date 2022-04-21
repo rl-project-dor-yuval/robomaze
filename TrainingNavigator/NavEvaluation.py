@@ -54,7 +54,6 @@ class NavEvalCallback(BaseCallback):
 
     def _init_callback(self) -> None:
         super(NavEvalCallback, self)._init_callback()
-        wandb.watch(self.model.actor, "gradients")
 
     def _on_step(self) -> bool:
         super(NavEvalCallback, self)._on_step()
@@ -78,30 +77,9 @@ class NavEvalCallback(BaseCallback):
                 print('--- Saving model to {}'.format(self.model_save_path))
             self.model.save(self.model_save_path + '/model_' + str(self.n_calls))
 
-        self._log_actor_critic_grad_norm()
-
     def _on_training_end(self) -> None:
         super(NavEvalCallback, self)._on_training_end()
         self.model.save(self.model_save_path + '/last_model_' + str(self.n_calls))
-
-    def _log_actor_critic_grad_norm(self) -> None:
-
-        actor_total_norm, critic_total_norm = 0, 0
-        actor_params = [p for p in self.model.actor.parameters() if p.grad is not None and p.requires_grad]
-        critic_params = [p for p in self.model.critic.parameters() if p.grad is not None and p.requires_grad]
-
-        for p_ac, p_cr in zip(actor_params, critic_params):
-            p_ac_norm = p_ac.grad.detach().data.norm(2)
-            actor_total_norm += p_ac_norm.item() ** 2
-
-            p_cr_norm = p_ac.grad.detach().data.norm(2)
-            critic_total_norm += p_cr_norm.item() ** 2
-
-        actor_total_norm = actor_total_norm ** 0.5
-        critic_total_norm = critic_total_norm ** 0.5
-
-        wandb.log({'actor_grad_norm': actor_total_norm, 'step': self.n_calls})
-        wandb.log({'critic_grad_norm': critic_total_norm, 'step': self.n_calls})
 
     def _on_insert_demo(self) -> None:
         pass  # use this?

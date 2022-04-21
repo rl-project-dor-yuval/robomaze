@@ -15,13 +15,14 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "tanhOnR",
+    "run_name": "GradClip5",
     "show_gui": False,
     "seed": 42 ** 3,
     "train_steps": 5 * 10 ** 6,
 
     # Training and environment parameters
     "learning_rate": 0.5e-5,
+    "grad_clip_norm": 5,
     "batch_size": 2048,
     "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
@@ -110,6 +111,7 @@ model = DDPGMP(policy=CustomTD3Policy,
                seed=config["seed"],
                demonstrations_path=config["demonstration_path"],
                demo_on_fail_prob=config["demo_on_fail_prob"],
+               grad_clip_norm=config["grad_clip_norm"],
                policy_kwargs=policy_kwargs)
 
 # from stable_baselines3 import DDPG
