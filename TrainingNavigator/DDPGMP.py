@@ -113,7 +113,7 @@ class DDPGMP(DDPG):
             self.critic.optimizer.zero_grad()
             critic_loss.backward()
             if self.grad_clip_norm is not None:
-                th.nn.utils.clip_grad_norm(self.critic.parameters(), self.grad_clip_norm)
+                th.nn.utils.clip_grad_norm_(self.critic.parameters(), self.grad_clip_norm)
             self._log_grad_norm(self.critic, "train/critic_grad_norm")
             self.critic.optimizer.step()
 
@@ -127,7 +127,7 @@ class DDPGMP(DDPG):
                 self.actor.optimizer.zero_grad()
                 actor_loss.backward()
                 if self.grad_clip_norm is not None:
-                    th.nn.utils.clip_grad_norm(self.actor.parameters(), self.grad_clip_norm)
+                    th.nn.utils.clip_grad_norm_(self.actor.parameters(), self.grad_clip_norm)
                 self._log_grad_norm(self.actor, "train/actor_grad_norm")
                 self.actor.optimizer.step()
 
