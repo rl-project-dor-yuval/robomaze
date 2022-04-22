@@ -75,6 +75,9 @@ class DDPGMP(DDPG):
         self.demo_on_fail_prob = demo_on_fail_prob
         self.grad_clip_norm = grad_clip_norm
 
+        # keep for comfort:
+        self.epsilon_to_goal = env.epsilon_to_hit_subgoal
+
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         """
         override td3 method but copy of the same implementation just added gradient logging and clipping
@@ -254,14 +257,17 @@ class DDPGMP(DDPG):
             # important - rescale action!
             action = self.policy.scale_action(action)
             action = np.clip(action, -1, 1)
-            # TODO - consider training on normalized action, maybe tanh
 
-            if i == len(demo_traj) - 2:  # last transition:
+            dist_to_goal = np.linalg.norm(new_obs[:2] - demo_traj[-1])
+            if i == len(demo_traj) - 2 or dist_to_goal < self.epsilon_to_goal:
+                # last transition or close enough to goal:
                 reward = self.env.envs[0].rewards_config.target_arrival
                 done = True
                 info = {'hit_maze': False, 'fell': False,  'stepper_timeout': False,
                         'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
                         'success': True}
+                replay_buffer.add(obs, new_obs, action, reward, done, [info],)
+                break  # end this trajectory here
             else:
                 reward = self.env.envs[0].rewards_config.idle
                 done = False
@@ -281,7 +287,7 @@ class DDPGMP(DDPG):
     def _compute_fake_action(self, obs, new_obs):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
-        r = r + 0.8  # add target epsilon offset
+        r = r + self.epsilon_to_goal  # add target epsilon offset
         return np.array([r, theta])
 
     def _excluded_save_params(self) -> List[str]:
