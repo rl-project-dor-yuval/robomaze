@@ -22,7 +22,8 @@ config = {
 
     # Training and environment parameters
     "learning_rate": 0.5e-5,
-    "grad_clip_norm": 5,
+    "grad_clip_norm_actor": 3,
+    "grad_clip_norm_critic": 0.5,
     "batch_size": 2048,
     "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
@@ -37,7 +38,7 @@ config = {
     "learning_starts": 10 ** 4,
 
     "max_stepper_steps": 75,
-    "max_navigator_steps": 60,
+    "max_navigator_steps": 100,
 
     # logging parameters
     "eval_workspaces": 50,  # will take the first workspaces
@@ -111,21 +112,9 @@ model = DDPGMP(policy=CustomTD3Policy,
                seed=config["seed"],
                demonstrations_path=config["demonstration_path"],
                demo_on_fail_prob=config["demo_on_fail_prob"],
-               grad_clip_norm=config["grad_clip_norm"],
+               grad_clip_norm_actor=config["grad_clip_norm_actor"],
+               grad_clip_norm_critic=config["grad_clip_norm_critic"],
                policy_kwargs=policy_kwargs)
-
-# from stable_baselines3 import DDPG
-# model = DDPG(policy="MlpPolicy",
-#              env=nav_env,
-#              buffer_size=BUFFER_SIZE,
-#              learning_rate=LEARNING_RATE,
-#              action_noise=exploration_noise,
-#              device=device,
-#              train_freq=(8, "episode"),
-#              verbose=0,
-#              tensorboard_log="./TrainingNavigator/logs/tb",
-#              learning_starts=16,
-#              seed=SEED, )
 
 callback = NavEvalCallback(dir=config["dir"],
                            eval_env=eval_nav_env,

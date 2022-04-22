@@ -43,7 +43,8 @@ class DDPGMP(DDPG):
             _init_setup_model: bool = True,
             demonstrations_path: os.path = None,
             demo_on_fail_prob: float = 0.5,
-            grad_clip_norm: float = None,
+            grad_clip_norm_actor: float = None,
+            grad_clip_norm_critic: float = None,
     ):
         super(DDPGMP, self).__init__(
             policy=policy,
@@ -73,7 +74,8 @@ class DDPGMP(DDPG):
         #     print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
         self.demonstrations_path = demonstrations_path
         self.demo_on_fail_prob = demo_on_fail_prob
-        self.grad_clip_norm = grad_clip_norm
+        self.grad_clip_norm_actor = grad_clip_norm_actor
+        self.grad_clip_norm_critic = grad_clip_norm_critic
 
         # keep for comfort:
         self.epsilon_to_goal = env.epsilon_to_hit_subgoal
@@ -115,8 +117,8 @@ class DDPGMP(DDPG):
             # Optimize the critics
             self.critic.optimizer.zero_grad()
             critic_loss.backward()
-            if self.grad_clip_norm is not None:
-                th.nn.utils.clip_grad_norm_(self.critic.parameters(), self.grad_clip_norm)
+            if self.grad_clip_norm_critic is not None:
+                th.nn.utils.clip_grad_norm_(self.critic.parameters(), self.grad_clip_norm_critic)
             self._log_grad_norm(self.critic, "train/critic_grad_norm")
             self.critic.optimizer.step()
 
@@ -129,8 +131,8 @@ class DDPGMP(DDPG):
                 # Optimize the actor
                 self.actor.optimizer.zero_grad()
                 actor_loss.backward()
-                if self.grad_clip_norm is not None:
-                    th.nn.utils.clip_grad_norm_(self.actor.parameters(), self.grad_clip_norm)
+                if self.grad_clip_norm_actor is not None:
+                    th.nn.utils.clip_grad_norm_(self.actor.parameters(), self.grad_clip_norm_actor)
                 self._log_grad_norm(self.actor, "train/actor_grad_norm")
                 self.actor.optimizer.step()
 
