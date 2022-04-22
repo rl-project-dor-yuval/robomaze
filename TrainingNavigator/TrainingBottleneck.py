@@ -28,7 +28,7 @@ config = {
     "buffer_size": 2 * 10 ** 5,
     "actor_arch": [64, 64],  # Should not be changed or explored
     "critic_arch": [64, 64],  # Should not be changed or explored
-    "exploration_noise_std": 0.1,
+    "exploration_noise_std": 0.03,
     "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
     "stepper_radius_range": (1, 2.5),
     "done_on_collision": True,  # modify rewards in case you change this
@@ -41,7 +41,7 @@ config = {
     "max_navigator_steps": 100,
 
     # logging parameters
-    "eval_workspaces": 50,  # will take the first workspaces
+    "eval_workspaces": 100,  # will take the first workspaces
     "eval_freq": 20000,
     "video_freq": 1,
     "save_model_freq": 50000,
