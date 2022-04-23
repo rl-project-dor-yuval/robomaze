@@ -36,7 +36,8 @@ class NavigatorEnv(gym.Env):
                  stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.8,
                  rewards: Rewards = Rewards(),
-                 done_on_collision=True):
+                 done_on_collision=True,
+                 velocity_in_obs=False,):
         """
         :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
         :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
@@ -61,6 +62,7 @@ class NavigatorEnv(gym.Env):
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
+        self.velocity_in_obs = velocity_in_obs
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
@@ -78,27 +80,38 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'cpu')
         self.stepper_agent = stepper_agent
 
         # Ant's current state
         self.ant_curr_obs = np.zeros(30)
         self.curr_subgoal = np.zeros(2)
         self.target_goal = np.array(self.maze_env._target_loc[0:2], dtype=np.float32)
+        self.ant_prev_loc = np.zeros(2)
 
         # Action -> [radius, azimuth (in radian)]
         self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi], dtype=np.float32),
                                 high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
                                 shape=(2,))
-        # Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
-        self.observation_space = Box(-np.inf, np.inf, (4,))
+
+        if self.velocity_in_obs:
+            # Observation -> [ Agent_x, Agent_y, V_x, V_y, Target_x, Target_y]
+            self.observation_space = Box(-np.inf, np.inf, (6,))
+        else:
+            # Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
+            self.observation_space = Box(-np.inf, np.inf, (4,))
 
         self.curr_step = 0
 
     def reset(self, **maze_env_kwargs):
         self.curr_step = 0
         self.ant_curr_obs = self.maze_env.reset(**maze_env_kwargs)
-        return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
+        self.ant_prev_loc = self.ant_curr_obs[0:2]
+
+        if self.velocity_in_obs:
+            return np.concatenate([self.ant_curr_obs[0:2], np.zeros(2), self.target_goal], dtype=np.float32)
+        else:
+            return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
 
     def step(self, action, visualize_subgoal=True):
         if action[0] < self.action_space.low[0] or action[0] > self.action_space.high[0]:
@@ -147,7 +160,11 @@ class NavigatorEnv(gym.Env):
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
                 break
 
-        nav_observation = np.concatenate([ant_xy, self.target_goal])
+        if self.velocity_in_obs:
+            nav_observation = np.concatenate([ant_xy, ant_xy - self.ant_prev_loc, self.target_goal])
+        else:
+            nav_observation = np.concatenate([ant_xy, self.target_goal])
+
         nav_info = info
 
         # determine nav reward and nav done according to info:
@@ -173,6 +190,8 @@ class NavigatorEnv(gym.Env):
             nav_info['navigator_timeout'] = False
 
         nav_info['stepper_timeout'] = nav_info.pop('timeout')
+
+        self.ant_prev_loc = ant_xy
 
         return nav_observation, nav_reward, nav_is_done, nav_info
 

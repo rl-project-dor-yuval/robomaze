@@ -253,7 +253,6 @@ class DDPGMP(DDPG):
                         elif self.verbose > 0:
                             print("Failed Episode, but not inserting demonstration to replay buffer.")
 
-
         callback.on_rollout_end()
 
         return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
@@ -264,13 +263,25 @@ class DDPGMP(DDPG):
         # therefore we insert just every num_envs'th transition from the demo trajectory
         # until we collect that number of transitions, we save them in temporary buffers.
 
+        vel_in_obs = self.env.get_attr('velocity_in_obs', 0)[0]
+        prev_loc = demo_traj[0]  # only managed if vel_in_obs is True
         for i in range(len(demo_traj) - 1):
-            self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], demo_traj[-1]])
-            self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
-            # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
+            if vel_in_obs:
+                self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i],
+                                                                    demo_traj[i] - prev_loc,
+                                                                    demo_traj[-1]])
+                prev_loc = demo_traj[i]
+                self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1],
+                                                                        demo_traj[i + 1] - prev_loc,
+                                                                        demo_traj[-1]])
+            else:
+                # Observation: [ Agent_x, Agent_y, Target_x, Target_y]
+                self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], demo_traj[-1]])
+                self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
+
             self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff[self.curr_buff_idx],
                                                                              self.new_obs_buff[self.curr_buff_idx])
-            # important - rescale action_buff!
+            # important - rescale action!
             self.action_buff[self.curr_buff_idx] = self.policy.scale_action(self.action_buff[self.curr_buff_idx])
             self.action_buff[self.curr_buff_idx] = np.clip(self.action_buff[self.curr_buff_idx], -1, 1)
 
@@ -280,14 +291,14 @@ class DDPGMP(DDPG):
                 self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].target_arrival
                 self.done_buff[self.curr_buff_idx] = True
                 self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                                   'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                                   'success': True}
+                                                      'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                                                      'success': True}
             else:
                 self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].idle
                 self.done_buff[self.curr_buff_idx] = False
                 self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                                   'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                                   'success': False}
+                                                      'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                                                      'success': False}
 
             if self.curr_buff_idx + 1 != replay_buffer.n_envs:
                 self.curr_buff_idx += 1
@@ -304,6 +315,7 @@ class DDPGMP(DDPG):
             self.curr_buff_idx = 0
 
     def _compute_fake_action(self, obs, new_obs):
+        # works for observations with velocities as well
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         r = r + self.epsilon_to_goal  # add target epsilon offset

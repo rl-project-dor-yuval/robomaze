@@ -19,16 +19,17 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "multiprocessing6envs_LongRun5M",
+        "run_name": "VelInObs_2Envs",
+        "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 42 ** 2,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
-        "num_envs": 6,
+        "num_envs": 2,
         "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 3,
-        "grad_clip_norm_critic": 0.5,
+        "grad_clip_norm_actor": 5,
+        "grad_clip_norm_critic": 1,
         "batch_size": 2048,
         "buffer_size": 1 * 10 ** 5,
         "actor_arch": [64, 64],  # Should not be changed or explored
@@ -42,12 +43,13 @@ if __name__ == '__main__':
         "demo_on_fail_prob": 0.5,
         "learning_starts": 10 ** 4,
 
+        "velocity_in_obs": True,
         "max_stepper_steps": 75,
         "max_navigator_steps": 100,
 
         # logging parameters
         "eval_workspaces": 100,  # will take the first workspaces
-        "eval_freq": 10000,
+        "eval_freq": 20000,
         "video_freq": 1,
         "save_model_freq": 20000,
 
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     # ---
 
     # setup W&B:
-    wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
+    wb_run = wandb.init(project=config["project"], name=config["run_name"],
                         config=config)
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
@@ -78,7 +80,8 @@ if __name__ == '__main__':
                           done_on_collision=config["done_on_collision"],
                           max_stepper_steps=config["max_stepper_steps"],
                           max_steps=config["max_navigator_steps"],
-                          stepper_radius_range=config["stepper_radius_range"], )
+                          stepper_radius_range=config["stepper_radius_range"],
+                          velocity_in_obs=config["velocity_in_obs"],)
 
     nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
@@ -94,7 +97,9 @@ if __name__ == '__main__':
                                               rewards=config["rewards"],
                                               done_on_collision=config["done_on_collision"],
                                               max_stepper_steps=config["max_stepper_steps"],
-                                              max_steps=config["max_navigator_steps"], )
+                                              max_steps=config["max_navigator_steps"],
+                                              velocity_in_obs=config["velocity_in_obs"],)
+    # noinspection DuplicatedCode
     eval_nav_env.visualize_mode(False)
 
     # set up model and run:
