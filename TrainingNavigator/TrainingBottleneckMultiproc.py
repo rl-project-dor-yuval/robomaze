@@ -19,13 +19,13 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "test_multiproccessing_local",
+        "run_name": "multiprocessing6envs_LongRun5M",
         "show_gui": False,
-        "seed": 42 ** 3,
+        "seed": 42 ** 2,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
-        "num_envs": 4,
+        "num_envs": 6,
         "learning_rate": 0.5e-5,
         "grad_clip_norm_actor": 3,
         "grad_clip_norm_critic": 0.5,
@@ -40,16 +40,16 @@ if __name__ == '__main__':
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.005, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
         "demo_on_fail_prob": 0.5,
-        "learning_starts": 100,
+        "learning_starts": 10 ** 4,
 
         "max_stepper_steps": 75,
         "max_navigator_steps": 100,
 
         # logging parameters
         "eval_workspaces": 100,  # will take the first workspaces
-        "eval_freq": 200,
+        "eval_freq": 10000,
         "video_freq": 1,
-        "save_model_freq": 50000,
+        "save_model_freq": 20000,
 
         # Constants:
         "maze_size": (10, 10)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     # ---
 
     # setup W&B:
-    wb_run = wandb.init(project="Robomaze-tests", name=config["run_name"],
+    wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
                         config=config)
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
