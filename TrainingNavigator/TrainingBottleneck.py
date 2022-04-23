@@ -15,7 +15,7 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 
 # --- Parameters
 config = {
-    "run_name": "GradClip5",
+    "run_name": "test",
     "show_gui": False,
     "seed": 42 ** 3,
     "train_steps": 5 * 10 ** 6,
@@ -53,7 +53,7 @@ config["dir"] = "./TrainingNavigator/logs/" + config["run_name"]
 # ---
 
 # setup W&B:
-wb_run = wandb.init(project="Robomaze-TrainingNavigator", name=config["run_name"],
+wb_run = wandb.init(project="Robomaze-tests", name=config["run_name"],
                     config=config)
 wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 

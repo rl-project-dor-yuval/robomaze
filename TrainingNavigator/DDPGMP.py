@@ -9,8 +9,8 @@ from torch.nn import functional as F
 from stable_baselines3 import DDPG
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.noise import ActionNoise
-from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn, GymEnv, Schedule
+from stable_baselines3.common.noise import ActionNoise, VectorizedActionNoise
+from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn, GymEnv, Schedule, TrainFrequencyUnit
 from stable_baselines3.common.utils import should_collect_more_steps, polyak_update
 from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
@@ -80,6 +80,16 @@ class DDPGMP(DDPG):
         # keep for comfort:
         self.epsilon_to_goal = env.epsilon_to_hit_subgoal
 
+        # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
+        num_envs = self.n_envs
+        self.obs_buff = np.zeros((num_envs,) + self.observation_space.shape)
+        self.new_obs_buff = np.zeros((num_envs,) + self.observation_space.shape)
+        self.action_buff = np.zeros((num_envs, self.action_space.shape[0]))
+        self.reward_buff = np.zeros(num_envs)
+        self.done_buff = np.zeros(num_envs)
+        self.info_buff = [{}] * num_envs
+        self.curr_buff_idx = 0
+
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         """
         override td3 method but copy of the same implementation just added gradient logging and clipping
@@ -125,7 +135,8 @@ class DDPGMP(DDPG):
             # Delayed policy updates
             if self._n_updates % self.policy_delay == 0:
                 # Compute actor loss
-                actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
+                actor_loss = -self.critic.q1_forward(replay_data.observations,
+                                                     self.actor(replay_data.observations)).mean()
                 actor_losses.append(actor_loss.item())
 
                 # Optimize the actor
@@ -144,8 +155,95 @@ class DDPGMP(DDPG):
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
 
-
     def collect_rollouts(
+            self,
+            env: VecEnv,
+            callback: BaseCallback,
+            train_freq: TrainFreq,
+            replay_buffer: ReplayBuffer,
+            action_noise: Optional[ActionNoise] = None,
+            learning_starts: int = 0,
+            log_interval: Optional[int] = None,
+    ) -> RolloutReturn:
+        """
+        Same as original implementation in OffPolicyAlgorithm but with the addition
+        of inserting demonstrations to the replay buffer in failure
+        """
+        # Switch to eval mode (this affects batch norm / dropout)
+        self.policy.set_training_mode(False)
+
+        num_collected_steps, num_collected_episodes = 0, 0
+
+        assert isinstance(env, VecEnv), "You must pass a VecEnv"
+        assert train_freq.frequency > 0, "Should at least collect one step or episode."
+
+        if env.num_envs > 1:
+            assert train_freq.unit == TrainFrequencyUnit.STEP, "You must use only one env when doing episodic training."
+
+        # Vectorize action noise if needed
+        if action_noise is not None and env.num_envs > 1 and not isinstance(action_noise, VectorizedActionNoise):
+            action_noise = VectorizedActionNoise(action_noise, env.num_envs)
+
+        if self.use_sde:
+            self.actor.reset_noise(env.num_envs)
+
+        callback.on_rollout_start()
+        continue_training = True
+
+        while should_collect_more_steps(train_freq, num_collected_steps, num_collected_episodes):
+            if self.use_sde and self.sde_sample_freq > 0 and num_collected_steps % self.sde_sample_freq == 0:
+                # Sample a new noise matrix
+                self.actor.reset_noise(env.num_envs)
+
+            # Select action randomly or according to policy
+            actions, buffer_actions = self._sample_action(learning_starts, action_noise, env.num_envs)
+
+            # Rescale and perform action
+            new_obs, rewards, dones, infos = env.step(actions)
+
+            self.num_timesteps += env.num_envs
+            num_collected_steps += 1
+
+            # Give access to local variables
+            callback.update_locals(locals())
+            # Only stop training if return value is False, not when it is None.
+            if callback.on_step() is False:
+                return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes,
+                                     continue_training=False)
+
+            # Retrieve reward and episode length if using Monitor wrapper
+            self._update_info_buffer(infos, dones)
+
+            # Store data in replay buffer (normalized action and unnormalized observation)
+            self._store_transition(replay_buffer, buffer_actions, new_obs, rewards, dones, infos)
+
+            self._update_current_progress_remaining(self.num_timesteps, self._total_timesteps)
+
+            # For DQN, check if the target network should be updated
+            # and update the exploration schedule
+            # For SAC/TD3, the update is dones as the same time as the gradient update
+            # see https://github.com/hill-a/stable-baselines/issues/900
+            self._on_step()
+
+            for idx, done in enumerate(dones):
+                if done:
+                    # Update stats
+                    num_collected_episodes += 1
+                    self._episode_num += 1
+
+                    if action_noise is not None:
+                        kwargs = dict(indices=[idx]) if env.num_envs > 1 else {}
+                        action_noise.reset(**kwargs)
+
+                    # Log training infos
+                    if log_interval is not None and self._episode_num % log_interval == 0:
+                        self._dump_logs()
+
+        callback.on_rollout_end()
+
+        return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
+
+    def __old_collect_rollouts(
             self,
             env: VecEnv,
             callback: BaseCallback,
@@ -251,40 +349,48 @@ class DDPGMP(DDPG):
         return RolloutReturn(mean_reward, num_collected_steps, num_collected_episodes, continue_training)
 
     def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj, demo_traj_idx):
-        for i in range(len(demo_traj) - 1):
-            obs = np.concatenate([demo_traj[i], demo_traj[-1]])
-            new_obs = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
-            # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
-            action = self._compute_fake_action(obs, new_obs)
-            # important - rescale action!
-            action = self.policy.scale_action(action)
-            action = np.clip(action, -1, 1)
+        # because replay buffer stores transitions in arrays of size buffer_size*num_envs,
+        # we need to collect transitions into arrays of num_envs to insert them to the replay buffer,
+        # therefore we insert just every num_envs'th transition from the demo trajectory
+        # until we collect that number of transitions, we save them in temporary buffers.
 
-            dist_to_goal = np.linalg.norm(new_obs[:2] - demo_traj[-1])
+        for i in range(len(demo_traj) - 1):
+            self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], demo_traj[-1]])
+            self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
+            # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
+            self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff, self.new_obs_buff)
+            # important - rescale action_buff!
+            self.action_buff[self.curr_buff_idx] = self.policy.scale_action(self.action_buff[self.curr_buff_idx])
+            self.action_buff[self.curr_buff_idx] = np.clip(self.action_buff[self.curr_buff_idx], -1, 1)
+
+            dist_to_goal = np.linalg.norm(demo_traj[i + 1] - demo_traj[-1])
             if i == len(demo_traj) - 2 or dist_to_goal < self.epsilon_to_goal:
                 # last transition or close enough to goal:
-                reward = self.env.envs[0].rewards_config.target_arrival
-                done = True
-                info = {'hit_maze': False, 'fell': False,  'stepper_timeout': False,
-                        'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                        'success': True}
-                replay_buffer.add(obs, new_obs, action, reward, done, [info],)
-                break  # end this trajectory here
+                self.reward_buff[self.curr_buff_idx] = self.env.envs[0].rewards_config.target_arrival
+                self.done_buff[self.curr_buff_idx] = True
+                self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
+                                   'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                                   'success': True}
             else:
-                reward = self.env.envs[0].rewards_config.idle
-                done = False
-                info = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                        'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                        'success': False}
+                self.reward_buff[self.curr_buff_idx] = self.env.envs[0].rewards_config.idle
+                self.done_buff[self.curr_buff_idx] = False
+                self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
+                                   'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
+                                   'success': False}
+
+            if self.curr_buff_idx + 1 != replay_buffer.n_envs:
+                self.curr_buff_idx += 1
+                continue
 
             replay_buffer.add(
-                obs,
-                new_obs,
-                action,
-                reward,
-                done,
-                [info],
+                self.obs_buff,
+                self.new_obs_buff,
+                self.action_buff,
+                self.reward_buff,
+                self.done_buff,
+                self.info_buff,
             )
+            self.curr_buff_idx = 0
 
     def _compute_fake_action(self, obs, new_obs):
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
@@ -352,4 +458,3 @@ class CustomTD3Policy(TD3Policy):
 
 def replay_buffer_debug(replay_buffer):
     import pandas as pd
-
