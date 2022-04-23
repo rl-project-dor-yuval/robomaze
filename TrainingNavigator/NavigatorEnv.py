@@ -22,19 +22,14 @@ def pol2cart(vec):
 
 class NavigatorEnv(gym.Env):
     """
-    :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
-    :param stepper_agent: stepper agent object
-    :param max_stepper_steps: maximum steps allowed to the stepper towards subgoal.
-    :param stepper_radius_range: defined by the reachable
-    :param epsilon_to_hit_subgoal: minimal distance to subgoal to be considered as goal arrival
-
     NavigatorEnv is a wrapper around MazeEnv and a stepper agent so that an s here is a command to the stepper.
     Generally the navigator's purpose is given a certain Goal, generate a sequence of subgoals (Navigator actions)
     all the way to it, whereas the stepperAgent knows how to reach close subgoals.
     """
 
     def __init__(self,
-                 maze_env: mz.MazeEnv,
+                 maze_env: mz.MazeEnv = None,
+                 maze_env_kwargs: dict = None,
                  stepper_agent=None,
                  max_stepper_steps=200,
                  max_steps=50,
@@ -42,9 +37,23 @@ class NavigatorEnv(gym.Env):
                  epsilon_to_hit_subgoal=0.8,
                  rewards: Rewards = Rewards(),
                  done_on_collision=True):
+        """
+        :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
+        :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
+                                otherwise this is ignored
+        :param stepper_agent: stepper agent object
+        :param max_stepper_steps: maximum steps allowed to the stepper towards subgoal.
+        :param max_steps: max steps for navigator episode
+        :param stepper_radius_range: defined by the reachable radius of the stepper
+        :param epsilon_to_hit_subgoal: minimal distance to subgoal to be considered as goal arrival
+        :param rewards: Rewards object, defines the reward for each event
+        :param done_on_collision: weather to kill the robot when colliding the wall
+        """
 
-        if not maze_env.xy_in_obs:
-            raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
+        if maze_env is None and maze_env_kwargs is None:
+            raise ValueError("Either maze_env or maze_env_kwargs must be given")
+        if maze_env is None:
+            maze_env = mz.MazeEnv(**maze_env_kwargs)
 
         self.maze_env = maze_env
         self.max_stepper_steps = max_stepper_steps
@@ -52,6 +61,9 @@ class NavigatorEnv(gym.Env):
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
+
+        if not maze_env.xy_in_obs:
+            raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
 
         # make sure:
         if not self.maze_env.done_on_collision == done_on_collision:

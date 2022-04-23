@@ -12,7 +12,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise, VectorizedActionNoise
 from stable_baselines3.common.type_aliases import TrainFreq, RolloutReturn, GymEnv, Schedule, TrainFrequencyUnit
 from stable_baselines3.common.utils import should_collect_more_steps, polyak_update
-from stable_baselines3.common.vec_env import VecEnv
+from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
@@ -21,7 +21,7 @@ class DDPGMP(DDPG):
     def __init__(
             self,
             policy: Union[str, Type[TD3Policy]],
-            env: MultiStartgoalNavigatorEnv,
+            env: SubprocVecEnv,
             learning_rate: Union[float, Schedule] = 1e-3,
             buffer_size: int = 1000000,  # 1e6
             learning_starts: int = 100,
@@ -78,7 +78,7 @@ class DDPGMP(DDPG):
         self.grad_clip_norm_critic = grad_clip_norm_critic
 
         # keep for comfort:
-        self.epsilon_to_goal = env.epsilon_to_hit_subgoal
+        self.epsilon_to_goal = env.get_attr('epsilon_to_hit_subgoal', 0)[0]
 
         # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
         num_envs = self.n_envs
@@ -239,6 +239,21 @@ class DDPGMP(DDPG):
                     if log_interval is not None and self._episode_num % log_interval == 0:
                         self._dump_logs()
 
+                    info = infos[idx]
+                    if info['hit_maze'] or info['fell'] or info['navigator_timeout']:
+                        # insert demonstration to replay buffer with probability self.demo_on_fail_prob
+                        if np.random.rand() < self.demo_on_fail_prob:
+                            if self.verbose > 0:
+                                print("Failed Episode. Inserting demonstration to replay buffer.")
+
+                            with np.load(self.demonstrations_path) as demos:
+                                demo_traj = demos[str(info['start_goal_pair_idx'])]
+                            self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
+                                                               info['start_goal_pair_idx'])
+                        elif self.verbose > 0:
+                            print("Failed Episode, but not inserting demonstration to replay buffer.")
+
+
         callback.on_rollout_end()
 
         return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
@@ -257,6 +272,7 @@ class DDPGMP(DDPG):
         Same as original implementation in OffPolicyAlgorithm but with the addition
         of inserting demonstrations to the replay buffer in failure
         """
+        # TODO : delete this
         episode_rewards, total_timesteps = [], []
         num_collected_steps, num_collected_episodes = 0, 0
 
@@ -358,7 +374,8 @@ class DDPGMP(DDPG):
             self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], demo_traj[-1]])
             self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
             # recall : Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
-            self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff, self.new_obs_buff)
+            self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff[self.curr_buff_idx],
+                                                                             self.new_obs_buff[self.curr_buff_idx])
             # important - rescale action_buff!
             self.action_buff[self.curr_buff_idx] = self.policy.scale_action(self.action_buff[self.curr_buff_idx])
             self.action_buff[self.curr_buff_idx] = np.clip(self.action_buff[self.curr_buff_idx], -1, 1)
@@ -366,13 +383,13 @@ class DDPGMP(DDPG):
             dist_to_goal = np.linalg.norm(demo_traj[i + 1] - demo_traj[-1])
             if i == len(demo_traj) - 2 or dist_to_goal < self.epsilon_to_goal:
                 # last transition or close enough to goal:
-                self.reward_buff[self.curr_buff_idx] = self.env.envs[0].rewards_config.target_arrival
+                self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].target_arrival
                 self.done_buff[self.curr_buff_idx] = True
                 self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
                                    'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
                                    'success': True}
             else:
-                self.reward_buff[self.curr_buff_idx] = self.env.envs[0].rewards_config.idle
+                self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].idle
                 self.done_buff[self.curr_buff_idx] = False
                 self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
                                    'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
