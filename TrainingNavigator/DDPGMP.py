@@ -43,6 +43,7 @@ class DDPGMP(DDPG):
             _init_setup_model: bool = True,
             demonstrations_path: os.path = None,
             demo_on_fail_prob: float = 0.5,
+            demo_prob_decay: float = 1,
             grad_clip_norm_actor: float = None,
             grad_clip_norm_critic: float = None,
     ):
@@ -76,6 +77,9 @@ class DDPGMP(DDPG):
         self.demo_on_fail_prob = demo_on_fail_prob
         self.grad_clip_norm_actor = grad_clip_norm_actor
         self.grad_clip_norm_critic = grad_clip_norm_critic
+        self.demo_prob_decay = demo_prob_decay
+
+        self.n_demos_inserted = 0
 
         # keep for comfort:
         self.epsilon_to_goal = env.get_attr('epsilon_to_hit_subgoal', 0)[0]
@@ -250,6 +254,13 @@ class DDPGMP(DDPG):
                                 demo_traj = demos[str(info['start_goal_pair_idx'])]
                             self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
                                                                info['start_goal_pair_idx'])
+
+                            self.n_demos_inserted += 1
+                            self.demo_on_fail_prob *= self.demo_prob_decay
+
+                            self.logger.record("demonstrations/n_demos_inserted", self.n_demos_inserted)
+                            self.logger.record("demonstrations/demo_prob", self.demo_on_fail_prob)
+
                         elif self.verbose > 0:
                             print("Failed Episode, but not inserting demonstration to replay buffer.")
 

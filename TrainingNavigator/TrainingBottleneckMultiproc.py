@@ -19,28 +19,29 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "VelInObs_2Envs",
+        "run_name": "VelInObs_demoProbDec",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 42 ** 2,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
-        "num_envs": 2,
+        "num_envs": 3,
         "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 5,
+        "grad_clip_norm_actor": 10,
         "grad_clip_norm_critic": 1,
         "batch_size": 2048,
         "buffer_size": 1 * 10 ** 5,
-        "actor_arch": [64, 64],  # Should not be changed or explored
-        "critic_arch": [64, 64],  # Should not be changed or explored
+        "actor_arch": [400, 300],  # Should not be changed or explored
+        "critic_arch": [400, 300],  # Should not be changed or explored
         "exploration_noise_std": 0.03,
         "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
         "stepper_radius_range": (1, 2.5),
         "done_on_collision": True,  # modify rewards in case you change this
-        "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.005, ),
+        "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
         "demo_on_fail_prob": 0.5,
+        "demo_prob_decay": 0.999,
         "learning_starts": 10 ** 4,
 
         "velocity_in_obs": True,
@@ -49,7 +50,7 @@ if __name__ == '__main__':
 
         # logging parameters
         "eval_workspaces": 100,  # will take the first workspaces
-        "eval_freq": 20000,
+        "eval_freq": 10000,
         "video_freq": 1,
         "save_model_freq": 20000,
 
@@ -126,6 +127,7 @@ if __name__ == '__main__':
                    demo_on_fail_prob=config["demo_on_fail_prob"],
                    grad_clip_norm_actor=config["grad_clip_norm_actor"],
                    grad_clip_norm_critic=config["grad_clip_norm_critic"],
+                   demo_prob_decay=config["demo_prob_decay"],
                    policy_kwargs=policy_kwargs)
 
     callback = NavEvalCallback(dir=config["dir"],

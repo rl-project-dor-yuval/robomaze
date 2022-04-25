@@ -80,7 +80,7 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'cpu')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'auto')
         self.stepper_agent = stepper_agent
 
         # Ant's current state
