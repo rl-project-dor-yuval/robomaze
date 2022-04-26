@@ -1,7 +1,7 @@
 import numpy as np
 
 from MazeEnv.MazeEnv import MazeEnv
-from MazeEnv.EnvAttributes import MazeSize, Rewards
+from MazeEnv.EnvAttributes import MazeSize, Rewards, GoalCriteria
 
 
 class MultiTargetMazeEnv(MazeEnv):
@@ -14,7 +14,9 @@ class MultiTargetMazeEnv(MazeEnv):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 xy_in_obs: bool = True):
+                 xy_in_obs: bool = True,
+                 hit_target_epsilon: float = 0.8,
+                 goal_criteria=GoalCriteria()):
         """
         The only different argument is target_log_list which is a list of targets for this envrionment
         instead of a single target
@@ -26,7 +28,7 @@ class MultiTargetMazeEnv(MazeEnv):
         self.target_count = len(target_loc_list)
 
         super().__init__(maze_size, maze_map, tile_size, start_loc, target_loc_list[0],
-                         rewards, timeout_steps, show_gui, xy_in_obs)
+                         rewards, timeout_steps, show_gui, xy_in_obs, hit_target_epsilon, goal_criteria)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, target_index=None):
         """

@@ -33,7 +33,8 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, xy_in_obs, show_gui):
+def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, goal_criteria, xy_in_obs, show_gui,
+                                  hit_target_epsilon):
     # create environment :
     tile_size = 0.1
     maze_size = mtmz.MazeSize.SQUARE10
@@ -50,7 +51,10 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, xy_in
                                        timeout_steps=timeout_steps,
                                        show_gui=show_gui,
                                        rewards=rewards,
-                                       xy_in_obs=xy_in_obs)
+                                       xy_in_obs=xy_in_obs,
+                                       hit_target_epsilon=hit_target_epsilon,
+                                       goal_criteria=goal_criteria)
+    # create environment :
     maze_env = Monitor(maze_env)
 
     check_env(maze_env)
@@ -64,7 +68,9 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, xy_in
                                             timeout_steps=timeout_steps,
                                             show_gui=False,
                                             rewards=rewards,
-                                            xy_in_obs=xy_in_obs)
+                                            xy_in_obs=xy_in_obs,
+                                            hit_target_epsilon=hit_target_epsilon,
+                                            goal_criteria=goal_criteria)
     return maze_env, eval_maze_env
 
 

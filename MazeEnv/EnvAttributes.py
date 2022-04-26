@@ -40,8 +40,8 @@ class GoalCriteria:
     robot vertical velocity (sqrt(vx**2 + vy**2)) must be less than max_velocity
     both pitch and roll angle must be less than max_pitch_roll
     """
-    max_velocity: float = 1
-    max_pitch_roll: float = np.pi / 10
+    max_velocity: float = 0.3
+    max_pitch_roll: float = 0.6  # np.pi / 10
 
     def meets_criteria(self, Vx, Vy, pitch, roll):
         """
@@ -51,7 +51,7 @@ class GoalCriteria:
         :param roll: Roll angle
         :return: True if the criteria are met, False otherwise
         """
-        return (np.sqrt(Vx ** 2 + Vy ** 2) < self.max_velocity) and\
+        return (np.sqrt(Vx ** 2 + Vy ** 2) < self.max_velocity) and \
                (np.abs(pitch) < self.max_pitch_roll) and\
                (np.abs(roll) < self.max_pitch_roll)
 

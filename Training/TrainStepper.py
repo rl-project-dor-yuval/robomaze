@@ -6,7 +6,7 @@ from stable_baselines3 import DDPG
 from stable_baselines3.common.noise import NormalActionNoise
 
 sys.path.append('..')
-from MazeEnv.MazeEnv import Rewards
+from MazeEnv.MazeEnv import Rewards, GoalCriteria
 from Utils import get_multi_targets_circle_envs
 from Evaluation import EvalAndSaveCallback, MultiTargetEvalAndSaveCallback
 import torch
@@ -29,6 +29,9 @@ config = {
     "exploration_noise_std": 0.4,
     "batch_size": 1024,
     "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-0.2e-3),
+    "goal_criteria": GoalCriteria(max_velocity=0.5, max_pitch_roll=5),
+    "epsilon_to_hit_goal": 0.6,
+
     "eval_freq": 10 ** 4,
     "video_freq": 25
 
@@ -40,14 +43,16 @@ config["dir"] = "./Training/StepperV2/logs/" + config["run_name"]
 #                     config=config)
 # wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
-targets = np.genfromtxt("TestTargets/test_coords_0_7to3_5.csv", delimiter=',')
+targets = np.genfromtxt("Training/TestTargets/test_coords_0_7to3_5.csv", delimiter=',')
 
 maze_env, eval_maze_env = get_multi_targets_circle_envs(radius=config["map_radius"],
                                                         targets=targets,
                                                         timeout_steps=config["timeout_steps"],
                                                         rewards=config["rewards"],
+                                                        goal_criteria=config["goal_criteria"],
                                                         xy_in_obs=False,
-                                                        show_gui=config["show_gui"])
+                                                        show_gui=config["show_gui"],
+                                                        hit_target_epsilon=config["epsilon_to_hit_goal"])
 
 callback = MultiTargetEvalAndSaveCallback(log_dir=config["dir"],
                                           eval_env=eval_maze_env,
@@ -77,15 +82,22 @@ callback = MultiTargetEvalAndSaveCallback(log_dir=config["dir"],
 #
 # wb_run.finish()
 
+
+# run stepper to test and visualize angles
 if __name__ == "__main__":
 
     model = torch.load(".\TrainingNavigator\StepperAgent.pt")
-    maze_env.reset(target_index=1, create_video=False)
-    is_done = False
-    while is_done is False:
-        action = model.predict(maze_env.get_observation())
-        obs, reward, is_done, _ = maze_env.step(action)
+    for tgt_idx in [6, 7, 8, 9, 10]:
 
-        if reward != 0:
-            print(reward)
-        time.sleep(1. / 20)
+        maze_env.reset(target_index=tgt_idx, create_video=False)
+
+        is_done = False
+        obs = maze_env.observation_space.sample()
+        while is_done is False:
+
+            action, _ = model.predict(obs)
+            obs, reward, is_done, _ = maze_env.step(action)
+
+            if reward != 0:
+                print(reward)
+            time.sleep(1. / 20)
