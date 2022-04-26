@@ -8,7 +8,7 @@ import numpy as np
 import math
 import os
 from MazeEnv.Recorder import Recorder
-from MazeEnv.EnvAttributes import Rewards, MazeSize
+from MazeEnv.EnvAttributes import Rewards, MazeSize, GoalCriteria
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
@@ -29,7 +29,7 @@ class MazeEnv(gym.Env):
 
     recording_video_size: Tuple[int, int] = (200, 200)
     video_skip_frames: int = 2
-    zoom: float = 1.1 # is also relative to maze size
+    zoom: float = 1.1  # is also relative to maze size
 
     _collision_manager: CollisionManager
     _maze: Maze
@@ -55,7 +55,8 @@ class MazeEnv(gym.Env):
                  show_gui: bool = False,
                  xy_in_obs:bool = True,
                  hit_target_epsilon=0.8,
-                 done_on_collision=True,):
+                 done_on_collision=True,
+                 goal_criteria: GoalCriteria = None):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -70,8 +71,8 @@ class MazeEnv(gym.Env):
         :param show_gui: if set to true, the simulation will be shown in a GUI window
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
-
-        :return: Maze Environment object
+        :param done_on_collision: if True, episodes ends when the ant collides with the wall
+        :param goal_criteria: optional GoalCriteria object to define the angles and velocity at the goal
 
         Initializing environment object
         """
@@ -89,6 +90,7 @@ class MazeEnv(gym.Env):
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.is_reset = False
+
         self.step_count = 0
         self.episode_count = 0
         self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
@@ -98,6 +100,7 @@ class MazeEnv(gym.Env):
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
         self.done_on_collision = done_on_collision
+        self.goal_criteria = goal_criteria
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -188,8 +191,15 @@ class MazeEnv(gym.Env):
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-ant_xy)
         if target_distance < self.hit_target_epsilon:
-            is_done = info['success'] = True
-            reward += self.rewards.target_arrival
+            if self.goal_criteria is not None:
+                vx, vy = observation[3], observation[4]
+                pitch, roll = observation[6], observation[7]
+                if self.goal_criteria.meets_criteria(vx, vy, pitch, roll):
+                    is_done = info['success'] = True
+                    reward += self.rewards.target_arrival
+            else:
+                is_done = info['success'] = True
+                reward += self.rewards.target_arrival
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
             is_done = info['timeout'] = True

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+import numpy as np
 
 
 class MazeSize:
@@ -13,6 +15,7 @@ class MazeSize:
     LARGE = SQUARE20
 
 
+@dataclass
 class Rewards:
     def __init__(self, target_arrival=1, collision=-1, timeout=0, idle=0, fall=-1):
         """
@@ -29,4 +32,26 @@ class Rewards:
         self.timeout = timeout
         self.fall = fall
 
+
+@dataclass
+class GoalCriteria:
+    """
+    definition of criteria to end episode with success.
+    robot vertical velocity (sqrt(vx**2 + vy**2)) must be less than max_velocity
+    both pitch and roll angle must be less than max_pitch_roll
+    """
+    max_velocity: float = 1
+    max_pitch_roll: float = np.pi / 10
+
+    def meets_criteria(self, Vx, Vy, pitch, roll):
+        """
+        :param Vx: Velocity on first axis
+        :param Vy: Velocity on second axis
+        :param pitch: Pitch angle
+        :param roll: Roll angle
+        :return: True if the criteria are met, False otherwise
+        """
+        return (np.sqrt(Vx ** 2 + Vy ** 2) < self.max_velocity) and\
+               (np.abs(pitch) < self.max_pitch_roll) and\
+               (np.abs(roll) < self.max_pitch_roll)
 

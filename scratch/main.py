@@ -13,7 +13,7 @@ start = time.time()
 tile_size = 0.1
 maze_size = mz.MazeSize.SQUARE10
 map_size = np.dot(maze_size, int(1 / tile_size))
-maze_map = make_circular_map(map_size, 1.2 / tile_size)
+maze_map = make_circular_map(map_size, 3 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
@@ -33,16 +33,16 @@ for i in range(1):
     print(maze.reset(target_index=i, create_video=False))
 
     for i in range(50000):
-        action = [0, 1] * 4
-        # if i % 50 > 25:
-        #     action = [1, -1]*4
+        action = [1, 1] * 4
+        if i % 50 > 25:
+            action = [1, -1]*4
 
         # action = np.random.random(8)*2 - 1
         obs, reward, is_done, _ = maze.step(action)
 
         # if reward != 0:
         #     print(reward)
-        time.sleep(1. / 100)
+        time.sleep(1. / 20)
 
 print(time.time() - start)
 
