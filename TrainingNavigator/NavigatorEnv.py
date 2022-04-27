@@ -148,6 +148,7 @@ class NavigatorEnv(gym.Env):
             # play ant step, reward is not required and is_done is determined using info
             self.ant_curr_obs, _, _, info = self.maze_env.step(stepper_action)
             ant_xy = self.ant_curr_obs[0:2]
+            ant_velocity = np.sqrt(self.ant_curr_obs[3]**2 + self.ant_curr_obs[4]**2)
 
             # use info to check if finished (may override mazeEnv is_done in some cases):
             if info['success'] or info['fell'] or info['timeout']:
@@ -156,8 +157,10 @@ class NavigatorEnv(gym.Env):
                 _hit_maze = True
                 if self.done_on_collision:
                     break
-            # check if close enough to subgoal:
-            if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal:
+            # check if close enough to subgoal and meets velocity criteria:
+            if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal \
+                    and ant_velocity < self.maze_env.max_goal_velocity:
+
                 break
 
         if self.velocity_in_obs:
