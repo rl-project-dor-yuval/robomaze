@@ -2,6 +2,8 @@ import numpy as np
 import glob
 import os
 import ipyplot
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
 import MazeEnv.MultiTargetMazeEnv as mtmz
 from stable_baselines3.common.monitor import Monitor
@@ -72,6 +74,45 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, max_g
                                             hit_target_epsilon=hit_target_epsilon,
                                             max_goal_velocity=max_goal_velocity)
     return maze_env, eval_maze_env
+
+
+def get_multi_targets_circle_envs_multiproc(radius, targets, timeout_steps, rewards, max_goal_velocity,
+                                                  xy_in_obs, show_gui, hit_target_epsilon, num_envs=4):
+    # create environment :
+    tile_size = 0.1
+    maze_size = mtmz.MazeSize.SQUARE10
+    map_size = np.dot(maze_size, int(1 / tile_size))
+    circle_radius = radius
+    maze_map = make_circular_map(map_size, circle_radius / tile_size)
+    start_loc = (5, 5)
+
+    train_env_kwargs = dict(maze_size=maze_size,
+                            maze_map=maze_map,
+                            tile_size=tile_size,
+                            start_loc=start_loc,
+                            target_loc_list=targets,
+                            timeout_steps=timeout_steps,
+                            show_gui=show_gui,
+                            rewards=rewards,
+                            xy_in_obs=xy_in_obs,
+                            hit_target_epsilon=hit_target_epsilon,
+                            max_goal_velocity=max_goal_velocity)
+    maze_vec_env = make_vec_env(mtmz.MultiTargetMazeEnv, num_envs,
+                                env_kwargs=train_env_kwargs, vec_env_cls=SubprocVecEnv)
+
+    # create separate evaluation environment:
+    eval_maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
+                                            maze_map=maze_map,
+                                            tile_size=tile_size,
+                                            start_loc=start_loc,
+                                            target_loc_list=targets,
+                                            timeout_steps=timeout_steps,
+                                            show_gui=False,
+                                            rewards=rewards,
+                                            xy_in_obs=xy_in_obs,
+                                            hit_target_epsilon=hit_target_epsilon,
+                                            max_goal_velocity=max_goal_velocity)
+    return maze_vec_env, eval_maze_env
 
 
 def visualize_model(model_path, targets_n, video_dir, eval_env: mtmz):
