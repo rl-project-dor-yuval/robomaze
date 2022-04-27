@@ -27,7 +27,7 @@ def create_target_bank(center, min_radius, max_radius, n_points=100):
 
 
 center = np.array([5, 5])
-min_radius = 1
+min_radius = 0.7
 max_radius = 3.5
 points = create_target_bank(center, min_radius, max_radius, 200)
 
@@ -49,6 +49,6 @@ plt.legend()
 plt.show()
 
 # Saving the Points Coordinates in CSV file
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords.csv"), 'w') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_0_7to3_5.csv"), 'w') as f:
     writer = csv.writer(f)
     writer.writerows(points)

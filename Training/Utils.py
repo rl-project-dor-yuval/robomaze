@@ -33,14 +33,14 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monitor_dir, xy_in_obs):
+def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, goal_criteria, xy_in_obs, show_gui,
+                                  hit_target_epsilon):
     # create environment :
     tile_size = 0.1
     maze_size = mtmz.MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
     circle_radius = radius
     maze_map = make_circular_map(map_size, circle_radius / tile_size)
-
     start_loc = (5, 5)
 
     maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
@@ -49,10 +49,13 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monit
                                        start_loc=start_loc,
                                        target_loc_list=targets,
                                        timeout_steps=timeout_steps,
-                                       show_gui=False,
+                                       show_gui=show_gui,
                                        rewards=rewards,
-                                       xy_in_obs=xy_in_obs)
-    maze_env = Monitor(maze_env, filename=monitor_dir)
+                                       xy_in_obs=xy_in_obs,
+                                       hit_target_epsilon=hit_target_epsilon,
+                                       goal_criteria=goal_criteria)
+    # create environment :
+    maze_env = Monitor(maze_env)
 
     check_env(maze_env)
 
@@ -65,7 +68,9 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, monit
                                             timeout_steps=timeout_steps,
                                             show_gui=False,
                                             rewards=rewards,
-                                            xy_in_obs=xy_in_obs)
+                                            xy_in_obs=xy_in_obs,
+                                            hit_target_epsilon=hit_target_epsilon,
+                                            goal_criteria=goal_criteria)
     return maze_env, eval_maze_env
 
 

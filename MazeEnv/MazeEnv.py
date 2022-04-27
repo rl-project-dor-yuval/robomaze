@@ -53,10 +53,10 @@ class MazeEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 xy_in_obs:bool = True,
-                 hit_target_epsilon=0.8,
+                 xy_in_obs: bool = True,
+                 hit_target_epsilon=0.4,
                  done_on_collision=True,
-                 goal_criteria: GoalCriteria = None):
+                 goal_criteria: GoalCriteria = GoalCriteria()):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
