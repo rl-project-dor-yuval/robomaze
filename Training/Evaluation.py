@@ -1,5 +1,6 @@
 import os
 import abc
+import time
 from typing import Tuple, List
 import numpy as np
 import pandas as pd
@@ -8,6 +9,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 import imageio
 import glob
 import sys
+import wandb
 
 sys.path.append('..')
 from MazeEnv.MazeEnv import MazeEnv
@@ -15,7 +17,7 @@ from MazeEnv.MultiTargetMazeEnv import MultiTargetMazeEnv
 
 
 class BaseEvalAndSaveCallback(BaseCallback):
-    def __init__(self, log_dir: str, eval_env: MazeEnv, eval_freq: int = 200,
+    def __init__(self, log_dir: str, eval_env: MazeEnv, wb_run: wandb.run, eval_freq: int = 200,
                  eval_episodes: int = 5, eval_video_freq=-1, verbose=1):
         """
         :param log_dir: The directory in which to put the results
@@ -29,6 +31,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
         super().__init__(verbose)
         self.eval_freq = eval_freq
         self.eval_episodes = eval_episodes
+        self.wb_run = wb_run
         self.log_dir = log_dir
         self.eval_env = eval_env
         self.eval_video_freq = eval_video_freq
@@ -55,7 +58,11 @@ class BaseEvalAndSaveCallback(BaseCallback):
             self.evals_count += 1
 
             # evaluate the model
-            rewards, lengths, success_rate = self.get_policy_evaluation()
+            start_time = time.time()
+            rewards, lengths, success_rate, mean_terminal_vel = self.get_policy_evaluation()
+            eval_time = time.time() - start_time
+            if self.verbose > 1:
+                print("Evaluation took {:.2f}s".format(eval_time))
 
             self.step.append(self.n_calls)
             self.mean_reward.append(sum(rewards) / float(len(rewards)))
@@ -78,11 +85,14 @@ class BaseEvalAndSaveCallback(BaseCallback):
             if self.eval_video_freq != -1 and self.evals_count % self.eval_video_freq == 0:
                 if self.verbose > 0:
                     print("creating video")
-                self._create_video()
+                video_path = self._create_video()
+                vid_log_item = log_item = {'eval_video': wandb.Video(video_path, fps=24), 'step': self.n_calls}
+                self.wb_run.log(vid_log_item)
+
                 # The video that is being created here is different from the
                 # case that made the `rewards` above
 
-            self.logger.record("success_rate", success_rate)
+            self.wb_run.log({'success_rate': success_rate, 'mean_terminal_velocity': mean_terminal_vel})
 
         return True
 
@@ -101,7 +111,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
         np.savetxt(self.result_save_path, results, delimiter=',')
 
     def _create_video(self):
-        video_path = os.path.join(self.log_dir, '{steps}_steps.avi'.format(steps=self.n_calls))
+        video_path = os.path.join(self.log_dir, '{steps}_steps.gif'.format(steps=self.n_calls))
         obs = self.eval_env.reset(create_video=True, video_path=video_path)
         while True:
             action, _ = self.model.predict(obs, deterministic=True)
@@ -109,8 +119,10 @@ class BaseEvalAndSaveCallback(BaseCallback):
             if done:
                 break
 
+        return video_path
+
     @abc.abstractmethod
-    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int], float, float]:
         """
         :return: tuple of reward for each episode and length of each episode in the evaluation
         """
@@ -118,9 +130,10 @@ class BaseEvalAndSaveCallback(BaseCallback):
 
 
 class EvalAndSaveCallback(BaseEvalAndSaveCallback):
-    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int], float, float]:
         rewards = []
         episodes_length = []
+        terminal_velocities = []
         success_rate_cnt = 0
 
         # evaluate on all targets
@@ -140,9 +153,11 @@ class EvalAndSaveCallback(BaseEvalAndSaveCallback):
             rewards.append(total_reward)
             episodes_length.append(step_count)
             success_rate_cnt += float(info['success'])
+            terminal_velocities.append(np.sqrt(obs[3] ** 2 + obs[4] ** 2))
 
         success_rate = success_rate_cnt / self.eval_episodes
-        return rewards, episodes_length, success_rate
+        mean_terminal_velocity = sum(terminal_velocities) / self.eval_episodes
+        return rewards, episodes_length, success_rate, mean_terminal_velocity
 
 
 class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
@@ -152,17 +167,18 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
     """
     eval_env: MultiTargetMazeEnv
 
-    def __init__(self, log_dir: str, eval_env: MultiTargetMazeEnv, eval_freq: int = 200,
+    def __init__(self, log_dir: str, eval_env: MultiTargetMazeEnv, wb_run: wandb.run, eval_freq: int = 200,
                  eval_video_freq=-1, verbose=1):
         eval_episodes = eval_env.target_count
-        super().__init__(log_dir, eval_env, eval_freq, eval_episodes,
+        super().__init__(log_dir, eval_env, wb_run, eval_freq, eval_episodes,
                          eval_video_freq, verbose)
 
         self.per_target_success = np.zeros(eval_episodes)
 
-    def get_policy_evaluation(self) -> Tuple[List[float], List[int]]:
+    def get_policy_evaluation(self) -> Tuple[List[float], List[int], float, float]:
         rewards = []
         episodes_length = []
+        terminal_velocities = []
         success_rate_cnt = 0
 
         # evaluate on all targets
@@ -183,9 +199,11 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
             episodes_length.append(step_count)
             success_rate_cnt += float(info['success'])
             self.per_target_success[i] += float(info['success'])
+            terminal_velocities.append(np.sqrt(obs[3] ** 2 + obs[4] ** 2))
 
         success_rate = success_rate_cnt / self.eval_episodes
-        return rewards, episodes_length, success_rate
+        mean_terminal_velocity = sum(terminal_velocities) / self.eval_episodes
+        return rewards, episodes_length, success_rate, mean_terminal_velocity
 
     def _on_training_end(self) -> None:
         super()._on_training_end()

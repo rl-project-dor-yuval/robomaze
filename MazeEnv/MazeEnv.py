@@ -8,7 +8,7 @@ import numpy as np
 import math
 import os
 from MazeEnv.Recorder import Recorder
-from MazeEnv.EnvAttributes import Rewards, MazeSize, GoalCriteria
+from MazeEnv.EnvAttributes import Rewards, MazeSize
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
@@ -40,6 +40,7 @@ class MazeEnv(gym.Env):
     _start_loc: List
     _target_loc: List
     hit_target_epsilon: float
+    max_goal_velocity: float
 
     _physics_server: int
     _pclient: bc.BulletClient
@@ -56,7 +57,7 @@ class MazeEnv(gym.Env):
                  xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
                  done_on_collision=True,
-                 goal_criteria: GoalCriteria = GoalCriteria()):
+                 goal_max_velocity: float = np.inf):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -72,7 +73,7 @@ class MazeEnv(gym.Env):
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
         :param done_on_collision: if True, episodes ends when the ant collides with the wall
-        :param goal_criteria: optional GoalCriteria object to define the angles and velocity at the goal
+        :param goal_max_velocity: optional velocity limit to consider reaching goal
 
         Initializing environment object
         """
@@ -100,7 +101,7 @@ class MazeEnv(gym.Env):
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
         self.done_on_collision = done_on_collision
-        self.goal_criteria = goal_criteria
+        self.max_goal_velocity = goal_max_velocity
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -159,8 +160,8 @@ class MazeEnv(gym.Env):
     def step(self, action):
         if not self.is_reset:
             raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
-        if not self.action_space.contains(action):
-            raise Exception("Expected shape (8,) and value in [-1,1] ")
+        # if not self.action_space.contains(action):
+        #     raise Exception("Expected shape (8,) and value in [-1,1] ")
 
         # perform step: pass actions through the ant object and run simulation step:
         self._ant.action(action)
@@ -191,13 +192,8 @@ class MazeEnv(gym.Env):
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-ant_xy)
         if target_distance < self.hit_target_epsilon:
-            if self.goal_criteria is not None:
-                vx, vy = observation[3], observation[4]
-                pitch, roll = observation[6], observation[7]
-                if self.goal_criteria.meets_criteria(vx, vy, pitch, roll):
-                    is_done = info['success'] = True
-                    reward += self.rewards.target_arrival
-            else:
+            vx, vy = observation[3], observation[4]
+            if np.sqrt(vx**2 + vy**2) < self.max_goal_velocity:
                 is_done = info['success'] = True
                 reward += self.rewards.target_arrival
 
