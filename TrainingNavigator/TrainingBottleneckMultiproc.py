@@ -19,7 +19,7 @@ from TrainingNavigator.NavEvaluation import NavEvalCallback
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "VelInObs_demoProbDec",
+        "run_name": "SmallerRB",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 42 ** 2,
@@ -28,8 +28,8 @@ if __name__ == '__main__':
         # Training and environment parameters
         "num_envs": 3,
         "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 10,
-        "grad_clip_norm_critic": 1,
+        "grad_clip_norm_actor": 20,
+        "grad_clip_norm_critic": 2,
         "batch_size": 2048,
         "buffer_size": 1 * 10 ** 5,
         "actor_arch": [400, 300],  # Should not be changed or explored
@@ -40,11 +40,11 @@ if __name__ == '__main__':
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
-        "demo_on_fail_prob": 0.5,
-        "demo_prob_decay": 0.999,
+        "demo_on_fail_prob": 0.2,
+        "demo_prob_decay": 0.9999,
         "learning_starts": 10 ** 4,
 
-        "velocity_in_obs": True,
+        "velocity_in_obs": False,
         "max_stepper_steps": 75,
         "max_navigator_steps": 100,
 
