@@ -24,21 +24,21 @@ if __name__ == '__main__':
 
         "num_envs": 1,
         "train_steps": 10_000_000,
-        "buffer_size": 100_000,
-        "learning_starts": 20_000,
+        "buffer_size": 300_000,
+        "learning_starts": 10_000,
         "timeout_steps": 200,
         "map_radius": 4,
         "learning_rate": 1e-6,
         "reduce_lr": True,
         "lr_reduce_factor": 0.2,
         "exploration_noise_std": 0.05,
-        "batch_size": 2048,
+        "batch_size": 1024,
         "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-4),
         "max_goal_velocity": 0.75,
         "target_epsilon": 0.35,
 
-        "eval_freq": 20 * 10 ** 5,
-        "video_freq": 2
+        "eval_freq": 10 ** 5,
+        "video_freq": 1
 
     }
     config["dir"] = "./Training/logs/StepperV2" + config["run_name"]

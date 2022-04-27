@@ -61,7 +61,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
             start_time = time.time()
             rewards, lengths, success_rate, mean_terminal_vel = self.get_policy_evaluation()
             eval_time = time.time() - start_time
-            if self.verbose > 1:
+            if self.verbose >= 1:
                 print("Evaluation took {:.2f}s".format(eval_time))
 
             self.step.append(self.n_calls)
