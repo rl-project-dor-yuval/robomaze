@@ -18,14 +18,14 @@ if __name__ == '__main__':
 
     # Parameters
     config = {
-        "run_name": "CloserTarget0.6_MaxVel0.75_TargetEps3",
+        "run_name": "FineTune_CloserTarget0.6_MaxVel0.75_TargetEps3.5",
         "show_gui": False,
         "seed": 42 ** 3,
 
         "num_envs": 1,
-        "train_steps": 10_000_000,
+        "train_steps": 3_000_000,
         "buffer_size": 300_000,
-        "learning_starts": 10_000,
+        "learning_starts": 100,
         "timeout_steps": 200,
         "map_radius": 4,
         "learning_rate": 1e-6,
@@ -33,20 +33,21 @@ if __name__ == '__main__':
         "lr_reduce_factor": 0.2,
         "exploration_noise_std": 0.05,
         "batch_size": 1024,
-        "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-4),
+        "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-3),
         "max_goal_velocity": 0.75,
-        "target_epsilon": 0.3,
+        "target_epsilon": 0.35,
 
         "eval_freq": 10 ** 5,
         "video_freq": 1
 
     }
     config["dir"] = "./Training/logs/StepperV2" + config["run_name"]
+    config["model_dir"] = "./Training/logs/StepperV2CloserTarget0.6_MaxVel0.75_TargetEps3.5/best_model.zip"
 
     # setup W&B:
     wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
                         config=config)
-    wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
+    wandb.tensorboard.patch(root_logdir=config["dir"], pytorch=True)
 
     targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
 
@@ -78,25 +79,23 @@ if __name__ == '__main__':
     def lr_func(progress):
         if progress < 0.33 and config["reduce_lr"]:
             return config["learning_rate"] * config["lr_reduce_factor"]
-        # elif progress < 0.80 and config["reduce_lr"]:
-        #     return config["learning_rate"] * config["lr_reduce_factor"] ** 2
         else:
             return config["learning_rate"]
 
 
-    model = DDPG(policy="MlpPolicy",
-                 env=maze_env,
-                 buffer_size=config["buffer_size"],
-                 learning_rate=lr_func,
-                 batch_size=config["batch_size"],
-                 action_noise=exploration_noise,
-                 device=device,
-                 train_freq=(100, "step"),
-                 verbose=0,
-                 tensorboard_log="./Training/logs/StepperV2/tb",
-                 learning_starts=config["learning_starts"],
-                 seed=config["seed"], )
-
+    # model = DDPG(policy="MlpPolicy",
+    #              env=maze_env,
+    #              buffer_size=config["buffer_size"],
+    #              learning_rate=lr_func,
+    #              batch_size=config["batch_size"],
+    #              action_noise=exploration_noise,
+    #              device=device,
+    #              train_freq=(100, "step"),
+    #              verbose=0,
+    #              tensorboard_log="./Training/logs/StepperV2/tb",
+    #              learning_starts=config["learning_starts"],
+    #              seed=config["seed"], )
+    model = DDPG.load(config["model_dir"])
     model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
     wb_run.finish()

@@ -1,5 +1,5 @@
 import os, sys
-
+import torch
 sys.path.append('../..')
 
 import MazeEnv.MultiTargetMazeEnv as mz
@@ -20,7 +20,7 @@ START_LOC = (5, 5)
 targets_loc = np.genfromtxt("Training/TestTargets/test_coords.csv", delimiter=',')
 print(targets_loc)
 
-maze = mz.MultiTargetMazeEnv(maze_size=maze_size,
+maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
                              maze_map=maze_map,
                              tile_size=tile_size,
                              start_loc=START_LOC,
@@ -29,26 +29,22 @@ maze = mz.MultiTargetMazeEnv(maze_size=maze_size,
                              show_gui=True,
                              xy_in_obs=False)
 
-for i in range(1):
-    print(maze.reset(target_index=i, create_video=False))
 
-    for i in range(50000):
-        action = [1, 1] * 4
-        if i % 50 > 25:
-            action = [1, -1]*4
+# run stepper to test and visualize angles
+if __name__ == "__main__":
 
-        # action = np.random.random(8)*2 - 1
-        obs, reward, is_done, _ = maze.step(action)
+    model = torch.load(".\TrainingNavigator\StepperAgent.pt")
+    for tgt_idx in [6, 7, 8, 9, 10]:
 
-        # if reward != 0:
-        #     print(reward)
-        time.sleep(1. / 20)
+        maze_env.reset(target_index=tgt_idx, create_video=False)
 
-print(time.time() - start)
+        is_done = False
+        obs = maze_env.observation_space.sample()
+        while is_done is False:
 
-maze.reset()  # has to be called to save video
+            action, _ = model.predict(obs)
+            obs, reward, is_done, _ = maze_env.step(action)
 
-# for i in range(10000):
-#     action = maze.action_space.sample()
-#     _, reward, is_done, _ = maze.step(action)
-#     time.sleep(1/250.0)
+            if reward != 0:
+                print(reward)
+            time.sleep(1. / 20)
