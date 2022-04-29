@@ -83,19 +83,20 @@ if __name__ == '__main__':
             return config["learning_rate"]
 
 
-    # model = DDPG(policy="MlpPolicy",
-    #              env=maze_env,
-    #              buffer_size=config["buffer_size"],
-    #              learning_rate=lr_func,
-    #              batch_size=config["batch_size"],
-    #              action_noise=exploration_noise,
-    #              device=device,
-    #              train_freq=(100, "step"),
-    #              verbose=0,
-    #              tensorboard_log="./Training/logs/StepperV2/tb",
-    #              learning_starts=config["learning_starts"],
-    #              seed=config["seed"], )
-    model = DDPG.load(config["model_dir"])
+    model = DDPG.load(config["model_dir"],
+                      env=maze_env,
+                      custom_objects=dict(
+                          buffer_size=config["buffer_size"],
+                          learning_rate=lr_func,
+                          batch_size=config["batch_size"],
+                          action_noise=exploration_noise,
+                          device=device,
+                          train_freq=(100, "step"),
+                          verbose=0,
+                          tensorboard_log="./Training/logs/StepperV2/tb",
+                          learning_starts=config["learning_starts"],
+                          seed=config["seed"])
+                      )
     model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
     wb_run.finish()

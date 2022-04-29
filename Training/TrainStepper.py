@@ -18,24 +18,24 @@ if __name__ == '__main__':
 
     # Parameters
     config = {
-        "run_name": "CloserTarget0.6_MaxVel0.75_TargetEps3",
+        "run_name": "CloserTarget0.6_MaxVel0.7_TargetEps35_v3",
         "show_gui": False,
-        "seed": 42 ** 3,
+        "seed": 4 ** 4,
 
         "num_envs": 1,
-        "train_steps": 10_000_000,
-        "buffer_size": 300_000,
-        "learning_starts": 10_000,
+        "train_steps": 7000000,
+        "buffer_size": 300000,
+        "learning_starts": 10000,
         "timeout_steps": 200,
         "map_radius": 4,
         "learning_rate": 1e-6,
         "reduce_lr": True,
         "lr_reduce_factor": 0.2,
         "exploration_noise_std": 0.05,
-        "batch_size": 1024,
+        "batch_size": 2048,
         "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-4),
-        "max_goal_velocity": 0.75,
-        "target_epsilon": 0.3,
+        "max_goal_velocity": 0.7,
+        "target_epsilon": 0.35,
 
         "eval_freq": 10 ** 5,
         "video_freq": 1
@@ -76,10 +76,8 @@ if __name__ == '__main__':
 
 
     def lr_func(progress):
-        if progress < 0.33 and config["reduce_lr"]:
+        if progress < 0.5 and config["reduce_lr"]:
             return config["learning_rate"] * config["lr_reduce_factor"]
-        # elif progress < 0.80 and config["reduce_lr"]:
-        #     return config["learning_rate"] * config["lr_reduce_factor"] ** 2
         else:
             return config["learning_rate"]
 
