@@ -10,6 +10,10 @@ from stable_baselines3.common.env_checker import check_env
 from gym.wrappers.rescale_action import RescaleAction
 
 
+def tf_top_left_to_bottom_left(vec: np.ndarray, size):
+    return np.array([vec[0], size - vec[1] - 1])
+
+
 def get_freespace_map(maze_map, robot_cube_size):
     # TODO move this to somewhere later
     assert robot_cube_size % 2 == 0, "robot_cube_size must be even"
@@ -33,11 +37,16 @@ def get_freespace_map(maze_map, robot_cube_size):
     return freespace_map
 
 
-def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True):
+def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True, stepper_path=None):
     """
     create a navigator env with the vanilla maze to solve,
     NOT wrapped with RescaleAction
+    :param start_loc: starting location cords
+    :param target_loc: target location cords
+    :param show_gui: if true, show the gui
+    :param stepper_path: path for pt file (pytorch) of actor stepper model
     """
+    assert stepper_path is not None, "stepper_path must be provided"
     map_path = "maps/vanilla_map.png"
     maze_map = - (cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     maze_map = maze_map.T
@@ -50,10 +59,9 @@ def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=T
                      xy_in_obs=True,
                      show_gui=show_gui)  # missing, timeout, rewards
 
-    agent_path = "StepperAgent.pt"
-    agent = StepperAgent(agent_path)
+    agent = StepperAgent(stepper_path=stepper_path)
 
-    return NavigatorEnv(maze_env=env, stepper_agent=agent, )
+    return NavigatorEnv(maze_env=env, stepper_agent=agent, epsilon_to_hit_subgoal=0.4)
 
 
 def get_vanilla_navigator_env_scaled(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True):
