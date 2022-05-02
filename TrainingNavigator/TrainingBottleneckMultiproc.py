@@ -70,7 +70,6 @@ if __name__ == '__main__':
     wb_run = wandb.init(project=config["project"], name=config["run_name"],
                         config=config)
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
-    wb_run.finish()
 
     # Setup Training Environment
     maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
