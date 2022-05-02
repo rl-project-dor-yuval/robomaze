@@ -1,3 +1,5 @@
+from typing import Union
+
 import gym
 from gym.spaces import Box
 import MazeEnv.MazeEnv as mz
@@ -30,7 +32,7 @@ class NavigatorEnv(gym.Env):
     def __init__(self,
                  maze_env: mz.MazeEnv = None,
                  maze_env_kwargs: dict = None,
-                 stepper_agent=None,
+                 stepper_agent: Union[StepperAgent, str] = None,
                  max_stepper_steps=200,
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
@@ -88,6 +90,8 @@ class NavigatorEnv(gym.Env):
 
         if stepper_agent is None:
             stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/StepperAgent.pt', 'auto')
+        elif isinstance(stepper_agent, str):
+            stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
 
         # Ant's current state

@@ -15,6 +15,7 @@ import torch
 from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
+from TrainingNavigator.StepperAgent import StepperAgent
 
 if __name__ == '__main__':
     # --- Parameters
@@ -35,7 +36,8 @@ if __name__ == '__main__':
         "actor_arch": [400, 300],  # Should not be changed or explored
         "critic_arch": [400, 300],  # Should not be changed or explored
         "exploration_noise_std": 0.03,
-        "epsilon_to_subgoal": 0.8,  # DO NOT TOUCH
+        "epsilon_to_subgoal": 0.5,  # DO NOT TOUCH
+        "max_velocity_in_subgoal": 1, # DO NOT TOUCH
         "stepper_radius_range": (1, 2.5),
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
@@ -44,6 +46,8 @@ if __name__ == '__main__':
         "demo_prob_decay": 0.9999,
         "use_demo_epsilon_offset": False,
         "learning_starts": 10 ** 4,
+
+        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05.pt',
 
         "velocity_in_obs": False,
         "max_stepper_steps": 75,
@@ -79,12 +83,14 @@ if __name__ == '__main__':
     nav_env_kwargs = dict(start_goal_pairs=start_goal_pairs,
                           maze_env_kwargs=maze_env_kwargs,
                           epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
+                          max_vel_in_subgoal=config["max_velocity_in_subgoal"],
                           rewards=config["rewards"],
                           done_on_collision=config["done_on_collision"],
                           max_stepper_steps=config["max_stepper_steps"],
                           max_steps=config["max_navigator_steps"],
                           stepper_radius_range=config["stepper_radius_range"],
-                          velocity_in_obs=config["velocity_in_obs"],)
+                          velocity_in_obs=config["velocity_in_obs"],
+                          stepper_agent=config["stepper_agent_path"],)
 
     nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
@@ -97,11 +103,13 @@ if __name__ == '__main__':
     eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
+                                              max_vel_in_subgoal=config["max_velocity_in_subgoal"],
                                               rewards=config["rewards"],
                                               done_on_collision=config["done_on_collision"],
                                               max_stepper_steps=config["max_stepper_steps"],
                                               max_steps=config["max_navigator_steps"],
-                                              velocity_in_obs=config["velocity_in_obs"],)
+                                              velocity_in_obs=config["velocity_in_obs"],
+                                              stepper_agent=config["stepper_agent_path"],)
     # noinspection DuplicatedCode
     eval_nav_env.visualize_mode(False)
 
