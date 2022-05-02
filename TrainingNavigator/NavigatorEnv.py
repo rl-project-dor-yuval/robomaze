@@ -35,6 +35,7 @@ class NavigatorEnv(gym.Env):
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.8,
+                 max_vel_in_subgoal=1,
                  rewards: Rewards = Rewards(),
                  done_on_collision=True,
                  velocity_in_obs=False,):
@@ -47,6 +48,7 @@ class NavigatorEnv(gym.Env):
         :param max_steps: max steps for navigator episode
         :param stepper_radius_range: defined by the reachable radius of the stepper
         :param epsilon_to_hit_subgoal: minimal distance to subgoal to be considered as goal arrival
+        :param max_vel_in_subgoal: maximal vertical velocity in subgoal to be considered as goal arrival
         :param rewards: Rewards object, defines the reward for each event
         :param done_on_collision: weather to kill the robot when colliding the wall
         """
@@ -60,6 +62,7 @@ class NavigatorEnv(gym.Env):
         self.max_stepper_steps = max_stepper_steps
         self.max_steps = max_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
+        self.max_vel_in_subgoal = max_vel_in_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
         self.velocity_in_obs = velocity_in_obs
@@ -72,15 +75,19 @@ class NavigatorEnv(gym.Env):
             print("WARNING: done_on_collision is different in mazeEnv and navigatorEnv, changing mazeEnv")
             self.maze_env.done_on_collision = done_on_collision
         # make sure:
-        if not  maze_env.hit_target_epsilon == epsilon_to_hit_subgoal:
+        if not maze_env.hit_target_epsilon == epsilon_to_hit_subgoal:
             print("WARNING: epsilon_to_hit_subgoal is different in mazeEnv and navigatorEnv, changing mazeEnv")
             maze_env.hit_target_epsilon = epsilon_to_hit_subgoal
+        # make sure:
+        if not maze_env.max_goal_velocity == max_vel_in_subgoal:
+            print("WARNING: max_vel_in_subgoal is different in mazeEnv and navigatorEnv, changing mazeEnv")
+            maze_env.max_goal_velocity = max_vel_in_subgoal
 
         self.visualize = False
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgent.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/StepperAgent.pt', 'auto')
         self.stepper_agent = stepper_agent
 
         # Ant's current state
@@ -159,7 +166,7 @@ class NavigatorEnv(gym.Env):
                     break
             # check if close enough to subgoal and meets velocity criteria:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal \
-                    and ant_velocity < self.maze_env.max_goal_velocity:
+                    and ant_velocity < self.max_vel_in_subgoal:
 
                 break
 

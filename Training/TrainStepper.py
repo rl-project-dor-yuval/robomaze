@@ -18,12 +18,12 @@ if __name__ == '__main__':
 
     # Parameters
     config = {
-        "run_name": "CloserTarget0.6_MaxVel0.7_TargetEps35_v3",
+        "run_name": "LongRun_BS1024",
         "show_gui": False,
-        "seed": 4 ** 4,
+        "seed": 1995**2,
 
         "num_envs": 1,
-        "train_steps": 7000000,
+        "train_steps": 25000000,
         "buffer_size": 300000,
         "learning_starts": 10000,
         "timeout_steps": 200,
@@ -32,9 +32,9 @@ if __name__ == '__main__':
         "reduce_lr": True,
         "lr_reduce_factor": 0.2,
         "exploration_noise_std": 0.05,
-        "batch_size": 2048,
+        "batch_size": 1024,
         "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-4),
-        "max_goal_velocity": 0.7,
+        "max_goal_velocity": 0.75,
         "target_epsilon": 0.35,
 
         "eval_freq": 10 ** 5,
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # setup W&B:
     wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
                         config=config)
-    wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
+    wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
     targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
 
     def lr_func(progress):
-        if progress < 0.5 and config["reduce_lr"]:
+        if progress < 0.33 and config["reduce_lr"]:
             return config["learning_rate"] * config["lr_reduce_factor"]
         else:
             return config["learning_rate"]

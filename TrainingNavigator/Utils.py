@@ -37,17 +37,24 @@ def get_freespace_map(maze_map, robot_cube_size):
     return freespace_map
 
 
-def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True, stepper_path=None):
+def get_vanilla_navigator_env(start_loc=(1., 7.5),
+                              target_loc=(9, 3),
+                              subgoal_epsilon=0.4,
+                              subgoal_max_vel=1,
+                              show_gui=True,
+                              stepper_path=None):
     """
     create a navigator env with the vanilla maze to solve,
     NOT wrapped with RescaleAction
+    :param subgoal_max_vel:
+    :param subgoal_epsilon:
     :param start_loc: starting location cords
     :param target_loc: target location cords
     :param show_gui: if true, show the gui
     :param stepper_path: path for pt file (pytorch) of actor stepper model
     """
     assert stepper_path is not None, "stepper_path must be provided"
-    map_path = "maps/vanilla_map.png"
+    map_path = "TrainingNavigator/maps/vanilla_map.png"
     maze_map = - (cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     maze_map = maze_map.T
 
@@ -59,9 +66,10 @@ def get_vanilla_navigator_env(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=T
                      xy_in_obs=True,
                      show_gui=show_gui)  # missing, timeout, rewards
 
-    agent = StepperAgent(stepper_path=stepper_path)
+    agent = StepperAgent(agent_path=stepper_path)
 
-    return NavigatorEnv(maze_env=env, stepper_agent=agent, epsilon_to_hit_subgoal=0.4)
+    return NavigatorEnv(maze_env=env, stepper_agent=agent, epsilon_to_hit_subgoal=subgoal_epsilon,
+                        max_vel_in_subgoal=subgoal_max_vel)
 
 
 def get_vanilla_navigator_env_scaled(start_loc=(1., 7.5), target_loc=(9, 3), show_gui=True):
