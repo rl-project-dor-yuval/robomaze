@@ -42,6 +42,7 @@ if __name__ == '__main__':
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
         "demo_on_fail_prob": 0.2,
         "demo_prob_decay": 0.9999,
+        "use_demo_epsilon_offset": False,
         "learning_starts": 10 ** 4,
 
         "velocity_in_obs": False,
@@ -129,6 +130,7 @@ if __name__ == '__main__':
                    grad_clip_norm_actor=config["grad_clip_norm_actor"],
                    grad_clip_norm_critic=config["grad_clip_norm_critic"],
                    demo_prob_decay=config["demo_prob_decay"],
+                   use_demo_epsilon_offset=config["use_demo_epsilon_offset"],
                    policy_kwargs=policy_kwargs)
 
     callback = NavEvalCallback(dir=config["dir"],

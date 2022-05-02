@@ -44,6 +44,7 @@ class DDPGMP(DDPG):
             demonstrations_path: os.path = None,
             demo_on_fail_prob: float = 0.5,
             demo_prob_decay: float = 1,
+            use_demo_epsilon_offset: bool = True,
             grad_clip_norm_actor: float = None,
             grad_clip_norm_critic: float = None,
     ):
@@ -78,6 +79,7 @@ class DDPGMP(DDPG):
         self.grad_clip_norm_actor = grad_clip_norm_actor
         self.grad_clip_norm_critic = grad_clip_norm_critic
         self.demo_prob_decay = demo_prob_decay
+        self.use_demo_epsilon_offset = use_demo_epsilon_offset
 
         self.n_demos_inserted = 0
 
@@ -329,7 +331,8 @@ class DDPGMP(DDPG):
         # works for observations with velocities as well
         dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
-        r = r + self.epsilon_to_goal  # add target epsilon offset
+        if self.use_demo_epsilon_offset:
+            r = r + self.epsilon_to_goal  # add target epsilon offset
         return np.array([r, theta])
 
     def _excluded_save_params(self) -> List[str]:
@@ -374,7 +377,6 @@ class CustomActor(Actor):
         # r_scaled = 2 * (r - low[0]) / (high[0] - low[0]) - 1
         # r_scaled = r_scaled.clip(-1, 1)
         r_scaled = th.tanh(r)
-        # r_scaled = r_scaled + 0.8  # add target epsilon offset
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
         # theta_scaled = theta_scaled.clip(-1, 1)
 
