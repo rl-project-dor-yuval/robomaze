@@ -20,7 +20,7 @@ from TrainingNavigator.StepperAgent import StepperAgent
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "SmallerRB",
+        "run_name": "WithImprovedStepper",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 42 ** 2,
@@ -37,8 +37,8 @@ if __name__ == '__main__':
         "critic_arch": [400, 300],  # Should not be changed or explored
         "exploration_noise_std": 0.03,
         "epsilon_to_subgoal": 0.5,  # DO NOT TOUCH
-        "max_velocity_in_subgoal": 1, # DO NOT TOUCH
-        "stepper_radius_range": (1, 2.5),
+        "max_velocity_in_subgoal": 1,  # DO NOT TOUCH
+        "stepper_radius_range": (0.6, 2.5),  # DO NOT TOUCH
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
