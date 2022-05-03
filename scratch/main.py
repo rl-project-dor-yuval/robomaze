@@ -17,7 +17,7 @@ maze_map = make_circular_map(map_size, 3 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
-targets_loc = np.genfromtxt("Training/TestTargets/test_coords.csv", delimiter=',')
+targets_loc = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
 print(targets_loc)
 
 maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
@@ -33,7 +33,9 @@ maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    model = torch.load(".\TrainingNavigator\StepperAgent.pt")
+    model = DDPG.load("./Training/logs/StepperV2CloserTarget0.6_MaxVel0.75_TargetEps3.5/best_model.zip")
+    model = model.policy.actor
+
     for tgt_idx in [6, 7, 8, 9, 10]:
 
         maze_env.reset(target_index=tgt_idx, create_video=False)

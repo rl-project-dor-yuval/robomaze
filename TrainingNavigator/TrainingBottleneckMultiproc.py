@@ -20,16 +20,16 @@ from TrainingNavigator.StepperAgent import StepperAgent
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "WithImprovedStepper",
+        "run_name": "WithImprovedStepper_LessDemos_higher_clip_maxV0.7",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 42 ** 2,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
-        "num_envs": 3,
+        "num_envs": 1,
         "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 20,
+        "grad_clip_norm_actor": 25,
         "grad_clip_norm_critic": 2,
         "batch_size": 2048,
         "buffer_size": 1 * 10 ** 5,
@@ -37,17 +37,17 @@ if __name__ == '__main__':
         "critic_arch": [400, 300],  # Should not be changed or explored
         "exploration_noise_std": 0.03,
         "epsilon_to_subgoal": 0.5,  # DO NOT TOUCH
-        "max_velocity_in_subgoal": 1,  # DO NOT TOUCH
+        "max_velocity_in_subgoal": 0.7,  # DO NOT TOUCH
         "stepper_radius_range": (0.6, 2.5),  # DO NOT TOUCH
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
         "demo_on_fail_prob": 0.2,
-        "demo_prob_decay": 0.9999,
+        "demo_prob_decay": 0.999,
         "use_demo_epsilon_offset": False,
         "learning_starts": 10 ** 4,
 
-        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05.pt',
+        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_new.pt',
 
         "velocity_in_obs": False,
         "max_stepper_steps": 75,
