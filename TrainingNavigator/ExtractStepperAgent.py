@@ -1,7 +1,6 @@
 """
 for usage can copy from here:
-python TrainingNavigator/ExtractStepperAgent.py Training/logs/StepperV2LongRun_BS400_harder/best_model.zip TrainingNavigator/StepperAgents/StepperV2_ep03_
-vel05.pt
+python TrainingNavigator/ExtractStepperAgent.py Training/logs/StepperV2LongRun_BS400_harder/best_model.zip TrainingNavigator/StepperAgents/StepperV2_ep03_vel05.pt
 """
 
 from stable_baselines3 import DDPG
