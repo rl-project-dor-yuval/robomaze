@@ -18,13 +18,13 @@ if __name__ == '__main__':
 
     # Parameters
     config = {
-        "run_name": "LongRun_BS1024",
+        "run_name": "WithRandomInitialization",
         "show_gui": False,
-        "seed": 1995**2,
+        "seed": 1995 ** 2,
 
         "num_envs": 1,
         "train_steps": 25000000,
-        "buffer_size": 300000,
+        "buffer_size": 500000,
         "learning_starts": 10000,
         "timeout_steps": 200,
         "map_radius": 4,
@@ -33,9 +33,10 @@ if __name__ == '__main__':
         "lr_reduce_factor": 0.2,
         "exploration_noise_std": 0.05,
         "batch_size": 1024,
-        "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-1e-4),
-        "max_goal_velocity": 0.75,
-        "target_epsilon": 0.35,
+        "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-2e-4),
+        "max_goal_velocity": 0.5,
+        "target_epsilon": 0.3,
+        "random_initialization": True,
 
         "eval_freq": 10 ** 5,
         "video_freq": 1
@@ -50,18 +51,19 @@ if __name__ == '__main__':
 
     targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
 
-    get_env_kwargs = dict(radius=config["map_radius"],
-                          targets=targets,
-                          timeout_steps=config["timeout_steps"],
-                          rewards=config["rewards"],
-                          max_goal_velocity=config["max_goal_velocity"],
-                          xy_in_obs=False,
-                          show_gui=config["show_gui"],
-                          hit_target_epsilon=config["target_epsilon"])
+    env_kwargs = dict(radius=config["map_radius"],
+                      targets=targets,
+                      timeout_steps=config["timeout_steps"],
+                      rewards=config["rewards"],
+                      max_goal_velocity=config["max_goal_velocity"],
+                      xy_in_obs=False,
+                      show_gui=config["show_gui"],
+                      hit_target_epsilon=config["target_epsilon"],
+                      random_ant_initialization=config["random_initialization"])
     if config["num_envs"] == 1:
-        maze_env, eval_maze_env = get_multi_targets_circle_envs(**get_env_kwargs)
+        maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
     else:
-        maze_env, eval_maze_env = get_multi_targets_circle_envs_multiproc(**get_env_kwargs,
+        maze_env, eval_maze_env = get_multi_targets_circle_envs_multiproc(**env_kwargs,
                                                                           num_envs=config["num_envs"])
 
     callback = MultiTargetEvalAndSaveCallback(log_dir=config["dir"],

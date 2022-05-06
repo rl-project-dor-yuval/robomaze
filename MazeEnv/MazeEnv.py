@@ -57,6 +57,7 @@ class MazeEnv(gym.Env):
                  xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
                  done_on_collision=True,
+                 noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -73,6 +74,8 @@ class MazeEnv(gym.Env):
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
         :param done_on_collision: if True, episodes ends when the ant collides with the wall
+        :type noisy_ant_initialization: if True, the ant will start with a random joint state and with
+         a noisy orientation at each reset
         :param goal_max_velocity: optional velocity limit to consider reaching goal
 
         Initializing environment object
@@ -102,6 +105,7 @@ class MazeEnv(gym.Env):
         self.hit_target_epsilon = hit_target_epsilon
         self.done_on_collision = done_on_collision
         self.max_goal_velocity = goal_max_velocity
+        self.noisy_ant_initialization = noisy_ant_initialization
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -226,7 +230,7 @@ class MazeEnv(gym.Env):
         reset the environment for the next episode
         """
         # move ant to start position:
-        self._ant.reset()
+        self._ant.reset(self.noisy_ant_initialization)
 
         # handle recording (save last episode if needed)
         if self._recorder.is_recording:

@@ -45,12 +45,25 @@ class Ant:
 
         # Initializing ant's action space, for 8 joint ranging -1 to 1.
 
-    def reset(self):
+    def reset(self, noisy_state=False):
+
+        initial_orientation = self.initial_orientation
+        if noisy_state:
+            initial_orientation = self._pclient.getEulerFromQuaternion(initial_orientation)
+            initial_orientation = [np.random.uniform(-0.5, 0.5) + oriant for oriant in initial_orientation]
+            initial_orientation = self._pclient.getQuaternionFromEuler(initial_orientation)
+
         self._pclient.resetBasePositionAndOrientation(self.uid,
-                                          self.start_position,
-                                          self.initial_orientation)
+                                                      self.start_position,
+                                                      initial_orientation)
+
         for joint, state in zip(JOINTS_INDICES, INIT_JOINT_STATES):
-            self._pclient.resetJointState(self.uid, joint, state)
+            state_ = state
+            velocity = 0
+            if noisy_state:
+                state_ += np.random.uniform(-0.5, 0.5)
+                velocity += np.random.uniform(-1, 1)
+            self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
     def action(self, in_action: np.array):
         # action will preform the given action following R8 vector that corresponds to each joint of the ant.

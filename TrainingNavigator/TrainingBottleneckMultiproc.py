@@ -20,10 +20,10 @@ from TrainingNavigator.StepperAgent import StepperAgent
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "EvenLessClip_eps0.3_vel0.5_RandInitStepperdifSeed",
+        "run_name": "RandInitStepper_LessStopCond_DiffSeed",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
-        "seed": 42,
+        "seed": 41**3,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
@@ -36,8 +36,8 @@ if __name__ == '__main__':
         "actor_arch": [400, 300],  # Should not be changed or explored
         "critic_arch": [400, 300],  # Should not be changed or explored
         "exploration_noise_std": 0.03,
-        "epsilon_to_subgoal": 0.3,  # DO NOT TOUCH
-        "max_velocity_in_subgoal": 0.5,  # DO NOT TOUCH
+        "epsilon_to_subgoal": 0.35,  # DO NOT TOUCH
+        "max_velocity_in_subgoal": 1,  # DO NOT TOUCH
         "stepper_radius_range": (0.4, 2.5),  # DO NOT TOUCH
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
 
         "velocity_in_obs": False,
-        "max_stepper_steps": 75,
+        "max_stepper_steps": 100,
         "max_navigator_steps": 100,
 
         # logging parameters

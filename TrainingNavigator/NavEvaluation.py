@@ -66,7 +66,7 @@ class NavEvalCallback(BaseCallback):
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
             vid_path, walked_trajectory, ws_id = self._record_video()
 
-            log_item = {'eval_video': wandb.Video(vid_path, fps=24), 'step': self.n_calls}
+            log_item = {'eval_video': wandb.Video(vid_path, fps=32), 'step': self.n_calls}
             if self.maze_map is not None:
                 log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory, ws_id)
 

@@ -16,6 +16,7 @@ class MultiTargetMazeEnv(MazeEnv):
                  show_gui: bool = False,
                  xy_in_obs: bool = True,
                  hit_target_epsilon: float = 0.8,
+                 noisy_ant_initialization: bool = False,
                  max_goal_velocity: float = np.inf,):
         """
         The only different argument is target_log_list which is a list of targets for this envrionment
@@ -28,7 +29,8 @@ class MultiTargetMazeEnv(MazeEnv):
         self.target_count = len(target_loc_list)
 
         super().__init__(maze_size, maze_map, tile_size, start_loc, target_loc_list[0],
-                         rewards, timeout_steps, show_gui, xy_in_obs, hit_target_epsilon, max_goal_velocity)
+                         rewards, timeout_steps, show_gui, xy_in_obs, hit_target_epsilon,
+                         noisy_ant_initialization, max_goal_velocity)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, target_index=None):
         """
