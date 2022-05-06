@@ -125,9 +125,8 @@ class NavigatorEnv(gym.Env):
             return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
 
     def step(self, action, visualize_subgoal=True):
-        if action[0] < self.action_space.low[0] or action[0] > self.action_space.high[0]:
+        if action[0] < self.action_space.low[0] or action[0] > self.action_space.high[0] + 1e-3:
             print("action:", action, "out of bounds")
-
 
         ant_xy = self.ant_curr_obs[0:2]
         # 2 first elements of action are range and direction to the subgoal
