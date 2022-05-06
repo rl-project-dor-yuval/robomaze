@@ -20,10 +20,10 @@ from TrainingNavigator.StepperAgent import StepperAgent
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "EvenLessClip_eps0.3_vel0.5_lowerMaxAction",
+        "run_name": "EvenLessClip_eps0.3_vel0.5_RandInitStepperdifSeed",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
-        "seed": 42 ** 2,
+        "seed": 42,
         "train_steps": 5 * 10 ** 6,
 
         # Training and environment parameters
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         "exploration_noise_std": 0.03,
         "epsilon_to_subgoal": 0.3,  # DO NOT TOUCH
         "max_velocity_in_subgoal": 0.5,  # DO NOT TOUCH
-        "stepper_radius_range": (0.4, 2),  # DO NOT TOUCH
+        "stepper_radius_range": (0.4, 2.5),  # DO NOT TOUCH
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
         "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         "use_demo_epsilon_offset": False,
         "learning_starts": 10 ** 4,
 
-        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05.pt',
+        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
 
         "velocity_in_obs": False,
         "max_stepper_steps": 75,
