@@ -10,7 +10,10 @@ parser = argparse.ArgumentParser(description="Solve the vanilla maze with fixed 
 parser.add_argument('--to_vid', dest='to_vid', action='store_const', const=True, default=False)
 
 args = parser.parse_args()
+
+# stepper can be from pt file of zip file
 stepper_path = "TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt"
+
 nav_env = get_vanilla_navigator_env(show_gui=not args.to_vid,
                                     stepper_path=stepper_path,
                                     subgoal_epsilon=0.5,
