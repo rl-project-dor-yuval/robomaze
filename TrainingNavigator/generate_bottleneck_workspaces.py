@@ -2,14 +2,17 @@ import cv2
 import numpy as np
 import colorsys
 import seaborn as sns
+from pathlib import Path
 
 
 num_of_workspaces = 1000
-min_num_hard_workspaces = 30
-workspaces_dir_name = "bottleneckXL"
+min_num_hard_workspaces = 0
 # minimum number of samples that are guaranteed to have start and goal in different
 # sides which makes the agent walk through the bottleneck to succeed
-min_distance = 15 # in maze pixels, for all targets
+min_distance = 15  # in maze pixels, for all targets
+
+free_space_map_path = "TrainingNavigator/maps/EasyBottleneck_freespace.png"
+workspaces_dir_name = "EasyBottleneck"
 
 
 def generate_start_and_goal(points):
@@ -22,8 +25,8 @@ def generate_start_and_goal(points):
             return start, goal
 
 
-free_space_map = - (cv2.imread("maps/bottleneck_freespace.png", cv2.IMREAD_GRAYSCALE) / 255) + 1
-
+Path(f"TrainingNavigator/workspaces/{workspaces_dir_name}").mkdir(parents=True, exist_ok=True)
+free_space_map = - (cv2.imread(free_space_map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
 free_space_points = np.argwhere(free_space_map == 0)
 
 workspaces = []
@@ -47,18 +50,18 @@ for i, w in enumerate(workspaces):
     cv2.circle(w_im, tuple(reversed(w[0])), 1, 0.2, -1)
     cv2.circle(w_im, tuple(reversed(w[1])), 2, 0.4, -1)
 
-    cv2.imwrite(f"workspaces/{workspaces_dir_name}/{i}.png", w_im * 255)
+    cv2.imwrite(f"TrainingNavigator/workspaces/{workspaces_dir_name}/{i}.png", w_im * 255)
 
 
 # create plot of all workspaces
 colors = sns.color_palette(None, num_of_workspaces)
-color_freespace_map = cv2.imread("maps/bottleneck_freespace.png", cv2.IMREAD_COLOR) / 255
+color_freespace_map = cv2.imread(free_space_map_path, cv2.IMREAD_COLOR) / 255
 
 for i, w in enumerate(workspaces):
      color_freespace_map[tuple(w[0])] = color_freespace_map[tuple(w[1])] = colors[i]
-cv2.imwrite(f"workspaces/{workspaces_dir_name}/all.png", color_freespace_map * 255)
+cv2.imwrite(f"TrainingNavigator/workspaces/{workspaces_dir_name}/all.png", color_freespace_map * 255)
 
 
 # save workspaces to csv:
 workspaces = np.array(workspaces)
-np.save(f"workspaces/{workspaces_dir_name}", workspaces)
+np.save(f"TrainingNavigator/workspaces/{workspaces_dir_name}", workspaces)

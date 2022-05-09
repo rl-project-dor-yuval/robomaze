@@ -20,7 +20,7 @@ from TrainingNavigator.StepperAgent import StepperAgent
 if __name__ == '__main__':
     # --- Parameters
     config = {
-        "run_name": "RandInitStepper_LessStopCond_DiffSeed",
+        "run_name": "EasyMaze_NewStepper_LessNoise",
         "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
         "show_gui": False,
         "seed": 41**3,
@@ -29,29 +29,34 @@ if __name__ == '__main__':
         # Training and environment parameters
         "num_envs": 3,
         "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 40,
+        "grad_clip_norm_actor": 70,
         "grad_clip_norm_critic": 1.5,
         "batch_size": 2048,
         "buffer_size": 1 * 10 ** 5,
         "actor_arch": [400, 300],  # Should not be changed or explored
         "critic_arch": [400, 300],  # Should not be changed or explored
-        "exploration_noise_std": 0.03,
+        "exploration_noise_std": 0.01,
         "epsilon_to_subgoal": 0.35,  # DO NOT TOUCH
-        "max_velocity_in_subgoal": 1,  # DO NOT TOUCH
+        "max_velocity_in_subgoal": 1.5,  # DO NOT TOUCH
         "stepper_radius_range": (0.4, 2.5),  # DO NOT TOUCH
         "done_on_collision": True,  # modify rewards in case you change this
         "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
-        "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz',
         "demo_on_fail_prob": 0.2,
         "demo_prob_decay": 0.999,
         "use_demo_epsilon_offset": False,
         "learning_starts": 10 ** 4,
 
-        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
 
         "velocity_in_obs": False,
         "max_stepper_steps": 100,
         "max_navigator_steps": 100,
+
+        # workspace paths:
+        "maze_map_path": "TrainingNavigator/maps/EasyBottleneck.png",
+        "workspaces_path": 'TrainingNavigator/workspaces/EasyBottleneck.npy',
+        "demonstration_path": 'TrainingNavigator/workspaces/EasyBottleneck_1.5_trajectories.npz',
+
+        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_WithRandomInitializationMaxV1.pt',
 
         # logging parameters
         "eval_workspaces": 100,  # will take the first workspaces
@@ -72,9 +77,9 @@ if __name__ == '__main__':
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
     # Setup Training Environment
-    maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
+    maze_map = - (cv2.imread(config["maze_map_path"], cv2.IMREAD_GRAYSCALE) / 255) + 1
 
-    start_goal_pairs = np.load('TrainingNavigator/workspaces/bottleneckXL.npy') / config["maze_size"][0]
+    start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
 
     maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
                            target_loc=start_goal_pairs[0][-1], xy_in_obs=True,
