@@ -1,5 +1,5 @@
 import torch
-
+from stable_baselines3 import DDPG
 
 class StepperAgent:
     """
@@ -11,7 +11,13 @@ class StepperAgent:
         else:
             _device = torch.device(device)
 
-        self.agent_nn = torch.load(agent_path, map_location=_device)
+        # agentpath could be pt file or zip file from SB3 format
+        if agent_path.split(".")[-1] == 'pt':
+            self.agent_nn = torch.load(agent_path, map_location=_device)
+        else:# zip file
+            model = DDPG.load(agent_path)
+            self.agent_nn = model.policy.actor
+
         self.agent_nn.eval()
         self.device = _device
 
