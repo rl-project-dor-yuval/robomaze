@@ -7,6 +7,7 @@ import cv2
 import torch
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from Utils import blackwhiteswitch
 
@@ -43,7 +44,7 @@ config = {
     "max_velocity_in_subgoal": 1.5,
 
     # logging parameters
-    "eval_ws_num": 1000,  # will take the first workspaces
+    "eval_ws_num": 4,  # will take the first workspaces
 
 }
 
@@ -65,15 +66,19 @@ def evaluate_workspace(model):
     t_start = time.time()
     episodes_length = []
     success_count = 0
-    stats = pd.DataFrame([])
+    stats = pd.DataFrame({'success': [0],
+                          'fell': [0],
+                          'hit_maze': [0],
+                          'navigator_timeout': [0],
+                          'stepper_timeout': [0]})
 
     for i in range(config["eval_ws_num"]):
         env_i = model.env.envs[0].env
         info, steps = play_workspace(env_i, model, i, create_video=False)
 
         # collect info to sturct
-        stats = stats.append(pd.DataFrame({k: [int(v)] for k, v in info.items()}))
         reason = [k for k, v in info.items() if v is True][0]
+        stats[reason] += 1
 
         # if episode failed so record with video
         if info["success"] is False:
@@ -120,7 +125,11 @@ if __name__ == '__main__':
     avg_length, success_rate, stats = evaluate_workspace(model=DDPGMP_model)
 
     print(f"avg_length: {avg_length}")
+    # get index list from dictionary
 
     print("saving stats bar plot")
-    stats.plot.bar(figsize=(10, 10))
-    plt.savefig(os.path.join(video_path, "stats.png"))
+    # plot the stats as the key in vertical axis and value is in horizontal axis
+    keys = list(stats.keys())
+    values = stats.values[0]
+    sns.barplot(values, keys)
+    plt.savefig(os.path.join(dir_name, "stats_bar_plot.png"))
