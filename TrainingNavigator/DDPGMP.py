@@ -71,9 +71,6 @@ class DDPGMP(DDPG):
             optimize_memory_usage=optimize_memory_usage,
         )
 
-        # self.demonstrations = np.load(demonstrations_path)
-        # if verbose > 0:
-        #     print(f"Debug: loaded {len(self.demonstrations)} different demonstrations")
         self.demonstrations_path = demonstrations_path
         self.demo_on_fail_prob = demo_on_fail_prob
         self.grad_clip_norm_actor = grad_clip_norm_actor

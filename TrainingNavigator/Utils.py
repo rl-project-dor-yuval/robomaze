@@ -10,6 +10,13 @@ from stable_baselines3.common.env_checker import check_env
 from gym.wrappers.rescale_action import RescaleAction
 
 
+def blackwhiteswitch(img_path):
+    """
+    black and white switch for the image
+    """
+    return - (cv2.imread(img_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
+
+
 def tf_top_left_to_bottom_left(vec: np.ndarray, size):
     return np.array([vec[0], size - vec[1] - 1])
 
