@@ -7,6 +7,7 @@ import cv2
 import torch
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from Utils import blackwhiteswitch
 
 from TrainingNavigator.NavigatorEnv import NavigatorEnv, MultiStartgoalNavigatorEnv
@@ -120,5 +121,6 @@ if __name__ == '__main__':
 
     print(f"avg_length: {avg_length}")
 
-    pd.set_option('display.max_colwidth', None)
-    print(stats.describe())
+    print("saving stats bar plot")
+    stats.plot.bar(figsize=(10, 10))
+    plt.savefig(os.path.join(video_path, "stats.png"))
