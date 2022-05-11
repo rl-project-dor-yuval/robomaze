@@ -40,7 +40,7 @@
 
 # workspace paths:
 "maze_map_path": "TrainingNavigator/maps/bottleneck.png"
-"workspaces_path": 'TrainingNavigator/workspaces/bottleneck.npy'
+"workspaces_path": 'TrainingNavigator/workspaces/bottleneckXL.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt'
 
