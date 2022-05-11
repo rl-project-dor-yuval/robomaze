@@ -1,7 +1,12 @@
-import sys
+"""
+Usage: TrainingMultiproc.py ConfigFileName.yaml
+the config file must appear in TrainingNavigator/Configs and you shouldn't pass the path
+"""
 
+import sys
 sys.path.append('.')
 
+import argparse
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.monitor import Monitor
@@ -16,57 +21,17 @@ from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
 from TrainingNavigator.StepperAgent import StepperAgent
+import yaml
 
 if __name__ == '__main__':
-    # --- Parameters
-    config = {
-        "run_name": "Easy_OlderStepper_NoKillWall_demos0.5_Vel1",
-        "project": "Robomaze-TrainingNavigator",  # "Robomaze-tests"
-        "show_gui": False,
-        "seed": 41**3,
-        "train_steps": 5 * 10 ** 6,
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config_name', type=str, help='maze map')
+    args = parser.parse_args()
 
-        # Training and environment parameters
-        "num_envs": 3,
-        "learning_rate": 0.5e-5,
-        "grad_clip_norm_actor": 70,
-        "grad_clip_norm_critic": 1.5,
-        "batch_size": 2048,
-        "buffer_size": 1 * 10 ** 5,
-        "actor_arch": [400, 300],  # Should not be changed or explored
-        "critic_arch": [400, 300],  # Should not be changed or explored
-        "exploration_noise_std": 0.03,
-        "epsilon_to_subgoal": 0.3,  # DO NOT TOUCH
-        "max_velocity_in_subgoal": 1,  # DO NOT TOUCH
-        "stepper_radius_range": (0.4, 2.5),  # DO NOT TOUCH
-        "done_on_collision": False,  # modify rewards in case you change this
-        "rewards": Rewards(target_arrival=1, collision=-0.02, fall=-1, idle=-0.001, ),
-        "demo_on_fail_prob": 0.5,
-        "demo_prob_decay": 0.999,
-        "use_demo_epsilon_offset": False,
-        "learning_starts": 10 ** 4,
-
-
-        "velocity_in_obs": False,
-        "max_stepper_steps": 100,
-        "max_navigator_steps": 30,
-
-        # workspace paths:
-        "maze_map_path": "TrainingNavigator/maps/EasyBottleneck.png",
-        "workspaces_path": 'TrainingNavigator/workspaces/EasyBottleneck.npy',
-        "demonstration_path": 'TrainingNavigator/workspaces/EasyBottleneck_1.5_trajectories.npz',
-
-        "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
-
-        # logging parameters
-        "eval_workspaces": 100,  # will take the first workspaces
-        "eval_freq": 10000,
-        "video_freq": 1,
-        "save_model_freq": 20000,
-
-        # Constants:
-        "maze_size": (10, 10)
-    }
+    yaml_loader = yaml.Loader
+    yaml_loader.add_constructor("!Rewards", Rewards.from_yaml)
+    config = yaml.load(open("TrainingNavigator/configs/" + args.config_name, "r"), yaml_loader)
+    print(config)
     # noinspection DuplicatedCode
     config["dir"] = "./TrainingNavigator/logs/" + config["run_name"]
     # ---
