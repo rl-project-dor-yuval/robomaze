@@ -1,6 +1,7 @@
-import time
 from pathlib import Path
-import os
+import os, time, sys
+
+sys.path.append('.')
 
 import cv2
 import torch
@@ -46,39 +47,46 @@ config = {
 }
 
 
+def play_workspace(env, model, idx, create_video=False):
+    steps, curr_reward, done = 0, 0, False
+    obs = env.reset(start_goal_pair_idx=idx, create_video=create_video, video_path=video_path + f"_{idx}.gif")
+
+    while done is False:
+        with torch.no_grad():
+            action, _ = model.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
+        curr_reward += reward
+        steps += 1
+
+    return info, steps
+
 def evaluate_workspace(model):
     t_start = time.time()
-    rewards = []
     episodes_length = []
     success_count = 0
     stats = pd.DataFrame([])
 
     for i in range(config["eval_ws_num"]):
         env_i = model.env.envs[0].env
-        obs = env_i.reset(start_goal_pair_idx=i, create_video=True, video_path=video_path + f"_{i}.gif")
-        steps, curr_reward, done = 0, 0, False
-
-        while done is False:
-            with torch.no_grad():
-                action, _ = model.predict(obs, deterministic=True)
-            obs, reward, done, info = env_i.step(action)
-            curr_reward += reward
-            steps += 1
+        info, steps = play_workspace(env_i, model, i, create_video=False)
 
         # collect info to sturct
         stats = stats.append(pd.DataFrame({k: [int(v)] for k, v in info.items()}))
+        reason = [k for k, v in info.items() if v is True][0]
 
-        print(f"workspace-{i} done reason: {info}")
-        rewards.append(curr_reward)
+        # if episode failed so record with video
+        if info["success"] is False:
+            play_workspace(env_i, model, i, create_video=True)
+
+        print(f"workspace-{i} done reason: {reason}")
         episodes_length.append(steps)
         success_count += info['success']
 
-    avg_reward = sum(rewards) / config["eval_ws_num"]
     avg_length = sum(episodes_length) / config["eval_ws_num"]
     success_rate = success_count / config["eval_ws_num"]
 
     print("All workspaces evaluation done in %.4f secs: " % (time.time() - t_start))
-    return avg_reward, avg_length, success_rate, stats
+    return avg_length, success_rate, stats
 
 
 if __name__ == '__main__':
@@ -108,6 +116,9 @@ if __name__ == '__main__':
 
     # create the model
     DDPGMP_model = DDPGMP.load(config["navigator_agent_path"], env=eval_nav_env)
-    avg_reward, avg_length, success_rate, stats = evaluate_workspace(model=DDPGMP_model)
+    avg_length, success_rate, stats = evaluate_workspace(model=DDPGMP_model)
+
     print(f"avg_length: {avg_length}")
+
+    pd.set_option('display.max_colwidth', None)
     print(stats.describe())
