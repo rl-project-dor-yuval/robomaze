@@ -32,3 +32,6 @@ class Rewards:
         self.timeout = timeout
         self.fall = fall
 
+    @classmethod
+    def from_yaml(cls, loader, node):
+        return cls(**loader.construct_mapping(node))
