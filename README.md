@@ -57,9 +57,7 @@ Our solution for solving a maze is built of 2 agents:
 
 ***The Stepper***
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
     <img src="assets/p3.gif" alt="Logo" height=150>
-  </a>
 </div>
 
 - This agent is able to control the ant robot's joints given a certain relatively close goal (subgoal), and arrive it in
@@ -71,9 +69,7 @@ Our solution for solving a maze is built of 2 agents:
 
 ***The Navigator (in progress...)***
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
     <img src="assets/navigator.gif" alt="navigator" height=150>
-  </a>
 </div>
 
 - This agent aims to generate subgoals towards the main goal for the stepper as an input.
