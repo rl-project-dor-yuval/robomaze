@@ -22,6 +22,7 @@ import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
 from TrainingNavigator.StepperAgent import StepperAgent
 import yaml
+from Utils import blackwhiteswitch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,8 +43,7 @@ if __name__ == '__main__':
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
     # Setup Training Environment
-    maze_map = - (cv2.imread(config["maze_map_path"], cv2.IMREAD_GRAYSCALE) / 255) + 1
-
+    maze_map = blackwhiteswitch(config["maze_map_path"])
     start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
 
     maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],

@@ -7,7 +7,7 @@ import ntpath
 import seaborn as sns
 from pathlib import Path
 import argparse
-from TrainingNavigator.Utils import get_freespace_map
+from TrainingNavigator.Utils import get_freespace_map, blackwhiteswitch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('map', type=str, help='maze map')
@@ -23,7 +23,7 @@ parser.add_argument('--ws_dir_name', type=int,
 args = parser.parse_args()
 
 # load map, create free space map and save it:
-maze_map = - (cv2.imread(args.map, cv2.IMREAD_GRAYSCALE) / 255) + 1
+maze_map = blackwhiteswitch(args.map)
 maze_map = cv2.rotate(maze_map, cv2.cv2.ROTATE_90_CLOCKWISE)
 
 free_space_map = get_freespace_map(maze_map, args.ant_size)  # was 24 before for bottleneck

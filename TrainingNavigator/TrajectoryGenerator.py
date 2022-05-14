@@ -12,7 +12,7 @@ from typing import Tuple, Dict, List
 from TrainingNavigator.RRT_star.src.rrt.rrt_star import RRTStar
 from TrainingNavigator.RRT_star.src.search_space.search_space import ImgSearchSpace
 from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
-from Utils import plot_trajectory
+from Utils import plot_trajectory, blackwhiteswitch
 
 # noinspection PyUnreachableCode
 class TrajGenerator:
@@ -22,7 +22,7 @@ class TrajGenerator:
 
     def __init__(self, mapPath: str, max_section_len=20):
 
-        self.map = -(cv2.imread(mapPath, cv2.IMREAD_GRAYSCALE) / 255) + 1
+        self.map = blackwhiteswitch(mapPath)
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
 
         self.max_section_len = max_section_len

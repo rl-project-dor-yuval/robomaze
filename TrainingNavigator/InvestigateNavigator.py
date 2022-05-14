@@ -22,7 +22,7 @@ This script is used to track statistics of the trained navigator.
 it shows the model's reasons for failure and success rate over any configurable number of workspaces
 """
 config = {
-    "name": "RandInitStepper_minV1.5_lessClipV2_doneOnCol",
+    "name": "RandInitStepper_minV1.5_lessClipV2",
     # if is None then the run name is extracted from nav agent path
 
     # visualize
@@ -39,7 +39,7 @@ config = {
     # Technical params
     "maze_size": (10, 10),
     "velocity_in_obs": False,
-    "done_on_collision": True,
+    "done_on_collision": False,
     "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
     "max_stepper_steps": 50,
     "max_navigator_steps": 20,
@@ -48,7 +48,7 @@ config = {
     "max_velocity_in_subgoal": 1.5,
 
     # logging parameters
-    "eval_ws_num": 4,  # will take the first workspaces
+    "eval_ws_num": 1000,  # will take the first workspaces
 
 }
 
