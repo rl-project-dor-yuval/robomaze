@@ -109,15 +109,15 @@ class TrajGenerator:
 
 
 if __name__ == "__main__":
-    workspaces_file_path = "workspaces/EasyBottleneck.npy"  # path of numpy file with workspaces
+    workspaces_file_path = "workspaces/S15x15.npy"  # path of numpy file with workspaces
     workspaces_filename = workspaces_file_path.split("/")[-1].split(".")[0]
 
-    trajs_filename = "EasyBottleneck_1.5"
-    plots_save_path = "workspaces/EasyBottleneck_1.5_plots/"  # path to save plots
+    trajs_filename = "S15x15"
+    plots_save_path = "workspaces/S15x15_plots/"  # path to save plots
     Path(plots_save_path).mkdir(parents=True, exist_ok=True)
 
     # create Search Space
-    map_path = "maps/EasyBottleneck_freespace.png"
+    map_path = "maps/S15x15_freespace.png"
 
     # create Search Space
     maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1

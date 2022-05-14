@@ -24,12 +24,12 @@ args = parser.parse_args()
 
 # load map, create free space map and save it:
 maze_map = - (cv2.imread(args.map, cv2.IMREAD_GRAYSCALE) / 255) + 1
-maze_map = cv2.rotate(maze_map, cv2.cv2.ROTATE_90_CLOCKWISE)
+maze_map_rotated = cv2.rotate(maze_map, cv2.cv2.ROTATE_90_CLOCKWISE)
 
 free_space_map = get_freespace_map(maze_map, args.ant_size)  # was 24 before for bottleneck
 free_space_rotated = cv2.rotate(free_space_map, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
 free_space_map_path = args.map.replace('.png', '_freespace.png')
-cv2.imwrite(free_space_map_path, (-free_space_rotated + 1) * 255)
+cv2.imwrite(free_space_map_path, (-free_space_map + 1) * 255)
 
 num_of_workspaces = args.num_workspaces
 min_distance = args.min_distance
