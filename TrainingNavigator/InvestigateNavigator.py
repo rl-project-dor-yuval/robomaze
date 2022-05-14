@@ -48,26 +48,32 @@ config = {
     "max_velocity_in_subgoal": 1.5,
 
     # logging parameters
-    "eval_ws_num": 1000,  # will take the first workspaces
+    "eval_ws_num": 4,  # will take the first workspaces
 
 }
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def play_workspace(env, model, idx, create_video=False):
+def play_workspace(env, agent, idx, create_video=False):
     steps, curr_reward, done = 0, 0, False
     obs = env.reset(start_goal_pair_idx=idx, create_video=create_video, video_path=video_path + f"_{idx}.gif")
 
     while done is False:
+        obs_ = torch.from_numpy(obs).unsqueeze(0).to(device)
         with torch.no_grad():
-            action, _ = model.predict(obs, deterministic=True)
+            action = agent(obs_)
+            action = action.squeeze(0).to('cpu').numpy()
+            action = action.clip(-1, 1)
+            low0, high0 = env.action_space.low[0], env.action_space.high[0]
+            action[0] = low0 + (0.5 * (action[0] + 1.0) * (high0 - low0))
+            action[1] = action[1] * env.action_space.high[1]
         obs, reward, done, info = env.step(action)
         curr_reward += reward
         steps += 1
 
     return info, steps
 
-
-def evaluate_workspace(model, env):
+def evaluate_workspace(agent, env):
     t_start = time.time()
     episodes_length = []
     success_count = 0
@@ -78,9 +84,7 @@ def evaluate_workspace(model, env):
                           'stepper_timeout': [0]})
 
     for i in range(config["eval_ws_num"]):
-        # env_i = model.env.envs[0].env
-        env_i = env
-        info, steps = play_workspace(env_i, model, i, create_video=False)
+        info, steps = play_workspace(env, agent, i, create_video=False)
 
         # collect info to sturct
         if not config["done_on_collision"]:
@@ -92,7 +96,7 @@ def evaluate_workspace(model, env):
 
         # if episode failed so record with video
         if info["success"] is False:
-            play_workspace(env_i, model, i, create_video=True)
+            play_workspace(env, agent, i, create_video=True)
 
         print(f"workspace-{i} done reason: {reason}")
         episodes_length.append(steps)
@@ -138,16 +142,16 @@ if __name__ == '__main__':
 
     model_path = os.path.join(config["navigator_agent_path"], "NavAgent.pt")
     if os.path.isfile(model_path):
-        model = torch.load(model_path)
+        agent = torch.load(model_path)
     elif os.listdir(config["navigator_agent_path"]):
         model_path = os.path.join(config["navigator_agent_path"],
                                   max(os.listdir(config["navigator_agent_path"]),
                                       key=lambda x: int(x.split(".")[0].split("_")[1])))
-        model = extract_agent(model_path, save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
+        agent = extract_agent(model_path, save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
     else:
         raise FileNotFoundError("No model found in the path")
 
-    avg_length, success_rate, stats = evaluate_workspace(model=model, env=eval_nav_env)
+    avg_length, success_rate, stats = evaluate_workspace(agent=agent, env=eval_nav_env)
 
     print(f"avg_length: {avg_length}")
     # get index list from dictionary
