@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from Utils import blackwhiteswitch
 
 from TrainingNavigator.NavigatorEnv import NavigatorEnv, MultiStartgoalNavigatorEnv
+from TrainingNavigator.ExtractStepperAgent import extract_agent
 from MazeEnv.MazeEnv import MazeEnv
 from MazeEnv.EnvAttributes import Rewards
 from DDPGMP import DDPGMP
@@ -21,6 +22,9 @@ This script is used to track statistics of the trained navigator.
 it shows the model's reasons for failure and success rate over any configurable number of workspaces
 """
 config = {
+    "name": "RandInitStepper_minV1.5_lessClipV2",
+    # if is None then the run name is extracted from nav agent path
+
     # visualize
     "show_gui": False,
     "save_video": True,
@@ -29,7 +33,7 @@ config = {
     "maze_map_path": "TrainingNavigator/maps/bottleneck.png",
     "workspaces_path": 'TrainingNavigator/workspaces/bottleneckXL.npy',
     "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
-    "navigator_agent_path": "TrainingNavigator/logs/RandInitStepper_minV1.5_lessClipV2/saved_model/model_1100000.zip",
+    "navigator_agent_path": "TrainingNavigator/logs/RandInitStepper_minV1.5_lessClipV2/saved_model",  # Dir Required
     "output_path": "TrainingNavigator/NavigatorTests",
 
     # Technical params
@@ -44,7 +48,7 @@ config = {
     "max_velocity_in_subgoal": 1.5,
 
     # logging parameters
-    "eval_ws_num": 4,  # will take the first workspaces
+    "eval_ws_num": 1000,  # will take the first workspaces
 
 }
 
@@ -56,13 +60,17 @@ def play_workspace(env, agent, idx, create_video=False):
 
     while done is False:
         obs_ = torch.from_numpy(obs).unsqueeze(0).to(device)
+
         with torch.no_grad():
             action = agent(obs_)
             action = action.squeeze(0).to('cpu').numpy()
+
+            # scale action
             action = action.clip(-1, 1)
             low0, high0 = env.action_space.low[0], env.action_space.high[0]
             action[0] = low0 + (0.5 * (action[0] + 1.0) * (high0 - low0))
             action[1] = action[1] * env.action_space.high[1]
+
         obs, reward, done, info = env.step(action)
         curr_reward += reward
         steps += 1
@@ -83,6 +91,10 @@ def evaluate_workspace(agent, env):
         info, steps = play_workspace(env, agent, i, create_video=False)
 
         # collect info to sturct
+        if not config["done_on_collision"]:
+            # ignore hit maze
+            info["hit_maze"] = 0
+
         reason = [k for k, v in info.items() if v is True][0]
         stats[reason] += 1
 
@@ -104,8 +116,9 @@ def evaluate_workspace(agent, env):
 if __name__ == '__main__':
     maze_map = blackwhiteswitch(config["maze_map_path"])
     start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
-    tested_nav_name = config["navigator_agent_path"].split('/')[-3]  # extract the examined navigator name
-
+    # extract the examined navigator name
+    tested_nav_name = config["name"] if config["name"] else config["navigator_agent_path"].split('/')[-3]
+    print(tested_nav_name)
     # create dir for the specific tested navigator
     dir_name = os.path.join(config["output_path"], tested_nav_name + "_test")
     Path(dir_name).mkdir(parents=True, exist_ok=True)
@@ -127,7 +140,21 @@ if __name__ == '__main__':
                                               stepper_radius_range=config["stepper_radius_range"])
 
     # create the model
-    agent = DDPGMP.load(config["navigator_agent_path"], env=eval_nav_env).policy.actor.eval().to(device)
+    # if there is a file ends with pt, then load the model
+    # else if there are multiple files end with .zip take the last one, and load the extract the model
+    # from it, otherwise raise excpetion
+
+    model_path = os.path.join(config["navigator_agent_path"], "NavAgent.pt")
+    if os.path.isfile(model_path):
+        agent = torch.load(model_path)
+    elif os.listdir(config["navigator_agent_path"]):
+        model_path = os.path.join(config["navigator_agent_path"],
+                                  max(os.listdir(config["navigator_agent_path"]),
+                                      key=lambda x: int(x.split(".")[0].split("_")[1])))
+        agent = extract_agent(model_path, save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
+    else:
+        raise FileNotFoundError("No model found in the path")
+
     avg_length, success_rate, stats = evaluate_workspace(agent=agent, env=eval_nav_env)
 
     print(f"avg_length: {avg_length}")
@@ -137,5 +164,5 @@ if __name__ == '__main__':
     # plot the stats as the key in vertical axis and value is in horizontal axis
     keys = list(stats.keys())
     values = stats.values[0]
-    sns.barplot(values, keys)
+    sns.barplot(x=values, y=keys)
     plt.savefig(os.path.join(dir_name, "stats_bar_plot.png"))

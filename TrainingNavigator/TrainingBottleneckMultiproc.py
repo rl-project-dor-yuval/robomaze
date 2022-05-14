@@ -2,20 +2,21 @@ import sys
 
 sys.path.append('.')
 
+import cv2
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
-from MazeEnv.MazeEnv import MazeEnv
-import cv2
-from DDPGMP import DDPGMP, CustomTD3Policy
-import torch
-from MazeEnv.EnvAttributes import Rewards
-import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
 from TrainingNavigator.StepperAgent import StepperAgent
+from MazeEnv.MazeEnv import MazeEnv
+from MazeEnv.EnvAttributes import Rewards
+from Utils import blackwhiteswitch
+from DDPGMP import DDPGMP, CustomTD3Policy
+import torch
+import wandb
 
 if __name__ == '__main__':
     # --- Parameters
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
     # Setup Training Environment
-    maze_map = - (cv2.imread(config["maze_map_path"], cv2.IMREAD_GRAYSCALE) / 255) + 1
+    maze_map = blackwhiteswitch(config["maze_map_path"])
 
     start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
 

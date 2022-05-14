@@ -5,7 +5,7 @@ import numpy as np
 from TrainingNavigator.NavigatorEnv import NavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 import cv2
-from Utils import plot_trajectory
+from Utils import plot_trajectory, blackwhiteswitch
 
 
 def test_trajectory(traj, maze_map, id, create_video=False):
@@ -40,7 +40,7 @@ def test_trajectory(traj, maze_map, id, create_video=False):
     return False
 
 if __name__ == '__main__':
-    maze_map = - (cv2.imread('TrainingNavigator/maps/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
+    maze_map = blackwhiteswitch('TrainingNavigator/maps/bottleneck.png')
     trajectories = np.load('TrainingNavigator/workspaces/botttleneck_trajectories.npz')
 
     # check hard workspaces:
