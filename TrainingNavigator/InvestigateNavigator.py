@@ -60,13 +60,17 @@ def play_workspace(env, agent, idx, create_video=False):
 
     while done is False:
         obs_ = torch.from_numpy(obs).unsqueeze(0).to(device)
+
         with torch.no_grad():
             action = agent(obs_)
             action = action.squeeze(0).to('cpu').numpy()
+
+            # scale action
             action = action.clip(-1, 1)
             low0, high0 = env.action_space.low[0], env.action_space.high[0]
             action[0] = low0 + (0.5 * (action[0] + 1.0) * (high0 - low0))
             action[1] = action[1] * env.action_space.high[1]
+
         obs, reward, done, info = env.step(action)
         curr_reward += reward
         steps += 1

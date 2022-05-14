@@ -30,5 +30,5 @@ def extract_agent(model_path, save_path):
 
     model = DDPG.load(model_path)
     actor = model.policy.actor
-    torch.save(actor, save_path + "NavAgent.pt")
+    torch.save(actor, save_path)
     return actor
