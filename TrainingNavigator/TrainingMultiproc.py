@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     # Setup Training Environment
     maze_map = blackwhiteswitch(config["maze_map_path"])
-    start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
+    start_goal_pairs = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
 
     maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
                            target_loc=start_goal_pairs[0][-1], xy_in_obs=True,
