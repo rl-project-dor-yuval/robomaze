@@ -1,4 +1,4 @@
-"run_name": "SMaze_15x15_seed2"
+"run_name": "SMaze_NoFill_seed2"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "S15x15.yaml"
 "show_gui": False

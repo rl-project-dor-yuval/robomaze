@@ -58,7 +58,8 @@ class MazeEnv(gym.Env):
                  hit_target_epsilon=0.4,
                  done_on_collision=True,
                  noisy_ant_initialization=False,
-                 goal_max_velocity: float = np.inf):
+                 goal_max_velocity: float = np.inf,
+                 optimize_maze_boarders: bool = True,):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -77,6 +78,8 @@ class MazeEnv(gym.Env):
         :type noisy_ant_initialization: if True, the ant will start with a random joint state and with
          a noisy orientation at each reset
         :param goal_max_velocity: optional velocity limit to consider reaching goal
+        :param optimize_boarders: if True, collision detection is checked only on boarder of
+         free areas on the map
 
         Initializing environment object
         """
@@ -128,7 +131,7 @@ class MazeEnv(gym.Env):
         self._pclient.configureDebugVisualizer(self._pclient.COV_ENABLE_GUI, False)  # dont show debugging windows
 
         # load maze:
-        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc)
+        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc, optimize_maze_boarders)
 
         # load ant robot:
         self._ant = Ant(self._pclient, self._start_loc)

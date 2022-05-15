@@ -19,17 +19,18 @@ class Maze:
                  maze_size,
                  maze_map,
                  tile_size,
-                 target_position3d):
+                 target_position3d,
+                 optimize_boarders=True):
         """
         :param pubullet_client:
         :param maze_size: MazeSize object defining the maze size
         :param maze_map: numpy array describing the Maze
         :param tile_size: size of building block of the Maze
         :param target_position: 3d position of Goal
-
+        :param optimize_boarders: if True,
+            collision detection is checked only on boarder of free areas on the map
         :return Maze object
         """
-        from os import getcwd
         self.maze_size = maze_size
 
         self._pclient = pybullet_client
@@ -44,8 +45,15 @@ class Maze:
         self._target_sphereUid = self._pclient.loadURDF("goalSphere.urdf",
                                                         basePosition=target_position3d)
 
-        self._create_maze_urdf(maze_map, "curr_maze.urdf", tile_size)
-        self._maze_tiles_uid = self._pclient.loadURDF("curr_maze.urdf")
+        if optimize_boarders:
+            maze_map_boarders, maze_map_fill = self._get_maze_map_boarders(maze_map)
+            self._create_maze_urdf(maze_map_boarders, "curr_maze_boarders.urdf", tile_size)
+            self._create_maze_urdf(maze_map_fill, "curr_maze_fill.urdf", tile_size)
+            self._maze_tiles_uid = self._pclient.loadURDF("curr_maze_boarders.urdf")
+            _ = self._pclient.loadURDF("curr_maze_fill.urdf")
+        else:
+            self._create_maze_urdf(maze_map, "curr_maze.urdf", tile_size)
+            self._maze_tiles_uid = self._pclient.loadURDF("curr_maze.urdf")
 
     def get_maze_objects_uids(self):
         maze_uids = np.concatenate([self._maze_frame_uids,
@@ -141,3 +149,26 @@ class Maze:
         f.write('    </link>\n</robot>\n')
 
         f.close()
+
+    def _get_maze_map_boarders(self, maze_map):
+        boarders = maze_map.copy()
+        fill = np.zeros_like(maze_map)
+
+        for i in range(maze_map.shape[0] - 1):
+            for j in range(maze_map.shape[1] - 1):
+                if maze_map[i, j] == 1:
+                    if maze_map[i, j - 1] == 0 or \
+                            maze_map[i, j + 1] == 0 or \
+                            maze_map[i - 1, j] == 0 or \
+                            maze_map[i + 1, j] == 0 or \
+                            maze_map[i - 1, j - 1] == 0 or \
+                            maze_map[i - 1, j + 1] == 0 or \
+                            maze_map[i + 1, j - 1] == 0 or \
+                            maze_map[i + 1, j + 1] == 0:
+                        continue  # it is a boarder
+                    else:
+                        # not a boarder
+                        boarders[i, j] = 0
+                        fill[i, j] = 1
+
+        return boarders, fill
