@@ -170,7 +170,6 @@ class NavigatorEnv(gym.Env):
             # check if close enough to subgoal and meets velocity criteria:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal \
                     and ant_velocity < self.max_vel_in_subgoal:
-
                 break
 
         if self.velocity_in_obs:
