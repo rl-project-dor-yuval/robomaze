@@ -26,7 +26,8 @@ from Utils import blackwhiteswitch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config_name', type=str, help='maze map')
+    parser.add_argument('config_name', type=str, help='config file name without path,'
+                                                      ' the file must appear in TrainingNavigator/configs/')
     args = parser.parse_args()
 
     yaml_loader = yaml.Loader

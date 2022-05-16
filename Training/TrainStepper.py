@@ -1,7 +1,14 @@
+"""
+Usage: TrainStepper.py ConfigFileName.yaml
+the config file must appear in Training/Configs and you shouldn't pass the full path
+"""
+
+import argparse
 import time
 import numpy as np
 import os
 import sys
+import yaml
 from stable_baselines3 import DDPG
 from stable_baselines3.common.noise import NormalActionNoise
 import wandb
@@ -13,36 +20,19 @@ from Evaluation import EvalAndSaveCallback, MultiTargetEvalAndSaveCallback
 import torch
 
 if __name__ == '__main__':
+    # noinspection DuplicatedCode
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config_name', type=str, help='config file name without path,'
+                                                      ' the file must appear in Training/configs/')
+    args = parser.parse_args()
+
+    yaml_loader = yaml.Loader
+    yaml_loader.add_constructor("!Rewards", Rewards.from_yaml)
+    config = yaml.load(open("Training/configs/" + args.config_name, "r"), yaml_loader)
+    config["dir"] = "./Training/logs/StepperV2" + config["run_name"]
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("running on:", device)
-
-    # Parameters
-    config = {
-        "run_name": "WithRandomInitialization",
-        "show_gui": False,
-        "seed": 1995 ** 2,
-
-        "num_envs": 1,
-        "train_steps": 25000000,
-        "buffer_size": 500000,
-        "learning_starts": 10000,
-        "timeout_steps": 200,
-        "map_radius": 4,
-        "learning_rate": 1e-6,
-        "reduce_lr": True,
-        "lr_reduce_factor": 0.2,
-        "exploration_noise_std": 0.05,
-        "batch_size": 1024,
-        "rewards": Rewards(target_arrival=1, collision=-1, timeout=0, fall=-1, idle=-2e-4),
-        "max_goal_velocity": 0.5,
-        "target_epsilon": 0.3,
-        "random_initialization": True,
-
-        "eval_freq": 10 ** 5,
-        "video_freq": 1
-
-    }
-    config["dir"] = "./Training/logs/StepperV2" + config["run_name"]
 
     # setup W&B:
     wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
@@ -59,10 +49,15 @@ if __name__ == '__main__':
                       xy_in_obs=False,
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
-                      random_ant_initialization=config["random_initialization"])
+                      random_ant_initialization=config["random_initialization"],
+                      with_obstacles=config["with_obstacles"])
     if config["num_envs"] == 1:
         maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
     else:
+        print("training stepper with multiple envrionments is inefficient."
+              " if you want to do this anyway, remove this line and make sure "
+              "get_multi_targets_circle_envs_multiproc is updated")
+        exit(0)
         maze_env, eval_maze_env = get_multi_targets_circle_envs_multiproc(**env_kwargs,
                                                                           num_envs=config["num_envs"])
 

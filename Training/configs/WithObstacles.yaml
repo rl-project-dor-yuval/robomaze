@@ -1,0 +1,31 @@
+"run_name": "Easier_WithObstacles_seed2(control01)"
+"show_gui": False
+"seed": !!python/object/apply:eval
+  [41**3]
+
+"num_envs": 1
+"train_steps": 20000000
+"buffer_size": 500000
+"learning_starts": 10000
+"timeout_steps": 200
+"map_radius": 4
+"learning_rate": 1.0e-6
+"reduce_lr": True
+"lr_reduce_factor": 0.2
+"exploration_noise_std": 0.05
+"batch_size": 1024
+"rewards":
+  !Rewards
+    target_arrival: 1
+    collision: -1
+    timeout: 0
+    fall: -1
+    idle: -2.0e-4
+
+"max_goal_velocity": 2
+"target_epsilon": 0.35
+"random_initialization": True
+"with_obstacles": True
+
+"eval_freq": !!python/object/apply:eval [10 ** 5]
+"video_freq": 1
