@@ -47,12 +47,12 @@ class Recorder:
                                                                             cameraTargetPosition=focal_point
                                                                             )
 
-        # temporary fix that works for our uses. TODO: find better defenition for farval
+        # temporary fix that works for our uses. TODO: find better defenition for farval and nearval
         far_val = camera_distance + max(self._maze_size)/2
 
         self._projection_matrix = self._pclient.computeProjectionMatrixFOV(fov=70,
                                                                            aspect=aspect,
-                                                                           nearVal=camera_distance - 1,
+                                                                           nearVal=camera_distance - 6,
                                                                            farVal=far_val)
 
     def start_recording(self, file_name, custom_path=False):
