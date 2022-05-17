@@ -1,4 +1,4 @@
-"run_name": "HardBn_NoKillOnWall"
+"run_name": "HardBn_easyStopCond_AddEpsilon"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
 "show_gui": False
@@ -18,9 +18,9 @@
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"epsilon_to_subgoal": 0.3  # DO NOT TOUCH
-"max_velocity_in_subgoal": 1  # DO NOT TOUCH
-"stepper_radius_range": !!python/tuple [0.4, 2.5]  # DO NOT TOUCH
+"epsilon_to_subgoal": 0.5  # DO NOT TOUCH
+"max_velocity_in_subgoal": 3  # DO NOT TOUCH
+"stepper_radius_range": !!python/tuple [0.6, 2.5]  # DO NOT TOUCH
 "done_on_collision": False  # modify rewards in case you change this
 "rewards":
   !Rewards
@@ -30,7 +30,7 @@
     idle: -0.001
 "demo_on_fail_prob": 0.5
 "demo_prob_decay": 0.999
-"use_demo_epsilon_offset": False
+"use_demo_epsilon_offset": True
 "learning_starts": !!python/object/apply:eval
   [10 ** 4]
 

@@ -1,7 +1,7 @@
-"run_name": "Easier_WithObstacles_seed2(control01)"
+"run_name": "Easier_WithObstacles_noRandInit_seed1(control16)"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [41**3]
+  [43**3]
 
 "num_envs": 1
 "train_steps": 20000000
@@ -24,7 +24,7 @@
 
 "max_goal_velocity": 2
 "target_epsilon": 0.35
-"random_initialization": True
+"random_initialization": False
 "with_obstacles": True
 
 "eval_freq": !!python/object/apply:eval [10 ** 5]
