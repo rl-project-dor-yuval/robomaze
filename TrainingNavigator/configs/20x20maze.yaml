@@ -1,9 +1,9 @@
-"run_name": "SMaze_easyStopCond_AddEpsilon"
+"run_name": "20x20_easyStopCond_AddEpsilon_seed1"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
-"config_file": "S15x15.yaml"
+"config_file": "20x20maze.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [41**3]
+  [1995**2]
 "train_steps": !!python/object/apply:eval
   [5 * 10 ** 6]
 
@@ -36,12 +36,12 @@
 
 "velocity_in_obs": False
 "max_stepper_steps": 100
-"max_navigator_steps": 40
+"max_navigator_steps": 50
 
 # workspace paths:
-"maze_map_path": "TrainingNavigator/maps/S15x15.png"
-"workspaces_path": 'TrainingNavigator/workspaces/S15x15.npy'
-"demonstration_path": 'TrainingNavigator/workspaces/S15x15_trajectories.npz'
+"maze_map_path": "TrainingNavigator/maps/20x20maze.png"
+"workspaces_path": 'TrainingNavigator/workspaces/20x20maze.npy'
+"demonstration_path": 'TrainingNavigator/workspaces/20x20maze_trajectories.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt'
 
 # logging parameters
@@ -51,4 +51,4 @@
 "save_model_freq": 10000
 
 # Constants:
-"maze_size": !!python/tuple [15, 15]
+"maze_size": !!python/tuple [20, 20]
