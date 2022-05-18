@@ -46,9 +46,12 @@
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 10000
+"eval_freq": 30000
 "video_freq": 1
-"save_model_freq": 10000
+"save_model_freq": 5000
+# after 5 evals, eval freq will change to 5000. This is because eval takes long before convergence
+"eval_freq2": 5000
+"change_eval_freq_after": 5
 
 # Constants:
 "maze_size": !!python/tuple [20, 20]

@@ -112,6 +112,8 @@ if __name__ == '__main__':
                    use_demo_epsilon_offset=config["use_demo_epsilon_offset"],
                    policy_kwargs=policy_kwargs)
 
+    eval_freq2 = config["eval_freq2"] if "eval_freq2" in config else -1
+    change_eval_freq_after = config["change_eval_freq_after"] if "change_eval_freq_after" in config else -1
     callback = NavEvalCallback(dir=config["dir"],
                                eval_env=eval_nav_env,
                                wandb_run=wb_run,
@@ -120,6 +122,8 @@ if __name__ == '__main__':
                                save_model_freq=config["save_model_freq"],
                                eval_workspaces=config["eval_workspaces"],
                                maze_map=maze_map,
+                               eval_freq2=eval_freq2,
+                               change_eval_freq_after=change_eval_freq_after,
                                verbose=1)
 
     model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)

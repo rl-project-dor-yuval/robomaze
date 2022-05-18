@@ -14,7 +14,7 @@ import wandb
 class NavEvalCallback(BaseCallback):
     def __init__(self, dir: str, eval_env: MultiStartgoalNavigatorEnv, wandb_run: wandb.run,
                  eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000, eval_workspaces=100,
-                 maze_map: np.ndarray = None, verbose=1):
+                 maze_map: np.ndarray = None, eval_freq2=-1, change_eval_freq_after=-1, verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
         :param eval_env: separate environment to evaluate the model on
@@ -24,6 +24,11 @@ class NavEvalCallback(BaseCallback):
         :param save_model_freq: frequency of saving the model
         :param eval_workspaces: on each evaluation, evaluate just on the first eval_workspaces workspaces
         :param maze_map: map of the maze, used to plot trajectories, if None, no plot is made
+        :param eval_freq2: In some cases, eval takes too long before convergence, but we want to evaluate
+            more frequent after convergence, so if this parameter set to a value > 0, eval_freq will change
+            to eval_freq2 after change_eval_freq_after evaluations
+        :param change_eval_freq_after after this number of evaluations, eval_freq will be set to eval_freq2 ignored if
+            eval_freq2 is set to -1
         :param verbose: verbosity
         """
         super(NavEvalCallback, self).__init__(verbose)
@@ -36,7 +41,11 @@ class NavEvalCallback(BaseCallback):
         self.save_model_freq = save_model_freq
         self.eval_workspaces = eval_workspaces
         self.maze_map = maze_map
+        self.eval_freq2 = eval_freq2
+        self.change_eval_freq_after = change_eval_freq_after
         self.verbose = verbose
+
+        self.evals_count = 0
 
         wandb_run.define_metric('step', hidden=True)
         wandb_run.define_metric('eval_avg_reward', step_metric='step')
@@ -57,10 +66,16 @@ class NavEvalCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         super(NavEvalCallback, self)._on_step()
+
+        eval_now = False
+        if self.eval_freq2 > 0 and self.evals_count >= self.change_eval_freq_after:
+            self.eval_freq = self.eval_freq2
+
         if self.n_calls % self.eval_freq == 0:
             avg_reward, avg_length, success_rate = self._evaluate_all_workspaces()
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
                                 'eval_success_rate': success_rate, 'step': self.n_calls})
+            self.evals_count += 1
 
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
