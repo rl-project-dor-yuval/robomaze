@@ -67,7 +67,6 @@ class NavEvalCallback(BaseCallback):
     def _on_step(self) -> bool:
         super(NavEvalCallback, self)._on_step()
 
-        eval_now = False
         if self.eval_freq2 > 0 and self.evals_count >= self.change_eval_freq_after:
             self.eval_freq = self.eval_freq2
 
@@ -168,6 +167,7 @@ class NavEvalCallback(BaseCallback):
 
         start, goal = planned_traj[0], planned_traj[-1]
 
+        plt.close('all')
         fig, axes = plt.subplots(1, 2)
         for ax in axes:
             ax.imshow(self.maze_map, cmap='gray')

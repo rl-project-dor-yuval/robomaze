@@ -22,7 +22,7 @@ This script is used to track statistics of the trained navigator.
 it shows the model's reasons for failure and success rate over any configurable number of workspaces
 """
 config = {
-    "name": "RandInitStepper_minV1.5_lessClipV2",
+    "name": "Smaze_easyStopCond_AddEpsilon",
     # if is None then the run name is extracted from nav agent path
 
     # visualize
@@ -30,25 +30,25 @@ config = {
     "save_video": True,
 
     # paths:
-    "maze_map_path": "TrainingNavigator/maps/bottleneck.png",
-    "workspaces_path": 'TrainingNavigator/workspaces/bottleneckXL.npy',
+    "maze_map_path": "TrainingNavigator/maps/S15x15.png",
+    "workspaces_path": 'TrainingNavigator/workspaces/S15x15.npy',
     "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
-    "navigator_agent_path": "TrainingNavigator/logs/RandInitStepper_minV1.5_lessClipV2/saved_model",  # Dir Required
+    "navigator_agent_path": "TrainingNavigator/logs/SMaze_easyStopCond_AddEpsilon/saved_model/model_260000.zip",  # Dir Required
     "output_path": "TrainingNavigator/NavigatorTests",
 
     # Technical params
-    "maze_size": (10, 10),
+    "maze_size": (15, 15),
     "velocity_in_obs": False,
     "done_on_collision": False,
-    "rewards": Rewards(target_arrival=1, collision=-1, fall=-1, idle=-0.001, ),
-    "max_stepper_steps": 50,
-    "max_navigator_steps": 20,
-    "stepper_radius_range": (0.4, 2.5),
-    "epsilon_to_subgoal": 0.35,
-    "max_velocity_in_subgoal": 1.5,
+    "rewards": Rewards(target_arrival=1, collision=-0.02, fall=-1, idle=-0.001, ),
+    "max_stepper_steps": 100,
+    "max_navigator_steps": 40,
+    "stepper_radius_range": (0.6, 2.5),
+    "epsilon_to_subgoal": 0.5,
+    "max_velocity_in_subgoal": 3,
 
     # logging parameters
-    "eval_ws_num": 1000,  # will take the first workspaces
+    "eval_ws_num": 200,  # will take the first workspaces
 
 }
 
@@ -98,7 +98,7 @@ def evaluate_workspace(agent, env):
         reason = [k for k, v in info.items() if v is True][0]
         stats[reason] += 1
 
-        # if episode failed so record with video
+        # if episode failed, create a video
         if info["success"] is False:
             play_workspace(env, agent, i, create_video=True)
 
@@ -115,7 +115,7 @@ def evaluate_workspace(agent, env):
 
 if __name__ == '__main__':
     maze_map = blackwhiteswitch(config["maze_map_path"])
-    start_goal_pairs = np.load(config["workspaces_path"]) / config["maze_size"][0]
+    start_goal_pairs = np.load(config["workspaces_path"]) / 10
     # extract the examined navigator name
     tested_nav_name = config["name"] if config["name"] else config["navigator_agent_path"].split('/')[-3]
     print(tested_nav_name)
@@ -144,17 +144,22 @@ if __name__ == '__main__':
     # else if there are multiple files end with .zip take the last one, and load the extract the model
     # from it, otherwise raise excpetion
 
-    model_path = os.path.join(config["navigator_agent_path"], "NavAgent.pt")
-    if os.path.isfile(model_path):
-        agent = torch.load(model_path)
-    elif os.listdir(config["navigator_agent_path"]):
-        model_path = os.path.join(config["navigator_agent_path"],
-                                  max(os.listdir(config["navigator_agent_path"]),
-                                      key=lambda x: int(x.split(".")[0].split("_")[1])))
-        agent = extract_agent(model_path, save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
-    else:
-        raise FileNotFoundError("No model found in the path")
+    # It doesn't work
+    # model_path = os.path.join(config["navigator_agent_path"], "NavAgent.pt")
+    # if os.path.isfile(config["navigator_agent_path"]):
+    #     agent = extract_agent(config["navigator_agent_path"],
+    #                           save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
+    # elif os.path.isfile(model_path):
+    #     agent = torch.load(model_path)
+    # elif os.listdir(config["navigator_agent_path"]):
+    #     model_path = os.path.join(config["navigator_agent_path"],
+    #                               max(os.listdir(config["navigator_agent_path"]),
+    #                                   key=lambda x: int(x.split(".")[0].split("_")[1])))
+    #     agent = extract_agent(model_path, save_path=os.path.join(config["navigator_agent_path"], "NavAgent.pt"))
+    # else:
+    #     raise FileNotFoundError("No model found in the path")
 
+    agent = DDPGMP.load(config["navigator_agent_path"], env=eval_nav_env).policy.actor.eval().to(device)
     avg_length, success_rate, stats = evaluate_workspace(agent=agent, env=eval_nav_env)
 
     print(f"avg_length: {avg_length}")
