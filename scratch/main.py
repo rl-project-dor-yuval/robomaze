@@ -35,7 +35,7 @@ maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
 if __name__ == "__main__":
 
     # model = torch.load(".\TrainingNavigator\StepperAgent.pt")
-    for tgt_idx in [6, 7, 8, 9, 10]:
+    for tgt_idx in range(10):
 
         maze_env.reset(target_index=tgt_idx, create_video=False)
 

@@ -5,6 +5,11 @@ from MazeEnv.EnvAttributes import MazeSize, Rewards
 
 
 class ObstaclesMultiTargetMazeEnv(MultiTargetMazeEnv):
+
+    min_ant_goal_distance_to_place_obstacle = 1.5
+    obstacle_radius_random_offset_range = 0.1
+    obstacle_angle_random_offset_range = np.pi/4
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.obstacle_uid = None
@@ -28,14 +33,23 @@ class ObstaclesMultiTargetMazeEnv(MultiTargetMazeEnv):
         if obstacle_type == 'nothing':
             return None
 
-        # place obstacle within a radius from the goal, but not to close to starting point
-        obstacle_x, obstacle_y = self._ant.start_position[:2]
-        while np.linalg.norm(np.array([obstacle_x, obstacle_y]) - self._ant.start_position[:2]) < 1:
-            goalx, goaly = self._target_loc[0], self._target_loc[1]
-            obstacle_r = np.random.uniform(1, 2.5)
-            obstacle_theta = np.random.uniform(0, 2 * np.pi)
-            obstacle_x = goalx + obstacle_r * np.cos(obstacle_theta)
-            obstacle_y = goaly + obstacle_r * np.sin(obstacle_theta)
+        ant_x, ant_y = self._ant.start_position[:2]
+        goal_x, goal_y = self._target_loc[0], self._target_loc[1]
+
+        goal_dist = np.linalg.norm([ant_x - goal_x, ant_y - goal_y])
+        if np.linalg.norm([ant_x - goal_x, ant_y - goal_y]) < self.min_ant_goal_distance_to_place_obstacle:
+            # no room for an obstacle, give up for this time
+            return None
+
+        # place obstacle between the ant and the goal with a random angle offset
+        obstacle_r = goal_dist / 2 + np.random.uniform(-self.obstacle_radius_random_offset_range,
+                                                       self.obstacle_radius_random_offset_range)
+        goal_angle = np.arctan2(goal_y - ant_y, goal_x - ant_x)
+        obstacle_angle = goal_angle + np.random.uniform(-self.obstacle_angle_random_offset_range,
+                                                        self.obstacle_angle_random_offset_range)
+
+        obstacle_x = ant_x + obstacle_r * np.cos(obstacle_angle)
+        obstacle_y = ant_y + obstacle_r * np.sin(obstacle_angle)
 
         if obstacle_type == 'pole':
             uid = self._pclient.loadURDF("pole_obstacle.urdf",

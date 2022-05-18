@@ -1,9 +1,9 @@
-"run_name": "20x20_easyStopCond_AddEpsilon_seed1"
+"run_name": "20x20_easyStopCond_AddEpsilon_seed2"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "20x20maze.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [1995**2]
+  [2022**1]
 "train_steps": !!python/object/apply:eval
   [5 * 10 ** 6]
 

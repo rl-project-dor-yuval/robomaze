@@ -1,4 +1,4 @@
-"run_name": "Easier_WithObstacles_noRandInit_seed1(control16)"
+"run_name": "eps0.4_NoObstacles_differentNoise"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [43**3]
@@ -12,8 +12,8 @@
 "learning_rate": 1.0e-6
 "reduce_lr": True
 "lr_reduce_factor": 0.2
-"exploration_noise_std_shoulder": 0.05
-"exploration_noise_std_ankle": 0.05
+"exploration_noise_std_shoulder": 0.1
+"exploration_noise_std_ankle": 0.03
 "batch_size": 1024
 "rewards":
   !Rewards
@@ -24,9 +24,9 @@
     idle: -2.0e-4
 
 "max_goal_velocity": 2
-"target_epsilon": 0.35
+"target_epsilon": 0.4
 "random_initialization": True
-"with_obstacles": True
+"with_obstacles": False
 
 "eval_freq": !!python/object/apply:eval [10 ** 5]
 "video_freq": 1

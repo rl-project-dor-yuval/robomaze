@@ -69,7 +69,8 @@ if __name__ == '__main__':
                                               verbose=1)
 
     # create_model
-    exploration_noise = NormalActionNoise(mean=np.array([0] * 8), sigma=np.array([config["exploration_noise_std"]] * 8))
+    noise_sigma = [config["exploration_noise_std_shoulder"], config["exploration_noise_std_ankle"]] * 4
+    exploration_noise = NormalActionNoise(mean=np.array([0] * 8), sigma=np.array(noise_sigma))
 
 
     def lr_func(progress):
