@@ -87,7 +87,7 @@ if __name__ == '__main__':
                  batch_size=config["batch_size"],
                  action_noise=exploration_noise,
                  device=device,
-                 train_freq=(100, "step"),
+                 train_freq=(500, "step"),
                  verbose=0,
                  tensorboard_log="./Training/logs/StepperV2/tb",
                  learning_starts=config["learning_starts"],

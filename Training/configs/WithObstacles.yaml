@@ -1,20 +1,20 @@
-"run_name": "Easier_WithObstacles_noRandInit_seed1(control16)"
+"run_name": "EvenMoreSteps_bs2048_seed2"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [43**3]
+  [313131 ** 1]
 
 "num_envs": 1
 "train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 200
-"map_radius": 4
+"timeout_steps": 400
+"map_radius": 5
 "learning_rate": 1.0e-6
 "reduce_lr": True
 "lr_reduce_factor": 0.2
 "exploration_noise_std_shoulder": 0.05
 "exploration_noise_std_ankle": 0.05
-"batch_size": 1024
+"batch_size": 4096
 "rewards":
   !Rewards
     target_arrival: 1
@@ -24,7 +24,7 @@
     idle: -2.0e-4
 
 "max_goal_velocity": 2
-"target_epsilon": 0.35
+"target_epsilon": 0.4
 "random_initialization": True
 "with_obstacles": True
 

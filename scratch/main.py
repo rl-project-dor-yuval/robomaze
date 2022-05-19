@@ -1,5 +1,6 @@
 import os, sys
 import torch
+import matplotlib.pyplot as plt
 
 sys.path.append('../..')
 
@@ -34,20 +35,27 @@ maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    # model = torch.load(".\TrainingNavigator\StepperAgent.pt")
-    for tgt_idx in range(10):
+    agent = torch.load("TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt")
+    for tgt_idx in [10]:
 
         maze_env.reset(target_index=tgt_idx, create_video=False)
 
         is_done = False
         obs = maze_env.observation_space.sample()
-        # while is_done is False:
-        for i in range(50):
 
-            # action, _ = model.predict(obs)
-            action = np.array([0]*8)
+        actions = []
+        while is_done is False:
+        # for i in range(50):
+            with torch.no_grad():
+                obs = torch.tensor(obs).unsqueeze(0)
+                action = agent(obs).squeeze().numpy()
+            actions.append(action)
             obs, reward, is_done, _ = maze_env.step(action)
 
             if reward != 0:
                 print(reward)
             time.sleep(1. / 20)
+
+    actions = np.array(actions)
+    plt.hist(actions)
+    plt.show()
