@@ -16,7 +16,7 @@ class MultiTargetMazeEnv(MazeEnv):
                  show_gui: bool = False,
                  xy_in_obs: bool = True,
                  hit_target_epsilon: float = 0.8,
-                 done_on_collision: bool = False,
+                 done_on_collision: bool = True,
                  noisy_ant_initialization: bool = False,
                  max_goal_velocity: float = np.inf,
                  optimize_maze_boarders=True):
