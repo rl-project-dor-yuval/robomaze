@@ -154,8 +154,8 @@ class Maze:
         boarders = maze_map.copy()
         fill = np.zeros_like(maze_map)
 
-        for i in range(maze_map.shape[0] - 1):
-            for j in range(maze_map.shape[1] - 1):
+        for i in range(1, maze_map.shape[0] - 1):
+            for j in range(1, maze_map.shape[1] - 1):
                 if maze_map[i, j] == 1:
                     if maze_map[i, j - 1] == 0 or \
                             maze_map[i, j + 1] == 0 or \
