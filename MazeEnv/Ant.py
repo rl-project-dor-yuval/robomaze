@@ -94,7 +94,7 @@ class Ant:
 
         # perform the move
         self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode,
-                                                action, forces=[1000]*8)
+                                                action, forces=[2000]*8)
 
     def get_pos_orientation_velocity(self):
         """

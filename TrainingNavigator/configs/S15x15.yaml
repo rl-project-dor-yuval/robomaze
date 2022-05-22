@@ -1,4 +1,4 @@
-"run_name": "SMaze_easyStopCond_AddEpsilon"
+"run_name": "SMaze_newStepper"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "S15x15.yaml"
 "show_gui": False
@@ -42,7 +42,7 @@
 "maze_map_path": "TrainingNavigator/maps/S15x15.png"
 "workspaces_path": 'TrainingNavigator/workspaces/S15x15.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/S15x15_trajectories.npz'
-"stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt'
+"stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_F2000.pt'
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces

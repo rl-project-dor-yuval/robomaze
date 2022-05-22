@@ -23,20 +23,28 @@ START_LOC = (5, 5)
 targets_loc = np.genfromtxt("Training/TestTargets/test_coords.csv", delimiter=',')
 print(targets_loc)
 
-maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
-                                           maze_map=maze_map,
-                                           tile_size=tile_size,
-                                           start_loc=START_LOC,
-                                           target_loc_list=targets_loc,
-                                           timeout_steps=500,
-                                           show_gui=True,
-                                           xy_in_obs=False)
+# maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
+#                                            maze_map=maze_map,
+#                                            tile_size=tile_size,
+#                                            start_loc=START_LOC,
+#                                            target_loc_list=targets_loc,
+#                                            timeout_steps=500,
+#                                            show_gui=True,
+#                                            xy_in_obs=False)
+maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
+                                   maze_map=maze_map,
+                                   tile_size=tile_size,
+                                   start_loc=START_LOC,
+                                   target_loc_list=targets_loc,
+                                   timeout_steps=500,
+                                   show_gui=True,
+                                   xy_in_obs=False)
 
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
     agent = torch.load("TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt")
-    for tgt_idx in [10]:
+    for tgt_idx in [10, 20, 30]:
 
         maze_env.reset(target_index=tgt_idx, create_video=False)
 
@@ -45,7 +53,7 @@ if __name__ == "__main__":
 
         actions = []
         while is_done is False:
-        # for i in range(50):
+            # for i in range(50):
             with torch.no_grad():
                 obs = torch.tensor(obs).unsqueeze(0)
                 action = agent(obs).squeeze().numpy()
@@ -54,7 +62,7 @@ if __name__ == "__main__":
 
             if reward != 0:
                 print(reward)
-            time.sleep(1. / 20)
+            time.sleep(1. / 40)
 
     actions = np.array(actions)
     plt.hist(actions)

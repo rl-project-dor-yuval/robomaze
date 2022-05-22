@@ -1,19 +1,19 @@
-"run_name": "eps0.4_NoObstacles_differentNoise"
+"run_name": "Force2000_MoreNoise"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [43**3]
+  [51757 ** 1]
 
 "num_envs": 1
 "train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 200
-"map_radius": 4
+"timeout_steps": 300
+"map_radius": 5
 "learning_rate": 1.0e-6
 "reduce_lr": True
 "lr_reduce_factor": 0.2
-"exploration_noise_std_shoulder": 0.1
-"exploration_noise_std_ankle": 0.03
+"exploration_noise_std_shoulder": 0.075
+"exploration_noise_std_ankle": 0.075
 "batch_size": 1024
 "rewards":
   !Rewards
@@ -25,7 +25,7 @@
 
 "max_goal_velocity": 2
 "target_epsilon": 0.4
-"random_initialization": True
+"random_initialization": False
 "with_obstacles": False
 
 "eval_freq": !!python/object/apply:eval [10 ** 5]
