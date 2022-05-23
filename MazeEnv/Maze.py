@@ -5,7 +5,7 @@ from os import path
 import math
 from MazeEnv.EnvAttributes import MazeSize
 
-_BLOCK_Z_COORD = 0  # half of the block is inside the floor, but it looks better
+_BLOCK_Z_COORD = 0.5  # half of the block is inside the floor, but it looks better
 
 
 class Maze:
