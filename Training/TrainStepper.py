@@ -9,7 +9,7 @@ import numpy as np
 import os
 import sys
 import yaml
-from stable_baselines3 import DDPG
+from stable_baselines3 import DDPG, TD3
 from stable_baselines3.common.noise import NormalActionNoise
 import wandb
 
@@ -80,18 +80,21 @@ if __name__ == '__main__':
             return config["learning_rate"]
 
 
-    model = DDPG(policy="MlpPolicy",
-                 env=maze_env,
-                 buffer_size=config["buffer_size"],
-                 learning_rate=lr_func,
-                 batch_size=config["batch_size"],
-                 action_noise=exploration_noise,
-                 device=device,
-                 train_freq=(1, "episode"),
-                 verbose=0,
-                 tensorboard_log="./Training/logs/StepperV2/tb",
-                 learning_starts=config["learning_starts"],
-                 seed=config["seed"], )
+    model = TD3(policy="MlpPolicy",
+                env=maze_env,
+                buffer_size=config["buffer_size"],
+                learning_rate=lr_func,
+                batch_size=config["batch_size"],
+                action_noise=exploration_noise,
+                device=device,
+                train_freq=(1, "episode"),
+                verbose=0,
+                tensorboard_log="./Training/logs/StepperV2/tb",
+                learning_starts=config["learning_starts"],
+                gamma=config["gamma"],
+                seed=config["seed"],
+                policy_delay=2,
+                tau=config["tau"],)
 
     model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
