@@ -109,15 +109,15 @@ class TrajGenerator:
 
 
 if __name__ == "__main__":
-    workspaces_file_path = "workspaces/Spiral15x15.npy"  # path of numpy file with workspaces
+    workspaces_file_path = "workspaces/SpiralThick20x20.npy"  # path of numpy file with workspaces
     workspaces_filename = workspaces_file_path.split("/")[-1].split(".")[0]
 
-    trajs_filename = "Spiral15x15"
-    plots_save_path = "workspaces/Spiral15x15_plots/"  # path to save plots
+    trajs_filename = "SpiralThick20x20"
+    plots_save_path = "workspaces/SpiralThick20x20_plots/"  # path to save plots
     Path(plots_save_path).mkdir(parents=True, exist_ok=True)
 
     # create Search Space
-    map_path = "maps/Spiral15x15_freespace.png"
+    map_path = "maps/SpiralThick20x20_freespace.png"
 
     # create Search Space
     maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
