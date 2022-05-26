@@ -171,8 +171,8 @@ class MazeEnv(gym.Env):
         #     raise Exception("Expected shape (8,) and value in [-1,1] ")
 
         # perform step: pass actions through the ant object and run simulation step:
-        self._ant.action(action)
-        for _ in range(5):
+        for _ in range(1): # loop incase we want sticky actions
+            self._ant.action(action)
             self._pclient.stepSimulation()
 
         self.step_count += 1

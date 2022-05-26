@@ -65,6 +65,10 @@ class Ant:
                 velocity += np.random.uniform(-0.5, 0.5)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
+            # turn off velocity motors, we use torque control
+            self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
+
+
     def action(self, in_action: np.array):
         # action will preform the given action following R8 vector that corresponds to each joint of the ant.
         # will consist as following positions for the relevant joints:
@@ -81,20 +85,23 @@ class Ant:
         #  3  / \  4
         # assert in_action.dtype == 'float64', "action dtype is not float64"
 
-        mode = self._pclient.POSITION_CONTROL
         action = np.array(in_action, dtype=np.float32)
-        # scale the given values from the input range to the practical range
-        # scale the shoulder position values in the odd indices
-        action[::2] = scale(action[::2], 1, -1, SHOULDER_HIGH, SHOULDER_LOW)
-        # handle ankles Position
-        action[1] = scale(-1 * action[1], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
-        action[7] = scale(-1 * action[7], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
-        action[5] = scale(action[5], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
-        action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
-
         # perform the move
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode,
-                                                action, forces=[2000]*8)
+        mode = self._pclient.TORQUE_CONTROL
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=4000*action)
+
+        # this is old code from when we used position control and we had to scale actions:
+
+        # # scale the given values from the input range to the practical range
+        # # scale the shoulder position values in the odd indices
+        # action[::2] = scale(action[::2], 1, -1, SHOULDER_HIGH, SHOULDER_LOW)
+        # # handle ankles Position
+        # action[1] = scale(-1 * action[1], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
+        # action[7] = scale(-1 * action[7], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
+        # action[5] = scale(action[5], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
+        # action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
+
+
 
     def get_pos_orientation_velocity(self):
         """
