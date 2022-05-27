@@ -17,6 +17,7 @@ class MultiTargetMazeEnv(MazeEnv):
                  xy_in_obs: bool = True,
                  hit_target_epsilon: float = 0.8,
                  done_on_collision: bool = True,
+                 success_steps_before_done=1,
                  noisy_ant_initialization: bool = False,
                  max_goal_velocity: float = np.inf,
                  optimize_maze_boarders=True,
@@ -31,12 +32,22 @@ class MultiTargetMazeEnv(MazeEnv):
         self.target_list = target_loc_list
         self.target_count = len(target_loc_list)
 
-        super().__init__(maze_size=maze_size, maze_map=maze_map, tile_size=tile_size,
-                         start_loc=start_loc, target_loc=target_loc_list[0], rewards=rewards,
-                         timeout_steps=timeout_steps, show_gui=show_gui, xy_in_obs=xy_in_obs,
-                         hit_target_epsilon=hit_target_epsilon, done_on_collision=done_on_collision,
-                         noisy_ant_initialization=noisy_ant_initialization, goal_max_velocity=max_goal_velocity,
-                         optimize_maze_boarders=optimize_maze_boarders, sticky_actions=sticky_actions)
+        super().__init__(maze_size=maze_size,
+                         maze_map=maze_map,
+                         tile_size=tile_size,
+                         start_loc=start_loc,
+                         target_loc=target_loc_list[0],
+                         rewards=rewards,
+                         timeout_steps=timeout_steps,
+                         show_gui=show_gui,
+                         xy_in_obs=xy_in_obs,
+                         hit_target_epsilon=hit_target_epsilon,
+                         done_on_collision=done_on_collision,
+                         success_steps_before_done=success_steps_before_done,
+                         noisy_ant_initialization=noisy_ant_initialization,
+                         goal_max_velocity=max_goal_velocity,
+                         optimize_maze_boarders=optimize_maze_boarders,
+                         sticky_actions=sticky_actions)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, target_index=None):
         """

@@ -36,9 +36,7 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, max_goal_velocity, xy_in_obs, show_gui,
-                                  hit_target_epsilon, random_ant_initialization=False, with_obstacles=False,
-                                  sticky_actions=1):
+def get_multi_targets_circle_envs(radius, with_obstacles=False, **env_kwargs):
     maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiTargetMazeEnv
 
     # create environment :
@@ -53,15 +51,7 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, max_g
                         maze_map=maze_map,
                         tile_size=tile_size,
                         start_loc=start_loc,
-                        target_loc_list=targets,
-                        timeout_steps=timeout_steps,
-                        show_gui=show_gui,
-                        rewards=rewards,
-                        xy_in_obs=xy_in_obs,
-                        hit_target_epsilon=hit_target_epsilon,
-                        max_goal_velocity=max_goal_velocity,
-                        noisy_ant_initialization=random_ant_initialization,
-                        sticky_actions=sticky_actions)
+                        **env_kwargs)
     # create environment :
     maze_env = Monitor(maze_env)
 
@@ -72,15 +62,8 @@ def get_multi_targets_circle_envs(radius, targets, timeout_steps, rewards, max_g
                              maze_map=maze_map,
                              tile_size=tile_size,
                              start_loc=start_loc,
-                             target_loc_list=targets,
-                             timeout_steps=timeout_steps,
                              show_gui=False,
-                             rewards=rewards,
-                             xy_in_obs=xy_in_obs,
-                             hit_target_epsilon=hit_target_epsilon,
-                             max_goal_velocity=max_goal_velocity,
-                             noisy_ant_initialization=random_ant_initialization,
-                             sticky_actions=sticky_actions)
+                             **env_kwargs)
     return maze_env, eval_maze_env
 
 

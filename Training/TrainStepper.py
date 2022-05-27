@@ -51,7 +51,8 @@ if __name__ == '__main__':
                       hit_target_epsilon=config["target_epsilon"],
                       random_ant_initialization=config["random_initialization"],
                       with_obstacles=config["with_obstacles"],
-                      sticky_actions=config["sticky_actions"])
+                      sticky_actions=config["sticky_actions"],
+                      success_steps_before_done=config["success_steps_before_done"], )
     if config["num_envs"] == 1:
         maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
     else:
@@ -79,6 +80,7 @@ if __name__ == '__main__':
             return config["learning_rate"] * config["lr_reduce_factor"]
         else:
             return config["learning_rate"]
+
 
     model_kwargs = dict(policy="MlpPolicy",
                         env=maze_env,

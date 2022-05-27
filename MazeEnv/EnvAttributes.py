@@ -17,12 +17,22 @@ class MazeSize:
 
 @dataclass
 class Rewards:
-    def __init__(self, target_arrival=1, collision=-1, timeout=0, idle=0, fall=-1):
+    def __init__(self, target_arrival=1,
+                 collision=-1,
+                 timeout=0,
+                 idle=0,
+                 fall=-1,
+                 target_distance_offset=0,
+                 target_distance_multiplier=0,):
         """
         :param target_arrival: the reward's value for arriving the target
         :param collision: the reward's value for a collision
         :param timeout: the reward's value for timeout
         :param idle: the reward for a time step where nothing else happens
+        :param fall: the reward for falling
+        :param target_distance_offset: offset for target distance reward, should be around max target distance
+            to promise negative reward
+        :param target_distance_multiplier: the weight for the target distance reward.
 
         The collection of rewards and their values
         """
@@ -31,6 +41,11 @@ class Rewards:
         self.collision = collision
         self.timeout = timeout
         self.fall = fall
+        self.target_distance_offset = target_distance_offset
+        self.target_distance_multiplier = target_distance_multiplier
+
+    def compute_target_distance_reward(self, target_distance):
+        return self.target_distance_multiplier * (self.target_distance_offset - target_distance)
 
     @classmethod
     def from_yaml(cls, loader, node):

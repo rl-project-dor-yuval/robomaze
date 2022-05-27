@@ -57,6 +57,7 @@ class MazeEnv(gym.Env):
                  xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
                  done_on_collision=True,
+                 success_steps_before_done: int = 1,
                  noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
@@ -76,11 +77,14 @@ class MazeEnv(gym.Env):
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
         :param done_on_collision: if True, episodes ends when the ant collides with the wall
+        :param success_steps_before_done: number of steps the ant has to be in the target location
+          (within epsilon distance) to end episode
         :type noisy_ant_initialization: if True, the ant will start with a random joint state and with
          a noisy orientation at each reset
         :param goal_max_velocity: optional velocity limit to consider reaching goal
         :param optimize_boarders: if True, collision detection is checked only on boarder of
          free areas on the map
+        :param sticky_actions: for how many simulation steps to repeat an action.
 
         Initializing environment object
         """
@@ -97,10 +101,6 @@ class MazeEnv(gym.Env):
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
-        self.is_reset = False
-
-        self.step_count = 0
-        self.episode_count = 0
         self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
         self._target_loc = [target_loc[0], target_loc[1], 0]
         self.rewards = rewards
@@ -108,9 +108,15 @@ class MazeEnv(gym.Env):
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
         self.done_on_collision = done_on_collision
+        self.success_steps_before_done = success_steps_before_done
         self.max_goal_velocity = goal_max_velocity
         self.noisy_ant_initialization = noisy_ant_initialization
         self.sticky_actions = sticky_actions
+
+        self.is_reset = False
+        self.step_count = 0
+        self.episode_count = 0
+        self.success_steps = 0
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -200,11 +206,17 @@ class MazeEnv(gym.Env):
 
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-ant_xy)
+
+        reward += self.rewards.compute_target_distance_reward(target_distance)
+
         if target_distance < self.hit_target_epsilon:
             vx, vy = observation[3], observation[4]
             if np.sqrt(vx**2 + vy**2) < self.max_goal_velocity:
-                is_done = info['success'] = True
+                info['success'] = True
                 reward += self.rewards.target_arrival
+                self.success_steps += 1
+                if self.success_steps >= self.success_steps_before_done:
+                    is_done = True
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
             is_done = info['timeout'] = True
@@ -251,6 +263,7 @@ class MazeEnv(gym.Env):
         self.episode_count = 0 if reset_episode_count else self.episode_count
         self.episode_count += 1
         self.step_count = 0
+        self.success_steps = 0
         self.is_reset = True
 
         observation = self._get_observation()
