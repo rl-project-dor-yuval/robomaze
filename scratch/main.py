@@ -39,7 +39,7 @@ maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                    timeout_steps=500,
                                    show_gui=True,
                                    xy_in_obs=False)
-
+i=0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
@@ -52,17 +52,29 @@ if __name__ == "__main__":
         obs = maze_env.observation_space.sample()
 
         actions = []
-        while is_done is False:
-            # for i in range(50):
+        # while is_done is False:
+        for i in range(400):
             with torch.no_grad():
                 obs = torch.tensor(obs).unsqueeze(0)
                 action = agent(obs).squeeze().numpy()
             actions.append(action)
+
+            i += 1
+
+            action = np.random.randn(8)
+            print(action)
+
+            # action = np.array([0, 0]*4)
+            # action[0] = 1
+            # if (i//10)%2 == 0:
+            #    action = - action
+
             obs, reward, is_done, _ = maze_env.step(action)
+            # print(obs)
 
             if reward != 0:
                 print(reward)
-            time.sleep(1. / 40)
+            time.sleep(1. / 60)
 
     actions = np.array(actions)
     plt.hist(actions)

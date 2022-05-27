@@ -88,7 +88,7 @@ class Ant:
         action = np.array(in_action, dtype=np.float32)
         # perform the move
         mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=4000*action)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=2000*action)
 
         # this is old code from when we used position control and we had to scale actions:
 

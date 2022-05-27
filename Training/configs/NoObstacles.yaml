@@ -1,30 +1,40 @@
-"run_name": "Force2000_MoreNoise"
+"run_name": "Torque_TD3oneCritic_Noise15"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [51757 ** 1]
+  [5557775 ** 1]
 
 "num_envs": 1
 "train_steps": 20000000
 "buffer_size": 500000
-"learning_starts": 10000
-"timeout_steps": 300
+"learning_starts": 50000
+"timeout_steps": 200
 "map_radius": 5
 "learning_rate": 1.0e-6
+"gamma": 0.99
+"tau": 0.005
 "reduce_lr": True
 "lr_reduce_factor": 0.2
-"exploration_noise_std_shoulder": 0.075
-"exploration_noise_std_ankle": 0.075
-"batch_size": 1024
+"exploration_noise_std_shoulder": 0.15
+"exploration_noise_std_ankle": 0.15
+"batch_size": 512
 "rewards":
   !Rewards
     target_arrival: 1
-    collision: -1
-    timeout: 0
+    collision: -2.0e-4
+    timeout: -2.0e-4
     fall: -1
     idle: -2.0e-4
+sticky_actions: 1
 
-"max_goal_velocity": 2
-"target_epsilon": 0.4
+"use_td3": True  # otherwise DDPG
+# td3 specific parameters, ignored if use_td3=False:
+"td3_smoothing_noise": 0.2
+"td3_smoothing_noise_clip": 0.5
+"td3_policy_delay": 2
+"td3_n_critics": 1
+
+"max_goal_velocity": 999
+"target_epsilon": 0.5
 "random_initialization": False
 "with_obstacles": False
 

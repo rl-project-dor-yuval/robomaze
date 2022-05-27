@@ -1,4 +1,4 @@
-"run_name": "HardBn_newStepper"
+"run_name": "HardBn_NoDemoDecay"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
 "show_gui": False
@@ -42,7 +42,7 @@
 "maze_map_path": "TrainingNavigator/maps/bottleneck.png"
 "workspaces_path": 'TrainingNavigator/workspaces/bottleneckXL.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/bottleneckXL_short1.5_trajectories.npz'
-"stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_F2000.pt'
+"stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_F2000_MoreNoise.pt'
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces

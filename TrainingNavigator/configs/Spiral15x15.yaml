@@ -1,4 +1,4 @@
-"run_name": "Spiral15x15_newStepperMoreNoise"
+"run_name": "Spiral15x15_NoDemoDecay_demoProb1"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "S15x15.yaml"
 "show_gui": False
@@ -29,14 +29,14 @@
     fall: -1
     idle: -0.001
 "demo_on_fail_prob": 0.5
-"demo_prob_decay": 0.999
+"demo_prob_decay": 1
 "use_demo_epsilon_offset": True
 "learning_starts": !!python/object/apply:eval
   [10 ** 4]
 
 "velocity_in_obs": False
 "max_stepper_steps": 100
-"max_navigator_steps": 40
+"max_navigator_steps": 45
 
 # workspace paths:
 "maze_map_path": "TrainingNavigator/maps/Spiral15x15.png"

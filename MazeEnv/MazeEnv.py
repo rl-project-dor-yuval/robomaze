@@ -28,7 +28,7 @@ class MazeEnv(gym.Env):
     done_on_collision: bool
 
     recording_video_size: Tuple[int, int] = (250, 250)
-    video_skip_frames: int = 1
+    video_skip_frames: int = 2
     zoom: float = 1.1  # is also relative to maze size
 
     _collision_manager: CollisionManager
@@ -59,7 +59,8 @@ class MazeEnv(gym.Env):
                  done_on_collision=True,
                  noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf,
-                 optimize_maze_boarders: bool = True,):
+                 optimize_maze_boarders: bool = True,
+                 sticky_actions=1):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
@@ -109,6 +110,7 @@ class MazeEnv(gym.Env):
         self.done_on_collision = done_on_collision
         self.max_goal_velocity = goal_max_velocity
         self.noisy_ant_initialization = noisy_ant_initialization
+        self.sticky_actions = sticky_actions
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
@@ -171,7 +173,7 @@ class MazeEnv(gym.Env):
         #     raise Exception("Expected shape (8,) and value in [-1,1] ")
 
         # perform step: pass actions through the ant object and run simulation step:
-        for _ in range(1): # loop incase we want sticky actions
+        for _ in range(self.sticky_actions): # loop incase we want sticky actions
             self._ant.action(action)
             self._pclient.stepSimulation()
 

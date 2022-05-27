@@ -19,7 +19,8 @@ class MultiTargetMazeEnv(MazeEnv):
                  done_on_collision: bool = True,
                  noisy_ant_initialization: bool = False,
                  max_goal_velocity: float = np.inf,
-                 optimize_maze_boarders=True):
+                 optimize_maze_boarders=True,
+                 sticky_actions=1):
         """
         The only different argument is target_log_list which is a list of targets for this envrionment
         instead of a single target
@@ -35,7 +36,7 @@ class MultiTargetMazeEnv(MazeEnv):
                          timeout_steps=timeout_steps, show_gui=show_gui, xy_in_obs=xy_in_obs,
                          hit_target_epsilon=hit_target_epsilon, done_on_collision=done_on_collision,
                          noisy_ant_initialization=noisy_ant_initialization, goal_max_velocity=max_goal_velocity,
-                         optimize_maze_boarders=optimize_maze_boarders)
+                         optimize_maze_boarders=optimize_maze_boarders, sticky_actions=sticky_actions)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, target_index=None):
         """

@@ -50,7 +50,8 @@ if __name__ == '__main__':
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
                       random_ant_initialization=config["random_initialization"],
-                      with_obstacles=config["with_obstacles"])
+                      with_obstacles=config["with_obstacles"],
+                      sticky_actions=config["sticky_actions"])
     if config["num_envs"] == 1:
         maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
     else:
@@ -79,22 +80,28 @@ if __name__ == '__main__':
         else:
             return config["learning_rate"]
 
-
-    model = TD3(policy="MlpPolicy",
-                env=maze_env,
-                buffer_size=config["buffer_size"],
-                learning_rate=lr_func,
-                batch_size=config["batch_size"],
-                action_noise=exploration_noise,
-                device=device,
-                train_freq=(1, "episode"),
-                verbose=0,
-                tensorboard_log="./Training/logs/StepperV2/tb",
-                learning_starts=config["learning_starts"],
-                gamma=config["gamma"],
-                seed=config["seed"],
-                policy_delay=2,
-                tau=config["tau"],)
+    model_kwargs = dict(policy="MlpPolicy",
+                        env=maze_env,
+                        buffer_size=config["buffer_size"],
+                        learning_rate=lr_func,
+                        batch_size=config["batch_size"],
+                        action_noise=exploration_noise,
+                        device=device,
+                        train_freq=(1, "episode"),
+                        verbose=0,
+                        tensorboard_log="./Training/logs/StepperV2/tb",
+                        learning_starts=config["learning_starts"],
+                        gamma=config["gamma"],
+                        seed=config["seed"],
+                        tau=config["tau"], )
+    if config["use_td3"]:
+        model_kwargs["target_policy_noise"] = config["td3_smoothing_noise"]
+        model_kwargs["target_noise_clip"] = config["td3_smoothing_noise_clip"]
+        model_kwargs["policy_delay"] = config["td3_policy_delay"]
+        model_kwargs["policy_kwargs"] = dict(n_critics=config["td3_n_critics"])
+        model = TD3(**model_kwargs)
+    else:
+        model = DDPG(**model_kwargs)
 
     model.learn(total_timesteps=config["train_steps"], tb_log_name=config["run_name"], callback=callback)
 
