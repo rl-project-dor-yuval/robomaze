@@ -1,4 +1,4 @@
-    "run_name": "Torque_TD3oneCritic_Noise15"
+"run_name": "   "
 "show_gui": False
 "seed": !!python/object/apply:eval
   [5557775 ** 1]
@@ -6,17 +6,17 @@
 "num_envs": 1
 "train_steps": 20000000
 "buffer_size": 500000
-"learning_starts": 50000
-"timeout_steps": 200
+"learning_starts": 20000
+"timeout_steps": 300
 "map_radius": 5
 "learning_rate": 1.0e-6
 "gamma": 0.99
 "tau": 0.005
 "reduce_lr": True
 "lr_reduce_factor": 0.2
-"exploration_noise_std_shoulder": 0.15
-"exploration_noise_std_ankle": 0.15
-"batch_size": 512
+"exploration_noise_std_shoulder": 0.05
+"exploration_noise_std_ankle": 0.05
+"batch_size": 1024
 "rewards":
   !Rewards
     target_arrival: 1
@@ -24,6 +24,10 @@
     timeout: -2.0e-4
     fall: -1
     idle: -2.0e-4
+    target_distance_weight: 0
+    target_distance_offset: 0
+success_steps_before_done: 10  # The minimum number of steps the robot must be at the target to end episode
+
 sticky_actions: 1
 
 "use_td3": True  # otherwise DDPG

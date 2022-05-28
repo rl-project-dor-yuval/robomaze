@@ -35,21 +35,21 @@ if __name__ == '__main__':
     print("running on:", device)
 
     # setup W&B:
-    wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
+    wb_run = wandb.init(project="Robomaze-Tests", name=config["run_name"],
                         config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
     targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
 
     env_kwargs = dict(radius=config["map_radius"],
-                      targets=targets,
+                      target_loc_list=targets,
                       timeout_steps=config["timeout_steps"],
                       rewards=config["rewards"],
                       max_goal_velocity=config["max_goal_velocity"],
                       xy_in_obs=False,
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
-                      random_ant_initialization=config["random_initialization"],
+                      noisy_ant_initialization=config["random_initialization"],
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
                       success_steps_before_done=config["success_steps_before_done"], )

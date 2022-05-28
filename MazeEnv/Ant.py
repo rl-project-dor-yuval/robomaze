@@ -43,31 +43,33 @@ class Ant:
 
         self.reset()
 
-        # Initializing ant's action space, for 8 joint ranging -1 to 1.
+        # turn off velocity motors, we use torque control
+        for joint in JOINTS_INDICES:
+            self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
 
     def reset(self, noisy_state=False):
 
         initial_orientation = self.initial_orientation
         if noisy_state:
             initial_orientation = self._pclient.getEulerFromQuaternion(initial_orientation)
-            initial_orientation = [np.random.uniform(-0.25, 0.25) + oriant for oriant in initial_orientation]
+            initial_orientation = [np.random.uniform(-0.3, 0.3) + oriant for oriant in initial_orientation]
             initial_orientation = self._pclient.getQuaternionFromEuler(initial_orientation)
-
         self._pclient.resetBasePositionAndOrientation(self.uid,
                                                       self.start_position,
                                                       initial_orientation)
+        # start with noisy velocity only if required
+        if noisy_state:
+            linear_vel = [np.random.uniform(-2, 2), np.random.uniform(-2, 2), np.random.uniform(-0.5, 1)]
+            angular_vel = np.random.uniform(-0.5, 0.5, 3)
+            self._pclient.resetBaseVelocity(self.uid, linear_vel, angular_vel)
 
         for joint, state in zip(JOINTS_INDICES, INIT_JOINT_STATES):
             state_ = state
             velocity = 0
             if noisy_state:
-                state_ += np.random.uniform(-0.5, 0.5)
+                state_ += np.random.uniform(-1, 1)
                 velocity += np.random.uniform(-0.5, 0.5)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
-
-            # turn off velocity motors, we use torque control
-            self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
-
 
     def action(self, in_action: np.array):
         # action will preform the given action following R8 vector that corresponds to each joint of the ant.
@@ -88,7 +90,7 @@ class Ant:
         action = np.array(in_action, dtype=np.float32)
         # perform the move
         mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=2000*action)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action*750)
 
         # this is old code from when we used position control and we had to scale actions:
 
@@ -100,8 +102,9 @@ class Ant:
         # action[7] = scale(-1 * action[7], 1, -1, ANKLE_1_4_HIGH, ANKLE_1_4_LOW)
         # action[5] = scale(action[5], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
         # action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
-
-
+        #
+        # self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, self._pclient.POSITION_CONTROL,
+        #                                         action, forces=[3000]*8)
 
     def get_pos_orientation_velocity(self):
         """

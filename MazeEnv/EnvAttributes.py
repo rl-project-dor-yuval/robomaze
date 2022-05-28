@@ -23,7 +23,7 @@ class Rewards:
                  idle=0,
                  fall=-1,
                  target_distance_offset=0,
-                 target_distance_multiplier=0,):
+                 target_distance_weight=0, ):
         """
         :param target_arrival: the reward's value for arriving the target
         :param collision: the reward's value for a collision
@@ -32,7 +32,7 @@ class Rewards:
         :param fall: the reward for falling
         :param target_distance_offset: offset for target distance reward, should be around max target distance
             to promise negative reward
-        :param target_distance_multiplier: the weight for the target distance reward.
+        :param target_distance_weight: the weight for the target distance reward.
 
         The collection of rewards and their values
         """
@@ -42,10 +42,10 @@ class Rewards:
         self.timeout = timeout
         self.fall = fall
         self.target_distance_offset = target_distance_offset
-        self.target_distance_multiplier = target_distance_multiplier
+        self.target_distance_weight = target_distance_weight
 
     def compute_target_distance_reward(self, target_distance):
-        return self.target_distance_multiplier * (self.target_distance_offset - target_distance)
+        return self.target_distance_weight * (self.target_distance_offset - target_distance)
 
     @classmethod
     def from_yaml(cls, loader, node):

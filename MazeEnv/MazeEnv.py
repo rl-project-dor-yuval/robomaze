@@ -1,3 +1,4 @@
+import time
 from typing import Optional, Tuple, List
 import gym
 from gym.spaces import Box, Dict
@@ -13,7 +14,7 @@ from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
 
-_ANT_START_Z_COORD = 0.6  # the height the ant starts at
+_ANT_START_Z_COORD = 0.7  # the height the ant starts at
 
 
 class MazeEnv(gym.Env):
@@ -27,8 +28,8 @@ class MazeEnv(gym.Env):
     rewards: Rewards
     done_on_collision: bool
 
-    recording_video_size: Tuple[int, int] = (250, 250)
-    video_skip_frames: int = 2
+    recording_video_size: Tuple[int, int] = (200, 200)
+    video_skip_frames: int = 1
     zoom: float = 1.1  # is also relative to maze size
 
     _collision_manager: CollisionManager
@@ -179,7 +180,7 @@ class MazeEnv(gym.Env):
         #     raise Exception("Expected shape (8,) and value in [-1,1] ")
 
         # perform step: pass actions through the ant object and run simulation step:
-        for _ in range(self.sticky_actions): # loop incase we want sticky actions
+        for _ in range(self.sticky_actions):  # loop incase we want sticky actions
             self._ant.action(action)
             self._pclient.stepSimulation()
 
@@ -207,9 +208,10 @@ class MazeEnv(gym.Env):
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
         target_distance = np.linalg.norm(target_loc_xy-ant_xy)
 
-        reward += self.rewards.compute_target_distance_reward(target_distance)
-
         if target_distance < self.hit_target_epsilon:
+            # give reward as if target distance is zero:
+            reward += self.rewards.compute_target_distance_reward(target_distance=0)
+            # check if meets velocity condition:
             vx, vy = observation[3], observation[4]
             if np.sqrt(vx**2 + vy**2) < self.max_goal_velocity:
                 info['success'] = True
@@ -217,6 +219,8 @@ class MazeEnv(gym.Env):
                 self.success_steps += 1
                 if self.success_steps >= self.success_steps_before_done:
                     is_done = True
+        else:
+            reward += self.rewards.compute_target_distance_reward(target_distance=target_distance)
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
             is_done = info['timeout'] = True
@@ -232,6 +236,11 @@ class MazeEnv(gym.Env):
         # if done and recording save video
         if is_done and self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
+
+        # print("-----------------")
+        # print(f"action {action}")
+        # print(f"reward {reward}")
+        # print(f"is_done {is_done}")
 
         return observation, reward, is_done, info
 

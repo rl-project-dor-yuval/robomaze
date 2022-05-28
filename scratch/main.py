@@ -36,15 +36,17 @@ maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                    tile_size=tile_size,
                                    start_loc=START_LOC,
                                    target_loc_list=targets_loc,
-                                   timeout_steps=500,
+                                   timeout_steps=300,
                                    show_gui=True,
-                                   xy_in_obs=False)
+                                   xy_in_obs=False,
+                                   sticky_actions=5,
+                                   noisy_ant_initialization=True)
 i=0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    agent = torch.load("TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt")
-    for tgt_idx in [10, 20, 30]:
+    agent = torch.load("TrainingNavigator/StepperAgents/StepperV2test.pt")
+    for tgt_idx in range(20):
 
         maze_env.reset(target_index=tgt_idx, create_video=False)
 
@@ -53,7 +55,7 @@ if __name__ == "__main__":
 
         actions = []
         # while is_done is False:
-        for i in range(400):
+        for i in range(250):
             with torch.no_grad():
                 obs = torch.tensor(obs).unsqueeze(0)
                 action = agent(obs).squeeze().numpy()
@@ -61,14 +63,17 @@ if __name__ == "__main__":
 
             i += 1
 
-            action = np.random.randn(8)
-            print(action)
-
-            # action = np.array([0, 0]*4)
+            # action = np.clip(np.random.randn(8), -1, 1)
+            if i > 200:
+                action = np.array([0.5, 0.5]*4)
             # action[0] = 1
-            # if (i//10)%2 == 0:
-            #    action = - action
 
+            action = maze_env.action_space.sample()
+
+            # if (i//10)%2 == 0:
+            #     action = - action
+
+            print(action)
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
 

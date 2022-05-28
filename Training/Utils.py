@@ -36,7 +36,7 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius, with_obstacles=False, **env_kwargs):
+def get_multi_targets_circle_envs(radius, show_gui=False, with_obstacles=False, **env_kwargs):
     maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiTargetMazeEnv
 
     # create environment :
@@ -51,6 +51,7 @@ def get_multi_targets_circle_envs(radius, with_obstacles=False, **env_kwargs):
                         maze_map=maze_map,
                         tile_size=tile_size,
                         start_loc=start_loc,
+                        show_gui=show_gui,
                         **env_kwargs)
     # create environment :
     maze_env = Monitor(maze_env)
