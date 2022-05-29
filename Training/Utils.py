@@ -36,7 +36,12 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius, show_gui=False, with_obstacles=False, **env_kwargs):
+def get_multi_targets_circle_envs(radius,
+                                  target_loc_list,
+                                  test_target_loc_list,
+                                  show_gui=False,
+                                  with_obstacles=False,
+                                  **env_kwargs):
     maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiTargetMazeEnv
 
     # create environment :
@@ -52,6 +57,7 @@ def get_multi_targets_circle_envs(radius, show_gui=False, with_obstacles=False, 
                         tile_size=tile_size,
                         start_loc=start_loc,
                         show_gui=show_gui,
+                        target_loc_list=target_loc_list,
                         **env_kwargs)
     # create environment :
     maze_env = Monitor(maze_env)
@@ -64,12 +70,14 @@ def get_multi_targets_circle_envs(radius, show_gui=False, with_obstacles=False, 
                              tile_size=tile_size,
                              start_loc=start_loc,
                              show_gui=False,
+                             target_loc_list=test_target_loc_list,
                              **env_kwargs)
     return maze_env, eval_maze_env
 
 
 def get_multi_targets_circle_envs_multiproc(radius, targets, timeout_steps, rewards, max_goal_velocity,
                                             xy_in_obs, show_gui, hit_target_epsilon, num_envs=4):
+    """ this is deprecated """
     # create environment :
     tile_size = 0.1
     maze_size = mtmz.MazeSize.SQUARE10

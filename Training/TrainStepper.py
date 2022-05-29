@@ -39,10 +39,12 @@ if __name__ == '__main__':
                         config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
-    targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
+    targets = np.genfromtxt("Training/workspaces/coords_0_6to3.csv", delimiter=',')
+    test_targets = np.genfromtxt("Training/workspaces/test_coords_0_6to3.csv", delimiter=',')
 
     env_kwargs = dict(radius=config["map_radius"],
                       target_loc_list=targets,
+                      test_target_loc_list=test_targets,
                       timeout_steps=config["timeout_steps"],
                       rewards=config["rewards"],
                       max_goal_velocity=config["max_goal_velocity"],

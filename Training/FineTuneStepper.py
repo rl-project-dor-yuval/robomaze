@@ -49,7 +49,7 @@ if __name__ == '__main__':
                         config=config)
     wandb.tensorboard.patch(root_logdir=config["dir"], pytorch=True)
 
-    targets = np.genfromtxt("Training/TestTargets/test_coords_0_6to3.5.csv", delimiter=',')
+    targets = np.genfromtxt("Training/workspaces/test_coords_0_6to3.5.csv", delimiter=',')
 
     get_env_kwargs = dict(radius=config["map_radius"],
                           targets=targets,

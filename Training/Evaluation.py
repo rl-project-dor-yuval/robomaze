@@ -82,11 +82,14 @@ class BaseEvalAndSaveCallback(BaseCallback):
                     print("--Saving new best model--")
                 self.model.save(self.model_save_path)
 
+            # save current model anyway, don't be cheap :)
+            self.model.save(os.path.join(self.log_dir, 'model_' + str(self.n_calls)))
+
             if self.eval_video_freq != -1 and self.evals_count % self.eval_video_freq == 0:
                 if self.verbose > 0:
                     print("creating video")
                 video_path = self._create_video()
-                vid_log_item = log_item = {'eval_video': wandb.Video(video_path, fps=24), 'step': self.n_calls}
+                vid_log_item = log_item = {'eval_video': wandb.Video(video_path, fps=40), 'step': self.n_calls}
                 self.wb_run.log(vid_log_item)
 
                 # The video that is being created here is different from the

@@ -4,7 +4,7 @@
   [49 ** 3]
 
 "num_envs": 1
-"train_steps": 10000000
+"train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
 "timeout_steps": 250
@@ -44,5 +44,5 @@ position_control: False
 "random_initialization": True
 "with_obstacles": False
 
-"eval_freq": !!python/object/apply:eval [1 * 10 ** 5]
+"eval_freq": !!python/object/apply:eval [2 * 10 ** 5]
 "video_freq": 1

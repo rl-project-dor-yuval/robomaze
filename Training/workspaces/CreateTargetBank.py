@@ -29,7 +29,7 @@ def create_target_bank(center, min_radius, max_radius, n_points=100):
 center = np.array([5, 5])
 min_radius = 0.6
 max_radius = 3.0
-points = create_target_bank(center, min_radius, max_radius, 500)
+points = create_target_bank(center, min_radius, max_radius, 100)
 
 # Plotting and saving the test coords
 fig, ax = plt.subplots()
@@ -44,11 +44,11 @@ ax.plot(center[0], center[1], 'ro', label="Initial Center of Ant")
 ax.margins(0.3)
 
 fig = plt.gcf()
-fig.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_0_6to3.5_plot.png"))
+fig.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_0_6to3_plot.png"))
 plt.legend()
 plt.show()
 
 # Saving the Points Coordinates in CSV file
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_0_6to3.5.csv"), 'w') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "", "test_coords_0_6to3.csv"), 'w') as f:
     writer = csv.writer(f)
     writer.writerows(points)

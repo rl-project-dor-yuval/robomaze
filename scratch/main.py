@@ -20,7 +20,7 @@ maze_map = make_circular_map(map_size, 5 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
-targets_loc = np.genfromtxt("Training/TestTargets/test_coords.csv", delimiter=',')
+targets_loc = np.genfromtxt("Training/workspaces/test_coords.csv", delimiter=',')
 print(targets_loc)
 
 # maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
