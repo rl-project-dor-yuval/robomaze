@@ -87,6 +87,7 @@ class MazeEnv(gym.Env):
          free areas on the map
         :param sticky_actions: for how many simulation steps to repeat an action.
 
+
         Initializing environment object
         """
 
@@ -206,21 +207,19 @@ class MazeEnv(gym.Env):
             reward += self.rewards.collision
 
         target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
-        target_distance = np.linalg.norm(target_loc_xy-ant_xy)
+        target_distance = np.linalg.norm(target_loc_xy - ant_xy)
+
+        reward += self.rewards.compute_target_distance_reward(target_distance=target_distance)
 
         if target_distance < self.hit_target_epsilon:
-            # give reward as if target distance is zero:
-            reward += self.rewards.compute_target_distance_reward(target_distance=0)
             # check if meets velocity condition:
             vx, vy = observation[3], observation[4]
-            if np.sqrt(vx**2 + vy**2) < self.max_goal_velocity:
+            if np.sqrt(vx ** 2 + vy ** 2) < self.max_goal_velocity:
                 info['success'] = True
                 reward += self.rewards.target_arrival
                 self.success_steps += 1
                 if self.success_steps >= self.success_steps_before_done:
                     is_done = True
-        else:
-            reward += self.rewards.compute_target_distance_reward(target_distance=target_distance)
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
             is_done = info['timeout'] = True
@@ -369,3 +368,9 @@ class MazeEnv(gym.Env):
                             f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
                             f"and {min_y} < y < {max_y} for this maze size")
 
+    def set_position_control(self, position_control: bool = True):
+        """set the ant to position control if true, or torque control if false"""
+        if position_control:
+            print("WARNING: setting ant to position control! make sure you know what you are doing! "
+                  "and please don't mix position and torque control in the same episode.")
+        self._ant.set_position_control(position_control)

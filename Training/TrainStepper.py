@@ -35,7 +35,7 @@ if __name__ == '__main__':
     print("running on:", device)
 
     # setup W&B:
-    wb_run = wandb.init(project="Robomaze-Tests", name=config["run_name"],
+    wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
                         config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
@@ -62,6 +62,10 @@ if __name__ == '__main__':
         exit(0)
         maze_env, eval_maze_env = get_multi_targets_circle_envs_multiproc(**env_kwargs,
                                                                           num_envs=config["num_envs"])
+
+    if config["position_control"]:
+        maze_env.set_position_control(True)
+        eval_maze_env.set_position_control(True)
 
     callback = MultiTargetEvalAndSaveCallback(log_dir=config["dir"],
                                               eval_env=eval_maze_env,
