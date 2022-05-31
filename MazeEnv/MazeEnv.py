@@ -103,6 +103,7 @@ class MazeEnv(gym.Env):
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
+        self.maze_size = maze_size
         self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
         self._target_loc = [target_loc[0], target_loc[1], 0]
         self.rewards = rewards

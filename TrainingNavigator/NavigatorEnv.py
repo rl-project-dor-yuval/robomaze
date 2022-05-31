@@ -40,7 +40,8 @@ class NavigatorEnv(gym.Env):
                  max_vel_in_subgoal=1,
                  rewards: Rewards = Rewards(),
                  done_on_collision=True,
-                 velocity_in_obs=False,):
+                 velocity_in_obs=False,
+                 normalize_observations=False,):
         """
         :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
         :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
@@ -68,6 +69,7 @@ class NavigatorEnv(gym.Env):
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
         self.velocity_in_obs = velocity_in_obs
+        self.normalize_observations = normalize_observations
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
@@ -120,9 +122,11 @@ class NavigatorEnv(gym.Env):
         self.ant_prev_loc = self.ant_curr_obs[0:2]
 
         if self.velocity_in_obs:
-            return np.concatenate([self.ant_curr_obs[0:2], np.zeros(2), self.target_goal], dtype=np.float32)
+            nav_obs = np.concatenate([self.ant_curr_obs[0:2], np.zeros(2), self.target_goal], dtype=np.float32)
         else:
-            return np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
+            nav_obs = np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
+
+        return self.normalize_obs_if_needed(nav_obs)
 
     def step(self, action, visualize_subgoal=True):
         if action[0] < self.action_space.low[0] or action[0] > self.action_space.high[0] + 1e-3:
@@ -205,6 +209,8 @@ class NavigatorEnv(gym.Env):
 
         self.ant_prev_loc = ant_xy
 
+        nav_observation = self.normalize_obs_if_needed(nav_observation)
+
         return nav_observation, nav_reward, nav_is_done, nav_info
 
     def visualize_mode(self, visualize: bool, fps: int = 40):
@@ -216,6 +222,21 @@ class NavigatorEnv(gym.Env):
         """
         self.visualize = visualize
         self.visualize_fps = fps
+
+    def normalize_obs_if_needed(self, obs):
+        if self.normalize_observations:
+            maze_size_x, maze_size_y = self.maze_env.maze_size
+            if self.velocity_in_obs:
+                denominator = np.array([maze_size_x, maze_size_y]*3)
+            else:
+                denominator = np.array([maze_size_x, maze_size_y]*2)
+
+            # normalize between -1 and 1:
+            obs = (obs / denominator) * 2 - 1
+            return obs
+        else:
+            return obs
+
 
 
 class MultiStartgoalNavigatorEnv(NavigatorEnv):
