@@ -47,14 +47,14 @@ class NavEvalCallback(BaseCallback):
 
         self.evals_count = 0
 
-        wandb_run.define_metric('step', hidden=True)
-        wandb_run.define_metric('eval_avg_reward', step_metric='step')
-        wandb_run.define_metric('eval_avg_length', step_metric='step')
-        wandb_run.define_metric('eval_success_rate', step_metric='step')
-        wandb_run.define_metric('eval_success_rate', step_metric='step')
+        wandb_run.define_metric('navStep', hidden=True)
+        wandb_run.define_metric('eval_avg_reward', step_metric='navStep')
+        wandb_run.define_metric('eval_avg_length', step_metric='navStep')
+        wandb_run.define_metric('eval_success_rate', step_metric='navStep')
+        wandb_run.define_metric('eval_avg_wallhits', step_metric='navStep')
 
-        wandb_run.define_metric('eval_video', step_metric='step')
-        wandb_run.define_metric('grad_norm', step_metric='step')
+        wandb_run.define_metric('eval_video', step_metric='navStep')
+        wandb_run.define_metric('grad_norm', step_metric='navStep')
 
         self.model_save_path = dir + '/saved_model'
         pathlib.Path(self.model_save_path).mkdir(parents=True, exist_ok=True)
@@ -71,16 +71,17 @@ class NavEvalCallback(BaseCallback):
             self.eval_freq = self.eval_freq2
 
         if self.n_calls % self.eval_freq == 0:
-            avg_reward, avg_length, success_rate = self._evaluate_all_workspaces()
+            avg_reward, avg_length, success_rate, avg_wallhits = self._evaluate_all_workspaces()
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
-                                'eval_success_rate': success_rate, 'step': self.n_calls})
+                                'eval_success_rate': success_rate, 'eval_avg_wallhits': avg_wallhits,
+                                'navStep': self.n_calls})
             self.evals_count += 1
 
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
             vid_path, walked_trajectory, ws_id = self._record_video()
 
-            log_item = {'eval_video': wandb.Video(vid_path, fps=40), 'step': self.n_calls}
+            log_item = {'eval_video': wandb.Video(vid_path, fps=40), 'navStep': self.n_calls}
             if self.maze_map is not None:
                 log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory, ws_id)
 
@@ -104,15 +105,18 @@ class NavEvalCallback(BaseCallback):
         rewards = []
         episodes_length = []
         success_count = 0
+        wallhits = []
 
         for i in range(self.eval_workspaces):
             obs = self.eval_env.reset(start_goal_pair_idx=i)
             curr_reward = 0
+            curr_wallhits = 0
             steps = 0
             while True:
                 with torch.no_grad():
                     action, _ = self.model.predict(obs, deterministic=True)
                 obs, reward, done, info = self.eval_env.step(action)
+                curr_wallhits += info['hit_maze']
                 curr_reward += reward
                 steps += 1
                 if done:
@@ -120,15 +124,17 @@ class NavEvalCallback(BaseCallback):
             rewards.append(curr_reward)
             episodes_length.append(steps)
             success_count += info['success']
+            wallhits.append(curr_wallhits)
 
         avg_reward = sum(rewards) / self.eval_workspaces
         avg_length = sum(episodes_length) / self.eval_workspaces
         success_rate = success_count / self.eval_workspaces
+        avg_wallhits = sum(wallhits) / self.eval_workspaces
 
         if self.verbose > 0:
             print("All workspaces evaluation done in %.4f secs: " % (time.time() - t_start))
 
-        return avg_reward, avg_length, success_rate
+        return avg_reward, avg_length, success_rate, avg_wallhits
 
     def _record_video(self) -> Tuple[str, np.ndarray, int]:
         """
