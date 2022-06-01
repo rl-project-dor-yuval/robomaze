@@ -58,6 +58,7 @@ class MazeEnv(gym.Env):
                  xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
                  done_on_collision=True,
+                 done_on_goal_reached=True,
                  success_steps_before_done: int = 1,
                  noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf,
@@ -78,8 +79,9 @@ class MazeEnv(gym.Env):
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
         :param done_on_collision: if True, episodes ends when the ant collides with the wall
+        :param done_on_goal_reached
         :param success_steps_before_done: number of steps the ant has to be in the target location
-          (within epsilon distance) to end episode
+          (within epsilon distance) to end episode in case done_on_goal_reached is True (otherwise ignored)
         :type noisy_ant_initialization: if True, the ant will start with a random joint state and with
          a noisy orientation at each reset
         :param goal_max_velocity: optional velocity limit to consider reaching goal
@@ -111,6 +113,7 @@ class MazeEnv(gym.Env):
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
         self.done_on_collision = done_on_collision
+        self.done_on_goal_reached = done_on_goal_reached
         self.success_steps_before_done = success_steps_before_done
         self.max_goal_velocity = goal_max_velocity
         self.noisy_ant_initialization = noisy_ant_initialization
@@ -219,7 +222,8 @@ class MazeEnv(gym.Env):
                 info['success'] = True
                 reward += self.rewards.target_arrival
                 self.success_steps += 1
-                if self.success_steps >= self.success_steps_before_done:
+                if self.success_steps >= self.success_steps_before_done and \
+                        self.done_on_goal_reached:
                     is_done = True
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:

@@ -1,4 +1,4 @@
-"run_name": "Torque_DenseWithGoalReward_DDPG_KeepEpAtGoal25"
+"run_name": "noDoneOnGoal_DenseRewardNoGoal_gamma096"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [49 ** 3]
@@ -7,10 +7,10 @@
 "train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 250
+"timeout_steps": 300
 "map_radius": 5
 "learning_rate": 0.5e-5
-"gamma": 0.99
+"gamma": 0.96
 "tau": 0.005
 "reduce_lr": True
 "lr_reduce_factor": 0.2
@@ -21,12 +21,14 @@
   !Rewards
     target_distance_weight: 0.01
     target_distance_offset: 5  # reward will be weight*(offset - distance)
-    fall: -1
-    target_arrival: 1
+    fall: 0
+    target_arrival: 0
     collision: 0
     timeout: 0
     idle: 0
-success_steps_before_done: 25  # The minimum number of steps the robot must be at the target to end episode
+done_on_goal_reached: False
+success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
+                            # ignored when done_on_goal_reached is False
 
 sticky_actions: 5
 
@@ -39,8 +41,8 @@ position_control: False
 "td3_policy_delay": 2
 "td3_n_critics": 2
 
-"max_goal_velocity": 999
-"target_epsilon": 0.4
+"max_goal_velocity": 9999
+"target_epsilon": 0.25
 "random_initialization": True
 "with_obstacles": False
 

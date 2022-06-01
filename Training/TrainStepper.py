@@ -54,7 +54,8 @@ if __name__ == '__main__':
                       noisy_ant_initialization=config["random_initialization"],
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
-                      success_steps_before_done=config["success_steps_before_done"], )
+                      success_steps_before_done=config["success_steps_before_done"],
+                      done_on_goal_reached=config["done_on_goal_reached"],)
     if config["num_envs"] == 1:
         maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
     else:
