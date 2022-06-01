@@ -1,3 +1,4 @@
+Fix parameters and project name before running!
 "run_name": "20x20_NoDemoDecay_demoProb1"
 "project": "Robomaze-TrainingNavigator"  # "Robomaze-tests"
 "config_file": "20x20maze.yaml"
