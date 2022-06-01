@@ -9,18 +9,15 @@ sys.path.append('.')
 import argparse
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
-from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
-import cv2
 from DDPGMP import DDPGMP, CustomTD3Policy
 import torch
 from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
-from TrainingNavigator.StepperAgent import StepperAgent
 import yaml
 from Utils import blackwhiteswitch
 

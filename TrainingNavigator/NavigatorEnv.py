@@ -252,8 +252,6 @@ class NavigatorEnv(gym.Env):
             return obs
 
 
-
-
 class MultiStartgoalNavigatorEnv(NavigatorEnv):
     """
      Navigator Environment with multiple start and goal pairs, varying every episode

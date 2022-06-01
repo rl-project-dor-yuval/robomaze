@@ -62,7 +62,7 @@ class MazeEnv(gym.Env):
                  noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
-                 sticky_actions=1):
+                 sticky_actions=5):
         """
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
