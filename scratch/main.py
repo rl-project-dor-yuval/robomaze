@@ -8,6 +8,7 @@ import MazeEnv.MultiTargetMazeEnv as mz
 import MazeEnv.ObstaclesMultiTargetMazeEnv as omz
 import time
 import numpy as np
+from TrainingNavigator.StepperAgent import StepperAgent
 from Training.Utils import *
 
 start = time.time()
@@ -20,7 +21,7 @@ maze_map = make_circular_map(map_size, 5 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
-targets_loc = np.genfromtxt("Training/workspaces/test_coords.csv", delimiter=',')
+targets_loc = np.genfromtxt("Training/workspaces/test_coords_0_6to3.csv", delimiter=',')
 print(targets_loc)
 
 # maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
@@ -36,47 +37,36 @@ maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                    tile_size=tile_size,
                                    start_loc=START_LOC,
                                    target_loc_list=targets_loc,
-                                   timeout_steps=300,
+                                   hit_target_epsilon=0.25,
+                                   timeout_steps=200,
                                    show_gui=True,
                                    xy_in_obs=False,
                                    sticky_actions=5,
-                                   noisy_ant_initialization=True)
+                                   noisy_ant_initialization=False)
 i=0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    agent = torch.load("TrainingNavigator/StepperAgents/StepperV2test.pt")
+    agent = StepperAgent("Training/logs/StepperV2eps025-400steps_same_params/model_6000000.zip")
     for tgt_idx in range(20):
-
-        maze_env.reset(target_index=tgt_idx, create_video=False)
-
+        obs =maze_env.reset(target_index=tgt_idx, create_video=False)
         is_done = False
-        obs = maze_env.observation_space.sample()
-
         actions = []
         # while is_done is False:
-        for i in range(250):
-            with torch.no_grad():
-                obs = torch.tensor(obs).unsqueeze(0)
-                action = agent(obs).squeeze().numpy()
-            actions.append(action)
-
-            i += 1
-
+        while not is_done:
             # action = np.clip(np.random.randn(8), -1, 1)
-            if i > 200:
-                action = np.array([0.5, 0.5]*4)
+            # if i > 200:
+            #     action = np.array([0.5, 0.5]*4)
             # action[0] = 1
-
-            action = maze_env.action_space.sample()
-
+            # action = maze_env.action_space.sample()
             # if (i//10)%2 == 0:
             #     action = - action
 
-            print(action)
+            action = agent.step(obs)
+            actions.append(action)
+
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
-
             if reward != 0:
                 print(reward)
             time.sleep(1. / 60)

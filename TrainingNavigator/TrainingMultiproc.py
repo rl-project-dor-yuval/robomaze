@@ -5,7 +5,7 @@ the config file must appear in TrainingNavigator/Configs and you shouldn't pass 
 
 import sys
 sys.path.append('.')
-
+from TrainingNavigator.TD3MP import TD3MP, CustomTD3Policy
 import argparse
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
@@ -13,7 +13,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
-from DDPGMP import DDPGMP, CustomTD3Policy
+from DDPGMP import DDPGMP
 import torch
 from MazeEnv.EnvAttributes import Rewards
 import wandb
@@ -57,7 +57,7 @@ if __name__ == '__main__':
                           max_steps=config["max_navigator_steps"],
                           stepper_radius_range=config["stepper_radius_range"],
                           velocity_in_obs=config["velocity_in_obs"],
-                          stepper_agent=config["stepper_agent_path"],)
+                          stepper_agent=config["stepper_agent_path"], )
 
     nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
@@ -89,25 +89,29 @@ if __name__ == '__main__':
     print('running on:', device)
 
     policy_kwargs = dict(net_arch=dict(pi=config["actor_arch"], qf=config["critic_arch"]))
-    model = DDPGMP(policy=CustomTD3Policy,
-                   env=nav_env,
-                   buffer_size=config["buffer_size"],
-                   learning_rate=config["learning_rate"],
-                   batch_size=config["batch_size"],
-                   action_noise=exploration_noise,
-                   device=device,
-                   train_freq=(100, "step"),
-                   verbose=0,
-                   tensorboard_log="./TrainingNavigator/logs/tb",
-                   learning_starts=config["learning_starts"],
-                   seed=config["seed"],
-                   demonstrations_path=config["demonstration_path"],
-                   demo_on_fail_prob=config["demo_on_fail_prob"],
-                   grad_clip_norm_actor=config["grad_clip_norm_actor"],
-                   grad_clip_norm_critic=config["grad_clip_norm_critic"],
-                   demo_prob_decay=config["demo_prob_decay"],
-                   use_demo_epsilon_offset=config["use_demo_epsilon_offset"],
-                   policy_kwargs=policy_kwargs)
+    model_kwargs = dict(policy=CustomTD3Policy,
+                        env=nav_env,
+                        buffer_size=config["buffer_size"],
+                        learning_rate=config["learning_rate"],
+                        batch_size=config["batch_size"],
+                        action_noise=exploration_noise,
+                        device=device,
+                        train_freq=(100, "step"),
+                        verbose=0,
+                        tensorboard_log="./TrainingNavigator/logs/tb",
+                        learning_starts=config["learning_starts"],
+                        seed=config["seed"],
+                        demonstrations_path=config["demonstration_path"],
+                        demo_on_fail_prob=config["demo_on_fail_prob"],
+                        grad_clip_norm_actor=config["grad_clip_norm_actor"],
+                        grad_clip_norm_critic=config["grad_clip_norm_critic"],
+                        demo_prob_decay=config["demo_prob_decay"],
+                        use_demo_epsilon_offset=config["use_demo_epsilon_offset"],
+                        policy_kwargs=policy_kwargs)
+    if config["use_TD3MP"]:
+        model = TD3MP(**model_kwargs)
+    else:
+        model = DDPGMP(**model_kwargs)
 
     eval_freq2 = config["eval_freq2"] if "eval_freq2" in config else -1
     change_eval_freq_after = config["change_eval_freq_after"] if "change_eval_freq_after" in config else -1
