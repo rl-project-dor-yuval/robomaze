@@ -82,6 +82,9 @@ class DDPGMP(DDPG):
 
         # keep for comfort:
         self.epsilon_to_goal = env.get_attr('epsilon_to_hit_subgoal', 0)[0]
+        self.normalize_obs = self.env.get_attr('normalize_observations', 0)[0]
+        self.maze_size = self.env.get_attr('maze_env', 0)[0].maze_size
+        self.vel_in_obs = self.env.get_attr('velocity_in_obs', 0)[0]
 
         # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
         num_envs = self.n_envs
@@ -251,6 +254,7 @@ class DDPGMP(DDPG):
 
                             with np.load(self.demonstrations_path) as demos:
                                 demo_traj = demos[str(info['start_goal_pair_idx'])]
+                            demo_traj = self.normalize_tarj_if_needed(demo_traj)
                             self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
                                                                info['start_goal_pair_idx'])
 
@@ -273,7 +277,7 @@ class DDPGMP(DDPG):
         # therefore we insert just every num_envs'th transition from the demo trajectory
         # until we collect that number of transitions, we save them in temporary buffers.
 
-        vel_in_obs = self.env.get_attr('velocity_in_obs', 0)[0]
+        vel_in_obs = self.vel_in_obs
         prev_loc = demo_traj[0]  # only managed if vel_in_obs is True
         for i in range(len(demo_traj) - 1):
             if vel_in_obs:
@@ -346,6 +350,14 @@ class DDPGMP(DDPG):
         total_norm = total_norm ** 0.5
 
         self.logger.record(log_name, total_norm)
+
+    def normalize_tarj_if_needed(self, demo_traj):
+        if self.normalize_obs:
+            demo_traj[:, 0] /= self.maze_size[0]
+            demo_traj[:, 1] /= self.maze_size[1]
+            demo_traj *= 2
+            demo_traj -= 1
+        return demo_traj
 
 
 class CustomActor(Actor):

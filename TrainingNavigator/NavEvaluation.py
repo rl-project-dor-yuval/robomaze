@@ -140,6 +140,7 @@ class NavEvalCallback(BaseCallback):
         """
         Record a video of the current model
         :return: path to the video, array of the walked trajectory, workspace id
+        the walked trajectory is unnormalized if environment normalizes the observations
         """
         t_start = time.time()
 
@@ -150,7 +151,7 @@ class NavEvalCallback(BaseCallback):
             with torch.no_grad():
                 action, _ = self.model.predict(obs, deterministic=True)
             obs, _, done, info = self.eval_env.step(action)
-            walked_traj.append(obs[:2])
+            walked_traj.append(self.eval_env.normalize_observations(obs)[:2])
             if done:
                 break
         ws_id = info['start_goal_pair_idx']

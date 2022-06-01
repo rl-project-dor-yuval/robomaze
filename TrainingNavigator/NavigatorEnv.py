@@ -41,7 +41,7 @@ class NavigatorEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  done_on_collision=True,
                  velocity_in_obs=False,
-                 normalize_observations=False,):
+                 normalize_observations=True,):
         """
         :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
         :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
@@ -236,6 +236,21 @@ class NavigatorEnv(gym.Env):
             return obs
         else:
             return obs
+
+    def unormalize_obs_if_needed(self, obs):
+        if self.normalize_observations:
+            maze_size_x, maze_size_y = self.maze_env.maze_size
+            if self.velocity_in_obs:
+                multiplier = np.array([maze_size_x, maze_size_y]*3)
+            else:
+                multiplier = np.array([maze_size_x, maze_size_y]*2)
+
+            # normalize between -1 and 1:
+            obs = ((obs + 1) / 2) * multiplier
+            return obs
+        else:
+            return obs
+
 
 
 
