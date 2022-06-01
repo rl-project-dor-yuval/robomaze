@@ -1,9 +1,11 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE', which is part of this source code package.
+import sys
+sys.path.append('.')
+import argparse
+import os.path
 import numpy as np
 from PIL import Image
-import csv
-import matplotlib.pyplot as plt
 from pathlib import Path
 import cv2
 import time
@@ -108,31 +110,17 @@ class TrajGenerator:
         return new_traj
 
 
-if __name__ == "__main__":
-    workspaces_file_path = "workspaces/SpiralThick20x20.npy"  # path of numpy file with workspaces
-    workspaces_filename = workspaces_file_path.split("/")[-1].split(".")[0]
+def generate_traj_set(trajGen: TrajGenerator, ws_dir, maze_map, ws_list, filename):
+    num_ws = ws_list.shape[0]
 
-    trajs_filename = "SpiralThick20x20"
-    plots_save_path = "workspaces/SpiralThick20x20_plots/"  # path to save plots
-    Path(plots_save_path).mkdir(parents=True, exist_ok=True)
-
-    # create Search Space
-    map_path = "maps/SpiralThick20x20_freespace.png"
-
-    # create Search Space
-    maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     map_granularity = 0.1  # in simulation coordinates, which means that any pixel in the map
     # is map_granularity units in the simulation coordinates
 
-    np.set_printoptions(precision=1)
+    plot_dir = os.path.join(ws_dir, f"{filename}_plots")
+    Path(plot_dir).mkdir(parents=True, exist_ok=True)
 
-    trajGen = TrajGenerator(map_path, max_section_len=15)
-
-    ws_list = np.load(workspaces_file_path)
-    num_workspaces = ws_list.shape[0]
     ws_traj_dict = {}  # workspaces Trajectory Dictionary key = workspace idx, value= dictionary of
-
-    for i in range(num_workspaces):
+    for i in range(num_ws):
         # coords when origin is bottom left (this is how RRTstar algo works)
         x_init = (ws_list[i, 0, 1], trajGen.map.shape[0] - ws_list[i, 0, 0] - 1)
         x_goal = (ws_list[i, 1, 1], trajGen.map.shape[0] - ws_list[i, 1, 0] - 1)
@@ -140,7 +128,7 @@ if __name__ == "__main__":
         traj = trajGen.find_optimal_trajectories(xInit=x_init, xGoal=x_goal, numOfTrajs=1, plot=False)
         traj[0] = np.array(traj[0])
         # anyway plot manually:
-        plot_trajectory(traj[0], maze_map, save_loc=plots_save_path + str(i) + "._traj_plot.png")
+        plot_trajectory(traj[0], maze_map, save_loc=plot_dir + f'/{i}.png')
 
         traj[0] = traj[0] * map_granularity
         # TODO: meanwhile saving only the first Traj for each workspace
@@ -149,8 +137,32 @@ if __name__ == "__main__":
         np.set_printoptions(precision=1)
         print(i, '\n', ws_traj_dict[str(i)])
 
-    np.savez(f'workspaces/{trajs_filename}_trajectories.npz', **ws_traj_dict)
+    np.savez(os.path.join(ws_dir, filename), **ws_traj_dict)
 
-    # test loading
-    trajectories = np.load(f'workspaces/{trajs_filename}_trajectories.npz')
-    assert np.all(trajectories[str(num_workspaces - 1)] == traj[0])
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('workspace_dir', type=str, help='everything is created in the same dir')
+    parser.add_argument('--max_section_len', type=int, default=15,
+                        help='maximum distance between two points in the trajectory')
+
+    args = parser.parse_args()
+
+    workspaces_train_path = args.workspace_dir + "/workspaces.npy"
+    workspaces_test_path = args.workspace_dir + "/test_workspaces.npy"
+    workspaces_validation_path = args.workspace_dir + "/validation_workspaces.npy"
+
+    ws_train = np.load(workspaces_train_path)
+    ws_test = np.load(workspaces_test_path)
+    ws_validation = np.load(workspaces_validation_path)
+
+    map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + "_freespace.png"
+    maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
+
+    np.set_printoptions(precision=1)
+
+    trajGen = TrajGenerator(map_path, max_section_len=args.max_section_len)
+
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_train, "trajectories_train")
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_test, "trajectories_test")
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_validation, "trajectories_validation")

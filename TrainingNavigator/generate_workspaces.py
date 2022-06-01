@@ -4,7 +4,6 @@ sys.path.append('.')
 
 import cv2
 import numpy as np
-import ntpath
 import seaborn as sns
 from pathlib import Path
 import argparse
@@ -12,7 +11,7 @@ from TrainingNavigator.Utils import get_freespace_map, blackwhiteswitch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('map', type=str, help='map path. everything is created in the same dir')
-parser.add_argument('--ant_size', type=int, default=28,
+parser.add_argument('--ant_size', type=int, default=26,
                     help='Size of ant square for free space map.'
                          ' Ant can be ant_size/2 from wall (in maze pixels)')
 parser.add_argument('--num_workspaces', type=int, default=500,
