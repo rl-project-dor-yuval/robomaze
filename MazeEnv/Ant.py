@@ -78,7 +78,7 @@ class Ant:
 
         if not self.position_control:  # torque control
             mode = self._pclient.TORQUE_CONTROL
-            self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action*750)
+            self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action*1500)
 
         else:
             # this is old code from when we used position control and we had to scale actions:
