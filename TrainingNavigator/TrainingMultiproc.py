@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     # setup W&B:
     wb_run = wandb.init(project=config["project"], name=config["run_name"],
-                        config=config)
+                        group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
     # Setup Training Environment

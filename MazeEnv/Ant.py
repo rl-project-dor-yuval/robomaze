@@ -61,8 +61,8 @@ class Ant:
                                                       initial_orientation)
         # start with noisy velocity only if required
         if noisy_state:
-            linear_vel = [np.random.uniform(-2, 2), np.random.uniform(-2, 2), np.random.uniform(-0.5, 1)]
-            angular_vel = np.random.uniform(-0.5, 0.5, 3)
+            linear_vel = [np.random.uniform(-1, 1), np.random.uniform(-1, 1), 0]
+            angular_vel = np.random.uniform(-0.3, 0.3, 3)
             self._pclient.resetBaseVelocity(self.uid, linear_vel, angular_vel)
 
         for joint, state in zip(JOINTS_INDICES, INIT_JOINT_STATES):

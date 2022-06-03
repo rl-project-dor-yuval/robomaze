@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     # setup W&B:
     wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
-                        config=config)
+                        group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
     targets = np.genfromtxt("Training/workspaces/coords_0_6to3.csv", delimiter=',')
