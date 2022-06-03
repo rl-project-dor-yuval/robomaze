@@ -40,7 +40,7 @@ if __name__ == '__main__':
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
     targets = np.genfromtxt("Training/workspaces/coords_0_6to3.csv", delimiter=',')
-    test_targets = np.genfromtxt("Training/workspaces/test_coords_0_6to3.csv", delimiter=',')
+    test_targets = np.genfromtxt("Training/workspaces/validation_coords_0_6to3.csv", delimiter=',')
 
     env_kwargs = dict(radius=config["map_radius"],
                       target_loc_list=targets,

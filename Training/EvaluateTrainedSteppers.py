@@ -83,19 +83,20 @@ def evaluate_stepper(agent, env: mz.MultiTargetMazeEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = [#"Training/logs/StepperV2eps025-400steps_50StepsAtGoal",
-                "Training/logs/StepperV2eps025-400steps_BS2048",
-                "Training/logs/StepperV2eps025-400steps_BS2048_50StepsAtGoal",
-                "Training/logs/StepperV2eps025-400steps_same_params"]
+    log_dirs = ["Training/logs/StepperV2same_params(except_max_steps)"]
     stepper_checkpoints = []
 
-    for log_dir in log_dirs:
-        # choose every milionth checkpoint
-        stepper_checkpoints += glob.glob(log_dir + "/model_*000000.zip")
+    # for log_dir in log_dirs:
+    #     # choose every milionth checkpoint
+    #     stepper_checkpoints += glob.glob(log_dir + "/model_*000000.zip")
     # remove checkpoints before step 5 milion:
-    for c in stepper_checkpoints:
-        if int(c.split("_")[-1].split(".")[0]) < 5000000:
-            stepper_checkpoints.remove(c)
+    # for c in stepper_checkpoints:
+    #     if int(c.split("_")[-1].split(".")[0]) < 5000000:
+    #         stepper_checkpoints.remove(c)
+
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_7800000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_9200000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_9600000.zip")
 
     env = get_env()
 
