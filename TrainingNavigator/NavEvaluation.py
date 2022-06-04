@@ -12,9 +12,18 @@ import wandb
 
 
 class NavEvalCallback(BaseCallback):
-    def __init__(self, dir: str, eval_env: MultiStartgoalNavigatorEnv, wandb_run: wandb.run,
-                 eval_freq: int = 5000, eval_video_freq=-1, save_model_freq=20000, eval_workspaces=100,
-                 maze_map: np.ndarray = None, eval_freq2=-1, change_eval_freq_after=-1, verbose=1):
+    def __init__(self, dir: str,
+                 eval_env: MultiStartgoalNavigatorEnv,
+                 wandb_run: wandb.run,
+                 validation_traj_path: str,
+                 eval_freq: int = 5000,
+                 eval_video_freq=-1,
+                 save_model_freq=20000,
+                 eval_workspaces=100,
+                 maze_map: np.ndarray = None,
+                 eval_freq2=-1,
+                 change_eval_freq_after=-1,
+                 verbose=1):
         """
         :param dir: path to the folder where logs and models will be saved
         :param eval_env: separate environment to evaluate the model on
@@ -36,6 +45,7 @@ class NavEvalCallback(BaseCallback):
         self.dir = dir
         self.eval_env = eval_env
         self.wandb_run = wandb_run
+        self.validation_traj_path = validation_traj_path
         self.eval_freq = eval_freq
         self.eval_video_freq = eval_video_freq
         self.save_model_freq = save_model_freq
@@ -169,7 +179,7 @@ class NavEvalCallback(BaseCallback):
         """
         walked_traj = walked_traj * 10
 
-        with np.load(self.model.demonstrations_path) as demos:
+        with np.load(self.validation_traj_path) as demos:
             planned_traj = demos[str(ws_id)] * 10
 
         start, goal = planned_traj[0], planned_traj[-1]

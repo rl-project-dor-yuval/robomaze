@@ -121,6 +121,7 @@ if __name__ == '__main__':
     callback = NavEvalCallback(dir=config["dir"],
                                eval_env=eval_nav_env,
                                wandb_run=wb_run,
+                               validation_traj_path=config["validation_demonstration_path"],
                                eval_freq=config["eval_freq"],
                                eval_video_freq=config["video_freq"],
                                save_model_freq=config["save_model_freq"],

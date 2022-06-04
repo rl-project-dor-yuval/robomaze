@@ -47,6 +47,7 @@ wall_hit_limit: 15
 "workspaces_path": 'TrainingNavigator/workspaces/SpiralThick20x20/workspaces.npy'
 "validation_workspaces_path": 'TrainingNavigator/workspaces/SpiralThick20x20/validation_workspaces.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/SpiralThick20x20/trajectories_train.npz'
+"validation_demonstration_path": 'TrainingNavigator/workspaces/SpiralThick20x20/trajectories_validation.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt'
 
 # logging parameters
