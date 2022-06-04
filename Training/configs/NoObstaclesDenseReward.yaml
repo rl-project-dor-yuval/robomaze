@@ -1,16 +1,17 @@
-"run_name": "noDoneOnGoal_DenseRewardNoGoal_gamma096"
+"run_name": "force3000"
+"group": "position"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [49 ** 3]
+  [43 ** 3]
 
 "num_envs": 1
 "train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 300
+"timeout_steps": 200
 "map_radius": 5
 "learning_rate": 0.5e-5
-"gamma": 0.96
+"gamma": 0.99
 "tau": 0.005
 "reduce_lr": True
 "lr_reduce_factor": 0.2
@@ -21,8 +22,8 @@
   !Rewards
     target_distance_weight: 0.01
     target_distance_offset: 5  # reward will be weight*(offset - distance)
-    fall: 0
-    target_arrival: 0
+    fall: -1
+    target_arrival: 1
     collision: 0
     timeout: 0
     idle: 0
@@ -32,7 +33,7 @@ success_steps_before_done: 1 # The minimum number of steps the robot must be at 
 
 sticky_actions: 5
 
-position_control: False
+position_control: True
 
 "use_td3": False  # otherwise DDPG
 # td3 specific parameters, ignored if use_td3=False:

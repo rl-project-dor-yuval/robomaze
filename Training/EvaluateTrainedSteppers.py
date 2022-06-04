@@ -94,9 +94,9 @@ if __name__ == "__main__":
     #     if int(c.split("_")[-1].split(".")[0]) < 5000000:
     #         stepper_checkpoints.remove(c)
 
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_7800000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_9200000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_9600000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_15000000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_18000000.zip")
 
     env = get_env()
 

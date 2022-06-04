@@ -1,4 +1,5 @@
-"run_name": "HardBn_MaxR1.5_maxStepperSteps150_DDPG"
+"run_name": "Bottleneck"
+"group": "WithWallHitLimitAndBetterEvalFreq"
 "project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
 "show_gui": False
@@ -6,7 +7,7 @@
   [41**3]
 
 # algorithm and training parameters
-use_TD3MP: False # otherwise DDPGMP
+use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
   [3 * 10 ** 6]
 "learning_rate": 0.5e-5
@@ -27,7 +28,7 @@ use_TD3MP: False # otherwise DDPGMP
 "num_envs": 3
 "epsilon_to_subgoal": 0.25
 "max_velocity_in_subgoal": 9999 # basically no limit
-"stepper_radius_range": !!python/tuple [0.3, 1.5]
+"stepper_radius_range": !!python/tuple [0.3, 2]
 "done_on_collision": False  # modify rewards in case you change this
 "rewards":
   !Rewards
@@ -37,20 +38,24 @@ use_TD3MP: False # otherwise DDPGMP
     idle: -0.001
 "use_demo_epsilon_offset": False
 "velocity_in_obs": False
-"max_stepper_steps": 150 # maybe you can change this
+"max_stepper_steps": 100 # maybe you can change this
 "max_navigator_steps": 30 # or this
+wall_hit_limit: 15
 
 # workspace paths:
-"maze_map_path": "TrainingNavigator/workspaces/bottleneck/bottleneck.png"
+"maze_map_path": 'TrainingNavigator/workspaces/bottleneck/bottleneck.png'
 "workspaces_path": 'TrainingNavigator/workspaces/bottleneck/workspaces.npy'
+"validation_workspaces_path": 'TrainingNavigator/workspaces/bottleneck/validation_workspaces.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_train.npz'
-"stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepper.pt'
+"stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt'
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 5000
+"eval_freq": 25000
+"eval_freq2": 5000
+"change_eval_freq_after": 4
 "video_freq": 1
-"save_model_freq": 5000
+"save_model_freq": 10000
 
 # Constants:
 "maze_size": !!python/tuple [10, 10]

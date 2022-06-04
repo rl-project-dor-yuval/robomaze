@@ -41,7 +41,8 @@ class NavigatorEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  done_on_collision=True,
                  velocity_in_obs=False,
-                 normalize_observations=True,):
+                 normalize_observations=True,
+                 wall_hit_limit=-1):
         """
         :param maze_env: mz.MazeEnv object - with observation space of 30d - with ant x,y location
         :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
@@ -54,6 +55,10 @@ class NavigatorEnv(gym.Env):
         :param max_vel_in_subgoal: maximal vertical velocity in subgoal to be considered as goal arrival
         :param rewards: Rewards object, defines the reward for each event
         :param done_on_collision: weather to kill the robot when colliding the wall
+        :param velocity_in_obs
+        :param normalize_observations
+        :param wall_hit_limit: if wall_hit_limit is > 0, and done in collision is True, then the episode is done if
+                     the robot hits the wall more than wall_hit_limit times
         """
 
         if maze_env is None and maze_env_kwargs is None:
@@ -70,6 +75,7 @@ class NavigatorEnv(gym.Env):
         self.done_on_collision = done_on_collision
         self.velocity_in_obs = velocity_in_obs
         self.normalize_observations = normalize_observations
+        self.wall_hit_limit = wall_hit_limit
 
         if not maze_env.xy_in_obs:
             raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
@@ -115,11 +121,13 @@ class NavigatorEnv(gym.Env):
             self.observation_space = Box(-np.inf, np.inf, (4,))
 
         self.curr_step = 0
+        self.wall_hit_count = 0
 
     def reset(self, **maze_env_kwargs):
         self.curr_step = 0
         self.ant_curr_obs = self.maze_env.reset(**maze_env_kwargs)
         self.ant_prev_loc = self.ant_curr_obs[0:2]
+        self.wall_hit_count = 0
 
         if self.velocity_in_obs:
             nav_obs = np.concatenate([self.ant_curr_obs[0:2], np.zeros(2), self.target_goal], dtype=np.float32)
@@ -187,8 +195,10 @@ class NavigatorEnv(gym.Env):
         nav_reward = 0
         nav_is_done = False
         if _hit_maze:
+            self.wall_hit_count += 1
             nav_reward += self.rewards_config.collision
-            nav_is_done = self.done_on_collision
+            too_many_walls_hit = 0 < self.wall_hit_limit < self.wall_hit_count
+            nav_is_done = self.done_on_collision or too_many_walls_hit
         elif info['fell']:
             nav_reward += self.rewards_config.fall
             nav_is_done = True

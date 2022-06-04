@@ -43,6 +43,7 @@ if __name__ == '__main__':
     # Setup Training Environment
     maze_map = blackwhiteswitch(config["maze_map_path"])
     start_goal_pairs = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
+    validation_start_goal_pairs = np.load(config["validation_workspaces_path"]) / 10
 
     maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
                            target_loc=start_goal_pairs[0][-1], xy_in_obs=True,
@@ -57,7 +58,8 @@ if __name__ == '__main__':
                           max_steps=config["max_navigator_steps"],
                           stepper_radius_range=config["stepper_radius_range"],
                           velocity_in_obs=config["velocity_in_obs"],
-                          stepper_agent=config["stepper_agent_path"], )
+                          stepper_agent=config["stepper_agent_path"],
+                          wall_hit_limit=config["wall_hit_limit"])
 
     nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
@@ -66,8 +68,8 @@ if __name__ == '__main__':
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
     eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
-                            target_loc=start_goal_pairs[0][-1], xy_in_obs=True, show_gui=False)
-    eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
+                            target_loc=validation_start_goal_pairs[0][-1], xy_in_obs=True, show_gui=False)
+    eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=validation_start_goal_pairs,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
                                               max_vel_in_subgoal=config["max_velocity_in_subgoal"],
@@ -77,7 +79,8 @@ if __name__ == '__main__':
                                               max_steps=config["max_navigator_steps"],
                                               velocity_in_obs=config["velocity_in_obs"],
                                               stepper_agent=config["stepper_agent_path"],
-                                              stepper_radius_range=config["stepper_radius_range"])
+                                              stepper_radius_range=config["stepper_radius_range"],
+                                              wall_hit_limit=config["wall_hit_limit"])
     # noinspection DuplicatedCode
     eval_nav_env.visualize_mode(False)
 

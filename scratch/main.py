@@ -42,28 +42,27 @@ maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                    show_gui=True,
                                    xy_in_obs=False,
                                    sticky_actions=5,
-                                   noisy_ant_initialization=False)
+                                   noisy_ant_initialization=True)
 i=0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
     agent = StepperAgent("Training/logs/StepperV2eps025-400steps_same_params/model_6000000.zip")
     for tgt_idx in range(20):
-        obs =maze_env.reset(target_index=tgt_idx, create_video=False)
+        obs = maze_env.reset(target_index=tgt_idx, create_video=False)
         is_done = False
         actions = []
         # while is_done is False:
         while not is_done:
-            # action = np.clip(np.random.randn(8), -1, 1)
+            action = np.clip(np.random.randn(8), -1, 1)
             # if i > 200:
             #     action = np.array([0.5, 0.5]*4)
             # action[0] = 1
             # action = maze_env.action_space.sample()
             # if (i//10)%2 == 0:
             #     action = - action
+            #
 
-            action = agent.step(obs)
-            actions.append(action)
 
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
