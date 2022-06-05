@@ -145,6 +145,9 @@ if __name__ == "__main__":
     parser.add_argument('workspace_dir', type=str, help='everything is created in the same dir')
     parser.add_argument('--max_section_len', type=int, default=15,
                         help='maximum distance between two points in the trajectory')
+    parser.add_argument('--freespace_map', action='store_true')
+    parser.add_argument('--no_freespace_map', dest='freespace_map', action='store_false')
+    parser.set_defaults(freespace_map=True)
 
     args = parser.parse_args()
 
@@ -156,13 +159,23 @@ if __name__ == "__main__":
     ws_test = np.load(workspaces_test_path)
     ws_validation = np.load(workspaces_validation_path)
 
-    map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + "_freespace.png"
+    if args.freespace_map:
+        map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + "_freespace.png"
+        traj_file_name_train = "trajectories_train"
+        traj_file_name_test = "trajectories_test"
+        traj_file_name_validation = "trajectories_validation"
+    else:
+        map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + ".png"
+        traj_file_name_train = "trajectories_train_no_freespace"
+        traj_file_name_test = "trajectories_test_no_freespace"
+        traj_file_name_validation = "trajectories_validation_no_freespace"
+
     maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
 
     np.set_printoptions(precision=1)
 
     trajGen = TrajGenerator(map_path, max_section_len=args.max_section_len)
 
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_train, "trajectories_train")
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_test, "trajectories_test")
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_validation, "trajectories_validation")
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_train, traj_file_name_train)
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_test, traj_file_name_test)
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_validation, traj_file_name_validation)
