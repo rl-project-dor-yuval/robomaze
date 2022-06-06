@@ -5,7 +5,7 @@ from os import path
 import math
 from MazeEnv.EnvAttributes import MazeSize
 
-_BLOCK_Z_COORD = 0.5  # half of the block is inside the floor, but it looks better
+_BLOCK_Z_COORD = 1  # so half of it won't be in the ground
 
 
 class Maze:
@@ -133,7 +133,7 @@ class Maze:
                 f.write('    <visual>\n'
                         '      <origin xyz="{x} {y} {z}" rpy="0 0 0" />\n'
                         '        <geometry>\n'
-                        '        <box size="{tile_size} {tile_size} 1" />\n'
+                        '        <box size="{tile_size} {tile_size} 2" />\n'
                         '        </geometry>\n'
                         '      <material name="Cyan">\n'
                         '        <color rgba="0 1.0 1.0 1.0"/>\n'
@@ -142,7 +142,7 @@ class Maze:
                         '    <collision>\n'
                         '      <origin xyz="{x} {y} {z}" rpy="0 0 0"/>\n'
                         '      <geometry>\n'
-                        '        <box size="{tile_size} {tile_size} 1" />\n'
+                        '        <box size="{tile_size} {tile_size} 2" />\n'
                         '      </geometry>\n'
                         '    </collision>\n'.format(x=x, y=y, z=_BLOCK_Z_COORD, tile_size=tile_size))
 
