@@ -1,6 +1,8 @@
 from pathlib import Path
 import os, time, sys
 
+from TrainingNavigator.TD3MP import TD3MP
+
 sys.path.append('.')
 
 import cv2
@@ -22,7 +24,7 @@ This script is used to track statistics of the trained navigator.
 it shows the model's reasons for failure and success rate over any configurable number of workspaces
 """
 config = {
-    "name": "Smaze_easyStopCond_AddEpsilon",
+    "name": None,
     # if is None then the run name is extracted from nav agent path
 
     # visualize
@@ -30,25 +32,26 @@ config = {
     "save_video": True,
 
     # paths:
-    "maze_map_path": "TrainingNavigator/maps/S15x15.png",
-    "workspaces_path": 'TrainingNavigator/workspaces/S15x15.npy',
-    "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperV2_ep03_vel05_randInit.pt',
-    "navigator_agent_path": "TrainingNavigator/logs/SMaze_easyStopCond_AddEpsilon/saved_model/model_260000.zip",  # Dir Required
+    "maze_map_path": "TrainingNavigator/workspaces/bottleneck/bottleneck.png",
+    "workspaces_path": 'TrainingNavigator/workspaces/bottleneck/test_workspaces.npy',
+    "stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt',
+    "navigator_agent_path": "TrainingNavigator/logs/seed4/saved_model/model_110000.zip",  # Dir Required
     "output_path": "TrainingNavigator/NavigatorTests",
 
     # Technical params
-    "maze_size": (15, 15),
+    "maze_size": (10, 10),
     "velocity_in_obs": False,
     "done_on_collision": False,
     "rewards": Rewards(target_arrival=1, collision=-0.02, fall=-1, idle=-0.001, ),
     "max_stepper_steps": 100,
-    "max_navigator_steps": 40,
-    "stepper_radius_range": (0.6, 2.5),
-    "epsilon_to_subgoal": 0.5,
-    "max_velocity_in_subgoal": 3,
+    "max_navigator_steps": 30,
+    "stepper_radius_range": (0.3, 2),
+    "epsilon_to_subgoal": 0.25,
+    "max_velocity_in_subgoal": 999,
+    "wall_hit_limit": 10,
 
     # logging parameters
-    "eval_ws_num": 200,  # will take the first workspaces
+    "eval_ws_num": 100,  # will take the first workspaces
 
 }
 
@@ -95,8 +98,9 @@ def evaluate_workspace(agent, env):
             # ignore hit maze
             info["hit_maze"] = 0
 
-        reason = [k for k, v in info.items() if v is True][0]
-        stats[reason] += 1
+        reason = [k for k, v in info.items() if v is True]
+        for r in reason:
+            stats[r] += 1
 
         # if episode failed, create a video
         if info["success"] is False:
@@ -137,7 +141,8 @@ if __name__ == '__main__':
                                               max_steps=config["max_navigator_steps"],
                                               velocity_in_obs=config["velocity_in_obs"],
                                               stepper_agent=config["stepper_agent_path"],
-                                              stepper_radius_range=config["stepper_radius_range"])
+                                              stepper_radius_range=config["stepper_radius_range"],
+                                              wall_hit_limit=config["wall_hit_limit"],)
 
     # create the model
     # if there is a file ends with pt, then load the model
@@ -159,7 +164,7 @@ if __name__ == '__main__':
     # else:
     #     raise FileNotFoundError("No model found in the path")
 
-    agent = DDPGMP.load(config["navigator_agent_path"], env=eval_nav_env).policy.actor.eval().to(device)
+    agent = TD3MP.load(config["navigator_agent_path"], env=eval_nav_env).policy.actor.eval().to(device)
     avg_length, success_rate, stats = evaluate_workspace(agent=agent, env=eval_nav_env)
 
     print(f"avg_length: {avg_length}")

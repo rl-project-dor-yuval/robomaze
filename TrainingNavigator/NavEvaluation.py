@@ -58,11 +58,11 @@ class NavEvalCallback(BaseCallback):
         self.evals_count = 0
 
         wandb_run.define_metric('navStep', hidden=True)
+        wandb_run.define_metric('TotalSimulationSteps')
         wandb_run.define_metric('eval_avg_reward', step_metric='navStep')
         wandb_run.define_metric('eval_avg_length', step_metric='navStep')
         wandb_run.define_metric('eval_success_rate', step_metric='navStep')
         wandb_run.define_metric('eval_avg_wallhits', step_metric='navStep')
-
         wandb_run.define_metric('eval_video', step_metric='navStep')
         wandb_run.define_metric('grad_norm', step_metric='navStep')
 
@@ -81,10 +81,11 @@ class NavEvalCallback(BaseCallback):
             self.eval_freq = self.eval_freq2
 
         if self.n_calls % self.eval_freq == 0:
+            simulation_steps = sum(self.training_env.get_attr('total_stepper_steps'))
             avg_reward, avg_length, success_rate, avg_wallhits = self._evaluate_all_workspaces()
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
                                 'eval_success_rate': success_rate, 'eval_avg_wallhits': avg_wallhits,
-                                'navStep': self.n_calls})
+                                'navStep': self.n_calls, 'TotalSimulationSteps': simulation_steps,})
             self.evals_count += 1
 
         if self.eval_video_freq > 0 and \

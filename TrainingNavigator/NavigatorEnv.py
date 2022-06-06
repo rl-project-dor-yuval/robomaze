@@ -122,6 +122,7 @@ class NavigatorEnv(gym.Env):
 
         self.curr_step = 0
         self.wall_hit_count = 0
+        self.total_stepper_steps = 0
 
     def reset(self, **maze_env_kwargs):
         self.curr_step = 0
@@ -154,6 +155,8 @@ class NavigatorEnv(gym.Env):
         for i in range(self.max_stepper_steps):
             if self.visualize:
                 time.sleep(1./float(self.visualize_fps))
+
+            self.total_stepper_steps += 1
 
             # compute the (r, theta) from the *current* ant location to the subgoal in order to put it
             # in the observation to the stepper this is different then the value passed in the action
