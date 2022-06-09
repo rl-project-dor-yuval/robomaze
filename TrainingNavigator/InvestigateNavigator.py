@@ -1,10 +1,7 @@
 from pathlib import Path
 import os, time, sys
-
-from TrainingNavigator.TD3MP import TD3MP
-
 sys.path.append('.')
-
+from TrainingNavigator.TD3MP import TD3MP
 import cv2
 import torch
 import pandas as pd
@@ -35,7 +32,7 @@ config = {
     "maze_map_path": "TrainingNavigator/workspaces/bottleneck/bottleneck.png",
     "workspaces_path": 'TrainingNavigator/workspaces/bottleneck/test_workspaces.npy',
     "stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt',
-    "navigator_agent_path": "TrainingNavigator/logs/seed4/saved_model/model_110000.zip",  # Dir Required
+    "navigator_agent_path": "TrainingNavigator/logs/bufferSize33k_repeatFailed05/saved_model/model_350000.zip",  # Dir Required
     "output_path": "TrainingNavigator/NavigatorTests",
 
     # Technical params
@@ -88,7 +85,8 @@ def evaluate_workspace(agent, env):
                           'fell': [0],
                           'hit_maze': [0],
                           'navigator_timeout': [0],
-                          'stepper_timeout': [0]})
+                          'stepper_timeout': [0],
+                          'too_many_wallhits': [0]})
 
     for i in range(config["eval_ws_num"]):
         info, steps = play_workspace(env, agent, i, create_video=False)
@@ -96,7 +94,7 @@ def evaluate_workspace(agent, env):
         # collect info to sturct
         if not config["done_on_collision"]:
             # ignore hit maze
-            info["hit_maze"] = 0
+            info["hit_maze"] = False
 
         reason = [k for k, v in info.items() if v is True]
         for r in reason:
@@ -172,7 +170,9 @@ if __name__ == '__main__':
 
     print("saving stats bar plot")
     # plot the stats as the key in vertical axis and value is in horizontal axis
+    stats = stats["success", "fell", "navigator_timeout", "too_many_wallhits"]
     keys = list(stats.keys())
     values = stats.values[0]
-    sns.barplot(x=values, y=keys)
+    sns.barplot(x=keys, y=values, orient="v")
+    plt.xticks(rotation=15)
     plt.savefig(os.path.join(dir_name, "stats_bar_plot.png"))

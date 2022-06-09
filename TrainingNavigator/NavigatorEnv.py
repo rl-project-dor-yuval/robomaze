@@ -193,6 +193,7 @@ class NavigatorEnv(gym.Env):
             nav_observation = np.concatenate([ant_xy, self.target_goal])
 
         nav_info = info
+        nav_info['too_many_wallhits'] = False
 
         # determine nav reward and nav done according to info:
         nav_reward = 0
@@ -202,6 +203,8 @@ class NavigatorEnv(gym.Env):
             nav_reward += self.rewards_config.collision
             too_many_walls_hit = 0 < self.wall_hit_limit < self.wall_hit_count
             nav_is_done = self.done_on_collision or too_many_walls_hit
+            nav_info['too_many_wallhits'] = too_many_walls_hit
+            nav_info['hit_maze'] = True
         elif info['fell']:
             nav_reward += self.rewards_config.fall
             nav_is_done = True
@@ -269,12 +272,16 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
     """
      Navigator Environment with multiple start and goal pairs, varying every episode
     """
-    def __init__(self, start_goal_pairs: np.ndarray, **navigator_kwargs):
+    def __init__(self, start_goal_pairs: np.ndarray, repeat_failed_ws_prob=0, **navigator_kwargs):
         super(MultiStartgoalNavigatorEnv, self).__init__(**navigator_kwargs)
 
         self.start_goal_pairs = start_goal_pairs
+        self.repeat_failed_ws_prob = repeat_failed_ws_prob
+
         self.start_goal_pairs_count = len(self.start_goal_pairs)
         self.curr_startgoal_pair_idx = None
+
+        self.is_last_failed = False
 
     def reset(self, start_goal_pair_idx: int = None, **kwargs):
         """
@@ -283,7 +290,11 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
         :return: observation
         """
         if start_goal_pair_idx is None:
-            start_goal_pair_idx = np.random.randint(0, self.start_goal_pairs_count)
+            if self.is_last_failed and np.random.rand() < self.repeat_failed_ws_prob:
+                start_goal_pair_idx = self.curr_startgoal_pair_idx
+            else:
+                start_goal_pair_idx = np.random.randint(0, self.start_goal_pairs_count)
+
         if start_goal_pair_idx >= self.start_goal_pairs_count:
             raise ValueError("start_goal_pair_idx is out of range")
 
@@ -302,5 +313,6 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         """
         obs, reward, is_done, info = super(MultiStartgoalNavigatorEnv, self).step(action, visualize_subgoal)
+        self.is_last_failed = not info['success']
         info['start_goal_pair_idx'] = self.curr_startgoal_pair_idx
         return obs, reward, is_done, info
