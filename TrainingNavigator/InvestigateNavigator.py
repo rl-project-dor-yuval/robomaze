@@ -1,8 +1,10 @@
+import os
+import sys
+import time
 from pathlib import Path
-import os, time, sys
+
 sys.path.append('.')
 from TrainingNavigator.TD3MP import TD3MP
-import cv2
 import torch
 import pandas as pd
 import numpy as np
@@ -10,11 +12,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from Utils import blackwhiteswitch
 
-from TrainingNavigator.NavigatorEnv import NavigatorEnv, MultiStartgoalNavigatorEnv
-from TrainingNavigator.ExtractStepperAgent import extract_agent
+from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 from MazeEnv.EnvAttributes import Rewards
-from DDPGMP import DDPGMP
 
 """
 This script is used to track statistics of the trained navigator.
@@ -32,7 +32,7 @@ config = {
     "maze_map_path": "TrainingNavigator/workspaces/bottleneck/bottleneck.png",
     "workspaces_path": 'TrainingNavigator/workspaces/bottleneck/test_workspaces.npy',
     "stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt',
-    "navigator_agent_path": "TrainingNavigator/logs/bufferSize33k_repeatFailed05/saved_model/model_350000.zip",  # Dir Required
+    "navigator_agent_path": "TrainingNavigator/logs/bufferSize33k_demoprob02/saved_model/model_250000.zip",  # Dir Required
     "output_path": "TrainingNavigator/NavigatorTests",
 
     # Technical params
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     print("saving stats bar plot")
     # plot the stats as the key in vertical axis and value is in horizontal axis
-    stats = stats["success", "fell", "navigator_timeout", "too_many_wallhits"]
+    stats = stats[["success", "fell", "navigator_timeout", "too_many_wallhits"]]
     keys = list(stats.keys())
     values = stats.values[0]
     sns.barplot(x=keys, y=values, orient="v")

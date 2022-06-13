@@ -59,7 +59,8 @@ if __name__ == '__main__':
                           stepper_radius_range=config["stepper_radius_range"],
                           velocity_in_obs=config["velocity_in_obs"],
                           stepper_agent=config["stepper_agent_path"],
-                          wall_hit_limit=config["wall_hit_limit"])
+                          wall_hit_limit=config["wall_hit_limit"],
+                          repeat_failed_ws_prob=config["repeat_failed_ws_prob"],)
 
     nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)

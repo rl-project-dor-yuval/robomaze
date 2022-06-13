@@ -1,25 +1,25 @@
-"run_name": "Bottleneck"
-"group": "WithWallHitLimitAndBetterEvalFreq"
+"run_name": "MaxStepperSteps300_maxVelInSubgoal0.5"
+"group": "BNImprovementExperiments"
 "project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
-  [41**3]
+  [42 ** 3]
 
 # algorithm and training parameters
 use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
   [3 * 10 ** 6]
 "learning_rate": 0.5e-5
-"grad_clip_norm_actor": 30
-"grad_clip_norm_critic": 1
+"grad_clip_norm_actor": 2
+"grad_clip_norm_critic": 0.5
 "batch_size": 1024
 "buffer_size": !!python/object/apply:eval
-  [1 * 10 ** 5]
+  [33333 ** 1] # Note: effective size is buffer_size * num_envs!
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"demo_on_fail_prob": 0.5
+"demo_on_fail_prob": 0.2
 "demo_prob_decay": 1
 "learning_starts": !!python/object/apply:eval
   [10 ** 4]
@@ -27,32 +27,34 @@ use_TD3MP: True # otherwise DDPGMP
 # environment parameters (please do not modify unless something changes)
 "num_envs": 3
 "epsilon_to_subgoal": 0.25
-"max_velocity_in_subgoal": 9999 # basically no limit
+"max_velocity_in_subgoal": 0.5
 "stepper_radius_range": !!python/tuple [0.3, 2]
 "done_on_collision": False  # modify rewards in case you change this
 "rewards":
   !Rewards
     target_arrival: 1
-    collision: -0.02
     fall: -1
+    collision: -0.02
     idle: -0.001
+    timeout: -0.001
 "use_demo_epsilon_offset": False
 "velocity_in_obs": False
-"max_stepper_steps": 100 # maybe you can change this
+"max_stepper_steps": 300 # maybe you can change this
 "max_navigator_steps": 30 # or this
-wall_hit_limit: 15
+"wall_hit_limit": 10
+"repeat_failed_ws_prob": 0.0
 
 # workspace paths:
 "maze_map_path": 'TrainingNavigator/workspaces/bottleneck/bottleneck.png'
 "workspaces_path": 'TrainingNavigator/workspaces/bottleneck/workspaces.npy'
 "validation_workspaces_path": 'TrainingNavigator/workspaces/bottleneck/validation_workspaces.npy'
-"demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_train.npz'
-"validation_demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_validation.npz'
+"demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_train_no_freespace.npz'
+"validation_demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_validation_no_freespace.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/TorqueStepperF1500.pt'
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 25000
+"eval_freq": 20000
 "eval_freq2": 5000
 "change_eval_freq_after": 4
 "video_freq": 1
