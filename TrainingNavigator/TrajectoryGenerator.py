@@ -145,6 +145,8 @@ if __name__ == "__main__":
     parser.add_argument('workspace_dir', type=str, help='everything is created in the same dir')
     parser.add_argument('--max_section_len', type=int, default=15,
                         help='maximum distance between two points in the trajectory')
+    parser.add_argument('--additional_name', type=str, default='',
+                        help='additional name to be added to the file name')
     parser.add_argument('--freespace_map', action='store_true')
     parser.add_argument('--no_freespace_map', dest='freespace_map', action='store_false')
     parser.set_defaults(freespace_map=True)
@@ -161,14 +163,14 @@ if __name__ == "__main__":
 
     if args.freespace_map:
         map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + "_freespace.png"
-        traj_file_name_train = "trajectories_train"
-        traj_file_name_test = "trajectories_test"
-        traj_file_name_validation = "trajectories_validation"
+        traj_file_name_train = "trajectories_train" + args.additional_name
+        traj_file_name_test = "trajectories_test" + args.additional_name
+        traj_file_name_validation = "trajectories_validation" + args.additional_name
     else:
         map_path = args.workspace_dir + '/' + os.path.basename(os.path.normpath(args.workspace_dir)) + ".png"
-        traj_file_name_train = "trajectories_train_no_freespace"
-        traj_file_name_test = "trajectories_test_no_freespace"
-        traj_file_name_validation = "trajectories_validation_no_freespace"
+        traj_file_name_train = "trajectories_train_no_freespace" + args.additional_name
+        traj_file_name_test = "trajectories_test_no_freespace" + args.additional_name
+        traj_file_name_validation = "trajectories_validation_no_freespace" + args.additional_name
 
     maze_map = -(cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
 
