@@ -36,10 +36,10 @@ class NavigatorEnv(gym.Env):
                  max_stepper_steps=200,
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
-                 epsilon_to_hit_subgoal=0.8,
-                 max_vel_in_subgoal=1,
+                 epsilon_to_hit_subgoal=0.25,
+                 max_vel_in_subgoal=9999,
                  rewards: Rewards = Rewards(),
-                 done_on_collision=True,
+                 done_on_collision=False,
                  velocity_in_obs=False,
                  normalize_observations=True,
                  wall_hit_limit=-1):
@@ -97,7 +97,7 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/StepperAgent.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/TorqueStepperF1500.pt', 'auto')
         elif isinstance(stepper_agent, str):
             stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
