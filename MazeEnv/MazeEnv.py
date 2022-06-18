@@ -318,6 +318,12 @@ class MazeEnv(gym.Env):
         self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
         self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
 
+    def get_target_loc(self):
+        """
+        :return: the target location
+        """
+        return self._target_loc[:2]
+
     def set_timeout_steps(self, timeout_steps):
         """
         change the amount of steps for timeout. The new value applies from the next step

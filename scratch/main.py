@@ -63,13 +63,15 @@ if __name__ == "__main__":
             # if (i//10)%2 == 0:
             #     action = - action
             #
-            action = agent.step(obs)
-
+            # action = agent.step(obs)
+            action = [0]*8
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
             if reward != 0:
                 print(reward)
-            time.sleep(1. / 60)
+
+            print(obs[6:9])
+            time.sleep(1. / 5)
 
     actions = np.array(actions)
     plt.hist(actions)

@@ -1,4 +1,4 @@
-"run_name": "MaxStepperSteps300_maxVelInSubgoal0.5"
+"run_name": "MaxStepSize1_MaxSteps50_NoDemo_MoreSteps_LR1e-5"
 "group": "BNImprovementExperiments"
 "project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
@@ -9,8 +9,8 @@
 # algorithm and training parameters
 use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
-  [3 * 10 ** 6]
-"learning_rate": 0.5e-5
+  [6 * 10 ** 6]
+"learning_rate": 1.0e-5
 "grad_clip_norm_actor": 2
 "grad_clip_norm_critic": 0.5
 "batch_size": 1024
@@ -19,7 +19,7 @@ use_TD3MP: True # otherwise DDPGMP
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"demo_on_fail_prob": 0.2
+"demo_on_fail_prob": 0.0
 "demo_prob_decay": 1
 "learning_starts": !!python/object/apply:eval
   [10 ** 4]
@@ -27,21 +27,21 @@ use_TD3MP: True # otherwise DDPGMP
 # environment parameters (please do not modify unless something changes)
 "num_envs": 3
 "epsilon_to_subgoal": 0.25
-"max_velocity_in_subgoal": 0.5
-"stepper_radius_range": !!python/tuple [0.3, 2]
+"max_velocity_in_subgoal": 9999
+"stepper_radius_range": !!python/tuple [0.3, 1]
 "done_on_collision": False  # modify rewards in case you change this
 "rewards":
   !Rewards
     target_arrival: 1
     fall: -1
-    collision: -0.02
+    collision: -0.01
     idle: -0.001
     timeout: -0.001
 "use_demo_epsilon_offset": False
 "velocity_in_obs": False
-"max_stepper_steps": 300 # maybe you can change this
-"max_navigator_steps": 30 # or this
-"wall_hit_limit": 10
+"max_stepper_steps": 50 # maybe you can change this
+"max_navigator_steps": 60 # or this
+"wall_hit_limit": 20
 "repeat_failed_ws_prob": 0.0
 
 # workspace paths:
@@ -55,7 +55,7 @@ use_TD3MP: True # otherwise DDPGMP
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
 "eval_freq": 20000
-"eval_freq2": 5000
+"eval_freq2": 10000
 "change_eval_freq_after": 4
 "video_freq": 1
 "save_model_freq": 10000

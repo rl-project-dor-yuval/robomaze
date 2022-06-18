@@ -1,5 +1,5 @@
-"run_name": "force3000"
-"group": "position"
+"run_name": "stickyActions8_max_steps150"
+"group": "ImproveAgain"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [43 ** 3]
@@ -8,7 +8,7 @@
 "train_steps": 20000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 200
+"timeout_steps": 150
 "map_radius": 5
 "learning_rate": 0.5e-5
 "gamma": 0.99
@@ -31,9 +31,9 @@ done_on_goal_reached: False
 success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
                             # ignored when done_on_goal_reached is False
 
-sticky_actions: 5
+sticky_actions: 8
 
-position_control: True
+position_control: False
 
 "use_td3": False  # otherwise DDPG
 # td3 specific parameters, ignored if use_td3=False:
