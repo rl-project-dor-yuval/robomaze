@@ -57,7 +57,6 @@ if __name__ == '__main__':
                           max_stepper_steps=config["max_stepper_steps"],
                           max_steps=config["max_navigator_steps"],
                           stepper_radius_range=config["stepper_radius_range"],
-                          velocity_in_obs=config["velocity_in_obs"],
                           stepper_agent=config["stepper_agent_path"],
                           wall_hit_limit=config["wall_hit_limit"],
                           repeat_failed_ws_prob=config["repeat_failed_ws_prob"],)
@@ -78,7 +77,6 @@ if __name__ == '__main__':
                                               done_on_collision=config["done_on_collision"],
                                               max_stepper_steps=config["max_stepper_steps"],
                                               max_steps=config["max_navigator_steps"],
-                                              velocity_in_obs=config["velocity_in_obs"],
                                               stepper_agent=config["stepper_agent_path"],
                                               stepper_radius_range=config["stepper_radius_range"],
                                               wall_hit_limit=config["wall_hit_limit"])

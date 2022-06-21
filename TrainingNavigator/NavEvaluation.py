@@ -8,6 +8,7 @@ import torch
 from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
 from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
+from TrainingNavigator.Utils import compute_traj_rotation
 import wandb
 
 
@@ -90,11 +91,13 @@ class NavEvalCallback(BaseCallback):
 
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
-            vid_path, walked_trajectory, ws_id = self._record_video()
+            vid_path, walked_trajectory, rotation_trajectory, ws_id = self._record_video()
 
             log_item = {'eval_video': wandb.Video(vid_path, fps=40), 'navStep': self.n_calls}
             if self.maze_map is not None:
-                log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory, ws_id)
+                log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory,
+                                                                         rotation_trajectory,
+                                                                         ws_id)
 
             self.wandb_run.log(log_item)
 
@@ -147,7 +150,7 @@ class NavEvalCallback(BaseCallback):
 
         return avg_reward, avg_length, success_rate, avg_wallhits
 
-    def _record_video(self) -> Tuple[str, np.ndarray, int]:
+    def _record_video(self) -> Tuple[str, np.ndarray, np.ndarray, int]:
         """
         Record a video of the current model
         :return: path to the video, array of the walked trajectory, workspace id
@@ -158,30 +161,41 @@ class NavEvalCallback(BaseCallback):
         video_path = os.path.join(self.video_dir, str(self.n_calls) + '.gif')
         obs = self.eval_env.reset(create_video=True, video_path=video_path)
         walked_traj = []
+        traj_rotation = []
         while True:
             with torch.no_grad():
                 action, _ = self.model.predict(obs, deterministic=True)
             obs, _, done, info = self.eval_env.step(action)
-            walked_traj.append(self.eval_env.unormalize_obs_if_needed(obs)[:2])
+
+            obs_unnorm = self.eval_env.unormalize_obs_if_needed(obs)
+            walked_traj.append(obs_unnorm[:2])
+            traj_rotation.append(obs_unnorm[2])
+
             if done:
                 break
+
         ws_id = info['start_goal_pair_idx']
         self.eval_env.reset()  # to make sure video is saved
 
         if self.verbose > 0:
             print("Video recorded in %.4f secs: " % (time.time() - t_start))
 
-        return video_path, np.array(walked_traj), ws_id
+        return video_path, np.array(walked_traj), np.array(traj_rotation), ws_id
 
-    def _get_trajectory_plot(self, walked_traj: np.ndarray, ws_id: int) -> plt.Figure:
+    def _get_trajectory_plot(self, walked_traj: np.ndarray, rotation_trajectory, ws_id: int) -> plt.Figure:
         """
         returns a plot of the walked trajectory near the RRT planned
          trajectory for that workspace
         """
         walked_traj = walked_traj * 10
+        walked_u = np.cos(rotation_trajectory)
+        walked_v = np.sin(rotation_trajectory)
 
         with np.load(self.validation_traj_path) as demos:
             planned_traj = demos[str(ws_id)] * 10
+        planned_rotation = compute_traj_rotation(planned_traj)
+        planned_u = np.cos(planned_rotation)
+        planned_v = np.sin(planned_rotation)
 
         start, goal = planned_traj[0], planned_traj[-1]
 
@@ -193,8 +207,8 @@ class NavEvalCallback(BaseCallback):
             ax.plot(goal[1], goal[0], 'g+')
 
         axes[0].set_title('Walked trajectory')
-        axes[0].plot(walked_traj[:, 1], walked_traj[:, 0], 'ro')
+        axes[0].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
         axes[1].set_title('RRT planned trajectory')
-        axes[1].plot(planned_traj[:, 1], planned_traj[:, 0], 'ro')
+        axes[1].quiver(planned_traj[:, 1], planned_traj[:, 0], planned_u, planned_v, color='r')
 
         return fig

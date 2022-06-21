@@ -108,3 +108,16 @@ def plot_trajectory(trajectory, map, save_loc=None):
     else:
         plt.show()
 
+
+def compute_traj_rotation(trajectory):
+    """
+    for a given trajectory of [(x, y), (x, y), ...]
+    compute an array of rotation assuming the rotation of the first point is 0 and at each point
+    the rotation is the angle between the previous point and the current point
+    """
+    rotations = np.zeros(trajectory.shape[0])
+    for i in range(1, trajectory.shape[0]):
+        # we swtich x and y since x is the vertical axis in our map and we use -x since this axis is inverted
+        rotations[i] = np.arctan2(-(trajectory[i, 0] - trajectory[i-1, 0]), trajectory[i, 1] - trajectory[i-1, 1])
+    return rotations
+

@@ -40,7 +40,6 @@ class NavigatorEnv(gym.Env):
                  max_vel_in_subgoal=9999,
                  rewards: Rewards = Rewards(),
                  done_on_collision=False,
-                 velocity_in_obs=False,
                  normalize_observations=True,
                  wall_hit_limit=-1):
         """
@@ -55,7 +54,6 @@ class NavigatorEnv(gym.Env):
         :param max_vel_in_subgoal: maximal vertical velocity in subgoal to be considered as goal arrival
         :param rewards: Rewards object, defines the reward for each event
         :param done_on_collision: weather to kill the robot when colliding the wall
-        :param velocity_in_obs
         :param normalize_observations
         :param wall_hit_limit: if wall_hit_limit is > 0, and done in collision is True, then the episode is done if
                      the robot hits the wall more than wall_hit_limit times
@@ -73,7 +71,6 @@ class NavigatorEnv(gym.Env):
         self.max_vel_in_subgoal = max_vel_in_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
-        self.velocity_in_obs = velocity_in_obs
         self.normalize_observations = normalize_observations
         self.wall_hit_limit = wall_hit_limit
 
@@ -113,28 +110,22 @@ class NavigatorEnv(gym.Env):
                                 high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
                                 shape=(2,))
 
-        if self.velocity_in_obs:
-            # Observation -> [ Agent_x, Agent_y, V_x, V_y, Target_x, Target_y]
-            self.observation_space = Box(-np.inf, np.inf, (6,))
-        else:
-            # Observation -> [ Agent_x, Agent_y, Target_x, Target_y]
-            self.observation_space = Box(-np.inf, np.inf, (4,))
+
+        # Observation -> [ Agent_x, Agent_y,  Agent_Rotation, Target_x, Target_y]
+        self.observation_space = Box(-np.inf, np.inf, (5,))
 
         self.curr_step = 0
         self.wall_hit_count = 0
         self.total_stepper_steps = 0
 
-    def reset(self, **maze_env_kwargs):
+    def reset(self, **maze_env_kwargs) -> np.ndarray:
         self.curr_step = 0
         self.ant_curr_obs = self.maze_env.reset(**maze_env_kwargs)
         self.ant_prev_loc = self.ant_curr_obs[0:2]
         self.wall_hit_count = 0
 
-        if self.velocity_in_obs:
-            nav_obs = np.concatenate([self.ant_curr_obs[0:2], np.zeros(2), self.target_goal], dtype=np.float32)
-        else:
-            nav_obs = np.concatenate([self.ant_curr_obs[0:2], self.target_goal], dtype=np.float32)
-
+        nav_obs = np.concatenate([self.ant_curr_obs[0:2], [self.ant_curr_obs[8]], self.target_goal],
+                                 dtype=np.float32)
         return self.normalize_obs_if_needed(nav_obs)
 
     def step(self, action, visualize_subgoal=True):
@@ -187,10 +178,8 @@ class NavigatorEnv(gym.Env):
                     and ant_velocity < self.max_vel_in_subgoal:
                 break
 
-        if self.velocity_in_obs:
-            nav_observation = np.concatenate([ant_xy, ant_xy - self.ant_prev_loc, self.target_goal])
-        else:
-            nav_observation = np.concatenate([ant_xy, self.target_goal])
+        ant_rotation = self.ant_curr_obs[8]
+        nav_observation = np.concatenate([ant_xy, [ant_rotation], self.target_goal])
 
         nav_info = info
         nav_info['too_many_wallhits'] = False
@@ -241,32 +230,28 @@ class NavigatorEnv(gym.Env):
 
     def normalize_obs_if_needed(self, obs):
         if self.normalize_observations:
+            # normalize x and y of robot and goal:
             maze_size_x, maze_size_y = self.maze_env.maze_size
-            if self.velocity_in_obs:
-                denominator = np.array([maze_size_x, maze_size_y]*3)
-            else:
-                denominator = np.array([maze_size_x, maze_size_y]*2)
+            max_xy = np.array([maze_size_x, maze_size_y])
+            obs[0:2] = 2 * (obs[0:2] / max_xy) - 1
+            obs[3:5] = 2 * (obs[3:5] / max_xy) - 1
 
-            # normalize between -1 and 1:
-            obs = (obs / denominator) * 2 - 1
-            return obs
-        else:
-            return obs
+            # normalize rotation:
+            obs[2] = obs[2] / np.pi
+
+        return obs
 
     def unormalize_obs_if_needed(self, obs):
+        unorm_obs = obs.copy()
         if self.normalize_observations:
             maze_size_x, maze_size_y = self.maze_env.maze_size
-            if self.velocity_in_obs:
-                multiplier = np.array([maze_size_x, maze_size_y]*3)
-            else:
-                multiplier = np.array([maze_size_x, maze_size_y]*2)
+            max_xy = np.array([maze_size_x, maze_size_y])
+            unorm_obs[0:2] = (unorm_obs[0:2] + 1) * max_xy / 2
+            unorm_obs[3:5] = (unorm_obs[3:5] + 1) * max_xy / 2
 
-            # normalize between -1 and 1:
-            obs = ((obs + 1) / 2) * multiplier
-            return obs
-        else:
-            return obs
+            unorm_obs[2] = unorm_obs[2] * np.pi
 
+        return unorm_obs
 
 class MultiStartgoalNavigatorEnv(NavigatorEnv):
     """

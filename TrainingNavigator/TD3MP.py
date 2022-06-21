@@ -14,6 +14,7 @@ from stable_baselines3.common.utils import should_collect_more_steps, polyak_upd
 from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
 from torch.nn import functional as F
+from TrainingNavigator.Utils import compute_traj_rotation
 
 
 class TD3MP(TD3):
@@ -89,7 +90,6 @@ class TD3MP(TD3):
         self.epsilon_to_goal = env.get_attr('epsilon_to_hit_subgoal', 0)[0]
         self.normalize_obs = self.env.get_attr('normalize_observations', 0)[0]
         self.maze_size = self.env.get_attr('maze_env', 0)[0].maze_size
-        self.vel_in_obs = self.env.get_attr('velocity_in_obs', 0)[0]
 
         # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
         num_envs = self.n_envs
@@ -282,21 +282,16 @@ class TD3MP(TD3):
         # therefore we insert just every num_envs'th transition from the demo trajectory
         # until we collect that number of transitions, we save them in temporary buffers.
 
-        vel_in_obs = self.vel_in_obs
-        prev_loc = demo_traj[0]  # only managed if vel_in_obs is True
+        # create rotations for the demo trajectory:
+        rotation = compute_traj_rotation(demo_traj)
+        if self.normalize_obs:
+            rotation = rotation / np.pi
+
         for i in range(len(demo_traj) - 1):
-            if vel_in_obs:
-                self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i],
-                                                                    demo_traj[i] - prev_loc,
-                                                                    demo_traj[-1]])
-                prev_loc = demo_traj[i]
-                self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1],
-                                                                        demo_traj[i + 1] - prev_loc,
-                                                                        demo_traj[-1]])
-            else:
-                # Observation: [ Agent_x, Agent_y, Target_x, Target_y]
-                self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], demo_traj[-1]])
-                self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], demo_traj[-1]])
+
+            # Observation: [ Agent_x, Agent_y, Agent_Rotation, Target_x, Target_y]
+            self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], [rotation[i]], demo_traj[-1]])
+            self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], [rotation[i+1]], demo_traj[-1]])
 
             self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff[self.curr_buff_idx],
                                                                              self.new_obs_buff[self.curr_buff_idx])
