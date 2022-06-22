@@ -11,6 +11,7 @@ class ObstaclesMultiTargetMazeEnv(MultiTargetMazeEnv):
     obstacle_angle_random_offset_range = np.pi/4
 
     def __init__(self, *args, **kwargs):
+        raise DeprecationWarning("ObstaclesMultiTargetMazeEnv is has to be updated to support target heading?")
         super().__init__(*args, **kwargs)
         self.obstacle_uid = None
 

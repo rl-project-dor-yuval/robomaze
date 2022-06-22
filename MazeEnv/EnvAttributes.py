@@ -23,7 +23,8 @@ class Rewards:
                  idle=0,
                  fall=-1,
                  target_distance_offset=0,
-                 target_distance_weight=0, ):
+                 target_distance_weight=0,
+                 rotation_weight=0,):
         """
         :param target_arrival: the reward's value for arriving the target
         :param collision: the reward's value for a collision
@@ -43,9 +44,13 @@ class Rewards:
         self.fall = fall
         self.target_distance_offset = target_distance_offset
         self.target_distance_weight = target_distance_weight
+        self.rotation_weight = rotation_weight
 
     def compute_target_distance_reward(self, target_distance):
         return self.target_distance_weight * (self.target_distance_offset - target_distance)
+
+    def compute_rotation_reward(self, rotation_diff):
+        return self.rotation_weight * np.abs(rotation_diff)
 
     @classmethod
     def from_yaml(cls, loader, node):

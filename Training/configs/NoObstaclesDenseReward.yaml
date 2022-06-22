@@ -1,14 +1,14 @@
-"run_name": "stickyActions8_max_steps150"
-"group": "ImproveAgain"
+"run_name": "stickyActions5_max_steps_250"
+"group": "rotation_at_goal"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [43 ** 3]
 
 "num_envs": 1
-"train_steps": 20000000
+"train_steps": 25000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 150
+"timeout_steps": 250
 "map_radius": 5
 "learning_rate": 0.5e-5
 "gamma": 0.99
@@ -22,6 +22,7 @@
   !Rewards
     target_distance_weight: 0.01
     target_distance_offset: 5  # reward will be weight*(offset - distance)
+    rotation_weight: 0.01
     fall: -1
     target_arrival: 1
     collision: 0
@@ -31,7 +32,7 @@ done_on_goal_reached: False
 success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
                             # ignored when done_on_goal_reached is False
 
-sticky_actions: 8
+sticky_actions: 5
 
 position_control: False
 
@@ -44,6 +45,7 @@ position_control: False
 
 "max_goal_velocity": 9999
 "target_epsilon": 0.25
+"target_heading_epsilon": 0.34 # ~ pi/9  ~ 20 degrees
 "random_initialization": True
 "with_obstacles": False
 

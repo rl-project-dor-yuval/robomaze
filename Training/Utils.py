@@ -37,8 +37,8 @@ def make_circular_map(size, radius):
 
 
 def get_multi_targets_circle_envs(radius,
-                                  target_loc_list,
-                                  test_target_loc_list,
+                                  target_list,
+                                  test_target_list,
                                   show_gui=False,
                                   with_obstacles=False,
                                   **env_kwargs):
@@ -57,7 +57,8 @@ def get_multi_targets_circle_envs(radius,
                         tile_size=tile_size,
                         start_loc=start_loc,
                         show_gui=show_gui,
-                        target_loc_list=target_loc_list,
+                        target_loc_list=target_list[:, :2],
+                        target_heading_list=target_list[:, 2],
                         **env_kwargs)
     # create environment :
     maze_env = Monitor(maze_env)
@@ -70,7 +71,8 @@ def get_multi_targets_circle_envs(radius,
                              tile_size=tile_size,
                              start_loc=start_loc,
                              show_gui=False,
-                             target_loc_list=test_target_loc_list,
+                             target_loc_list=test_target_list[:, :2],
+                             target_heading_list=test_target_list[:, 2],
                              **env_kwargs)
     return maze_env, eval_maze_env
 

@@ -52,11 +52,13 @@ class MazeEnv(gym.Env):
                  tile_size=0.1,
                  start_loc=(1, 1),
                  target_loc=(3, 3),
+                 target_heading=0,
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
                  xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
+                 target_heading_epsilon=np.pi,
                  done_on_collision=True,
                  done_on_goal_reached=True,
                  success_steps_before_done: int = 1,
@@ -65,6 +67,7 @@ class MazeEnv(gym.Env):
                  optimize_maze_boarders: bool = True,
                  sticky_actions=5):
         """
+        # TODO: Update docstring
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
         :param maze_map: a boolean numpy array of the maze. shape must be maze_size ./ tile_size.
          if no value is passed, an empty maze is made, means there are only edges.
@@ -89,7 +92,6 @@ class MazeEnv(gym.Env):
          free areas on the map
         :param sticky_actions: for how many simulation steps to repeat an action.
 
-
         Initializing environment object
         """
 
@@ -108,10 +110,12 @@ class MazeEnv(gym.Env):
         self.maze_size = maze_size
         self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
         self._target_loc = [target_loc[0], target_loc[1], 0]
+        self._target_heading = target_heading
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
+        self.target_heading_epsilon = target_heading_epsilon
         self.done_on_collision = done_on_collision
         self.done_on_goal_reached = done_on_goal_reached
         self.success_steps_before_done = success_steps_before_done
@@ -126,7 +130,7 @@ class MazeEnv(gym.Env):
 
         self.action_space = Box(low=-1, high=1, shape=(8,))
 
-        obs_space_size = 30 if xy_in_obs else 28
+        obs_space_size = 31 if xy_in_obs else 29
         self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # setup simulation:
@@ -194,6 +198,8 @@ class MazeEnv(gym.Env):
         # resolve observation:
         observation = self._get_observation()
         ant_xy = observation[0:2]
+        ant_heading_diff = observation[30]
+
         if not self.xy_in_obs:
             observation = observation[2:]
 
@@ -214,8 +220,10 @@ class MazeEnv(gym.Env):
         target_distance = np.linalg.norm(target_loc_xy - ant_xy)
 
         reward += self.rewards.compute_target_distance_reward(target_distance=target_distance)
+        reward += self.rewards.compute_rotation_reward(rotation_diff=ant_heading_diff)
 
-        if target_distance < self.hit_target_epsilon:
+        # check if goal is reached and update info/reward/is_done:
+        if target_distance < self.hit_target_epsilon and abs(ant_heading_diff) < self.target_heading_epsilon:
             # check if meets velocity condition:
             vx, vy = observation[3], observation[4]
             if np.sqrt(vx ** 2 + vy ** 2) < self.max_goal_velocity:
@@ -297,16 +305,20 @@ class MazeEnv(gym.Env):
         else:
             self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
 
-    def set_target_loc(self, new_loc):
+    def set_target_loc_and_heading(self, new_loc, new_heading=None):
         """
         set the target location. Call this Only Before reset()!
-        :param position: the position of the target
+        :param new_loc: the position of the target
+        :param new_heading: the heading at the target. optional if not given the heading will be 0
         """
         self._target_loc[0], self._target_loc[1] = new_loc
+        if new_heading is not None:
+            self._target_heading = new_heading
+        else:
+            self._target_heading = 0
 
-        _, target_uid, _ = self._maze.get_maze_objects_uids()
-        _, old_orientation = self._pclient.getBasePositionAndOrientation(target_uid)
-        self._pclient.resetBasePositionAndOrientation(target_uid, self._target_loc, old_orientation)
+        # physically move and rotate goal
+        self._maze.set_new_goal(self._target_loc, self._target_heading)
 
     def set_start_loc(self, start_loc):
         """
@@ -334,7 +346,7 @@ class MazeEnv(gym.Env):
 
     def _get_observation(self):
         """
-        get 30D/28D observation vector according to use of x,y
+        get 31D/29D observation vector according to use of x,y
         observation consists of:
         [ 0:2 - ant COM position (x,y,z),
           3:5 - ant COM velocity (x,y,z),
@@ -343,21 +355,30 @@ class MazeEnv(gym.Env):
           12:19 - ant joint position (8 joints),
           20:27 - ant joint velocities (8 joints),
           28 - relative distance from target,
-          29 - relative angle to target (in radians) ]
+          29 - relative angle to target (in radians),
+          30 - angle between rotation of the robot and target heading]
         """
         # if xy not in observation it will be cut later
-        observation = np.zeros(30, dtype=np.float32)
+        observation = np.zeros(31, dtype=np.float32)
 
         observation[0:12] = self._ant.get_pos_orientation_velocity()
         observation[12:28] = self._ant.get_joint_state()
 
-        # last two elements are angel and distance from target
+        # next two elements are angel and distance from target
         ant_loc = observation[0:2]
         target_loc = np.array(self._target_loc[0:2])
         relative_target = target_loc - ant_loc
-
         observation[28] = np.linalg.norm(relative_target)
         observation[29] = np.arctan2(relative_target[1], relative_target[0])
+
+        # last element is rotation angle between ant and target heading
+        robot_rotation = observation[8]
+        rotation_diff = self._target_heading - robot_rotation
+        rotation_sign = 1 if (0 <= rotation_diff <= 180) or (-180 >= rotation_diff >= -360) else -1
+        observation[30] = np.abs(rotation_diff) % 360
+        if observation[30] > 180:
+            observation[30] = 360 - observation[30]
+        observation[30] *= rotation_sign
 
         return observation
 

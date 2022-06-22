@@ -285,7 +285,9 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         self.curr_startgoal_pair_idx = start_goal_pair_idx
 
-        self.maze_env.set_target_loc(self.start_goal_pairs[start_goal_pair_idx][1])
+        # TODO: changed to set_target_loc_and_heading. handle heading if needed
+        raise NotImplementedError("handle heading if needed")
+        self.maze_env.set_target_loc_and_heading(self.start_goal_pairs[start_goal_pair_idx][1])
         self.maze_env.set_start_loc(self.start_goal_pairs[start_goal_pair_idx][0])
 
         self.target_goal = self.start_goal_pairs[start_goal_pair_idx][1]

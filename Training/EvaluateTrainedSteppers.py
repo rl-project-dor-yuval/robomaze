@@ -27,6 +27,8 @@ def get_env():
     rewards = Rewards(target_distance_weight=0.01, target_distance_offset=5, fall=-1,
                       target_arrival=1, collision=0, timeout=0, idle=0)
 
+    # TODO: add target heading list and epsilon
+    raise NotImplementedError
     maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
                                      maze_map=maze_map,
                                      tile_size=tile_size,

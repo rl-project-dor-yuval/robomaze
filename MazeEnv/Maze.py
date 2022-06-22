@@ -20,6 +20,7 @@ class Maze:
                  maze_map,
                  tile_size,
                  target_position3d,
+                 target_heading,
                  optimize_boarders=True):
         """
         :param pubullet_client:
@@ -45,6 +46,11 @@ class Maze:
         self._target_sphereUid = self._pclient.loadURDF("goalSphere.urdf",
                                                         basePosition=target_position3d)
 
+        pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
+        self._direction_pointer = self._pclient.loadURDF("direction_pointer.urdf",
+                                                         basePosition=target_position3d,
+                                                         baseOrientation=pointer_orientation)
+
         if optimize_boarders:
             maze_map_boarders, maze_map_fill = self._get_maze_map_boarders(maze_map)
             self._create_maze_urdf(maze_map_boarders, "curr_maze_boarders.urdf", tile_size)
@@ -61,6 +67,14 @@ class Maze:
                                     [self._maze_tiles_uid]])
 
         return maze_uids, self._target_sphereUid, self._floorUid
+
+    def set_new_goal(self, target_position3d, target_heading):
+        _, old_orientation = self._pclient.getBasePositionAndOrientation(self._target_sphereUid)
+        self._pclient.resetBasePositionAndOrientation(self._target_sphereUid, target_position3d, old_orientation)
+
+        pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
+        self._pclient.resetBasePositionAndOrientation(self._direction_pointer, target_position3d, pointer_orientation)
+
 
     def _load_maze_edges(self):
         """load the blocks for the edges of the maze"""

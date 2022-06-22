@@ -21,8 +21,7 @@ maze_map = make_circular_map(map_size, 5 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
-targets_loc = np.genfromtxt("Training/workspaces/test_coords_0_6to3.csv", delimiter=',')
-print(targets_loc)
+targets = np.genfromtxt("Training/workspaces/goals_06to3_test.csv", delimiter=',')
 
 # maze_env = omz.ObstaclesMultiTargetMazeEnv(maze_size=maze_size,
 #                                            maze_map=maze_map,
@@ -32,11 +31,13 @@ print(targets_loc)
 #                                            timeout_steps=500,
 #                                            show_gui=True,
 #                                            xy_in_obs=False)
+# TODO: add target_heading_list
 maze_env = mtmz.MultiTargetMazeEnv(maze_size=maze_size,
                                    maze_map=maze_map,
                                    tile_size=tile_size,
                                    start_loc=START_LOC,
-                                   target_loc_list=targets_loc,
+                                   target_loc_list=targets[:, :2],
+                                   target_heading_list=targets[:, 2],
                                    hit_target_epsilon=0.25,
                                    timeout_steps=200,
                                    show_gui=True,
@@ -71,7 +72,7 @@ if __name__ == "__main__":
                 print(reward)
 
             print(obs[6:9])
-            time.sleep(1. / 5)
+            time.sleep(1. / 50)
 
     actions = np.array(actions)
     plt.hist(actions)
