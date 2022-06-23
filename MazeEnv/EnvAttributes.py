@@ -50,7 +50,7 @@ class Rewards:
         return self.target_distance_weight * (self.target_distance_offset - target_distance)
 
     def compute_rotation_reward(self, rotation_diff):
-        return self.rotation_weight * np.abs(rotation_diff)
+        return self.rotation_weight * (np.pi - np.abs(rotation_diff))
 
     @classmethod
     def from_yaml(cls, loader, node):
