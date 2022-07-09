@@ -149,7 +149,8 @@ class MazeEnv(gym.Env):
         self._pclient.configureDebugVisualizer(self._pclient.COV_ENABLE_GUI, False)  # dont show debugging windows
 
         # load maze:
-        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc, optimize_maze_boarders)
+        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc, self._target_heading,
+                          optimize_maze_boarders)
 
         # load ant robot:
         self._ant = Ant(self._pclient, self._start_loc)
@@ -180,7 +181,7 @@ class MazeEnv(gym.Env):
                                   maze_size=maze_size,
                                   video_size=self.recording_video_size,
                                   zoom=self.zoom,
-                                  fps=60)
+                                  fps=30)
 
     def step(self, action):
         if not self.is_reset:
@@ -206,7 +207,7 @@ class MazeEnv(gym.Env):
         # check status and resolve reward and is_done:
         reward = 0
         is_done = False
-        info = dict(success=False, fell=False, hit_maze=False, timeout=False)
+        info = {'success': False, 'fell': False, 'hit_maze': False, 'TimeLimit.truncated': False}
 
         if self._collision_manager.check_hit_floor():
             is_done = info['fell'] = True
@@ -235,7 +236,7 @@ class MazeEnv(gym.Env):
                     is_done = True
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            is_done = info['timeout'] = True
+            is_done = info['TimeLimit.truncated'] = True
             reward += self.rewards.timeout
 
         reward += self.rewards.idle
@@ -374,11 +375,7 @@ class MazeEnv(gym.Env):
         # last element is rotation angle between ant and target heading
         robot_rotation = observation[8]
         rotation_diff = self._target_heading - robot_rotation
-        rotation_sign = 1 if (0 <= rotation_diff <= 180) or (-180 >= rotation_diff >= -360) else -1
-        observation[30] = np.abs(rotation_diff) % 360
-        if observation[30] > 180:
-            observation[30] = 360 - observation[30]
-        observation[30] *= rotation_sign
+        observation[30] = self.compute_signed_rotation_diff(rotation_diff)
 
         return observation
 
@@ -406,3 +403,17 @@ class MazeEnv(gym.Env):
             print("WARNING: setting ant to position control! make sure you know what you are doing! "
                   "and please don't mix position and torque control in the same episode.")
         self._ant.set_position_control(position_control)
+
+    @staticmethod
+    def compute_signed_rotation_diff(rotation_diff):
+        """
+        given a raw angles difference, cast it to a signed angle between -pi and pi.
+        original diff may be more then pi or less than -pi.
+        """
+        unsigned_diff = np.abs(rotation_diff) % 360
+        if unsigned_diff > 180:
+            unsigned_diff = 360 - unsigned_diff
+
+        rotation_sign = 1 if (0 <= rotation_diff <= 180) or (-180 >= rotation_diff >= -360) else -1
+
+        return rotation_sign * unsigned_diff

@@ -91,12 +91,12 @@ class NavEvalCallback(BaseCallback):
 
         if self.eval_video_freq > 0 and \
                 self.n_calls % (self.eval_video_freq * self.eval_freq) == 0:
-            vid_path, walked_trajectory, rotation_trajectory, ws_id = self._record_video()
+            vid_path, walked_trajectory, action_trajectory, ws_id = self._record_video()
 
             log_item = {'eval_video': wandb.Video(vid_path, fps=40), 'navStep': self.n_calls}
             if self.maze_map is not None:
                 log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory,
-                                                                         rotation_trajectory,
+                                                                         action_trajectory,
                                                                          ws_id)
 
             self.wandb_run.log(log_item)
@@ -161,16 +161,15 @@ class NavEvalCallback(BaseCallback):
         video_path = os.path.join(self.video_dir, str(self.n_calls) + '.gif')
         obs = self.eval_env.reset(create_video=True, video_path=video_path)
         walked_traj = []
-        traj_rotation = []
+        action_traj = []
         while True:
             with torch.no_grad():
                 action, _ = self.model.predict(obs, deterministic=True)
             obs, _, done, info = self.eval_env.step(action)
 
             obs_unnorm = self.eval_env.unormalize_obs_if_needed(obs)
-            walked_traj.append(obs_unnorm[:2])
-            traj_rotation.append(obs_unnorm[2])
-
+            walked_traj.append(obs_unnorm[:3])
+            action_traj.append(action)
             if done:
                 break
 
@@ -180,16 +179,23 @@ class NavEvalCallback(BaseCallback):
         if self.verbose > 0:
             print("Video recorded in %.4f secs: " % (time.time() - t_start))
 
-        return video_path, np.array(walked_traj), np.array(traj_rotation), ws_id
+        return video_path, np.array(walked_traj), np.array(action_traj), ws_id
 
-    def _get_trajectory_plot(self, walked_traj: np.ndarray, rotation_trajectory, ws_id: int) -> plt.Figure:
+    def _get_trajectory_plot(self, walked_traj: np.ndarray, action_traj, ws_id: int) -> plt.Figure:
         """
         returns a plot of the walked trajectory near the RRT planned
          trajectory for that workspace
         """
         walked_traj = walked_traj * 10
-        walked_u = np.cos(rotation_trajectory)
-        walked_v = np.sin(rotation_trajectory)
+        walked_u = np.cos(walked_traj[:, 2])
+        walked_v = np.sin(walked_traj[:, 2])
+
+        actions_u = np.cos(action_traj[:, 2])
+        actions_v = np.sin(action_traj[:, 2])
+        # in action we get r and theta, we need to convert first two elements to x and y
+        actions_y = walked_traj[:, 0] + action_traj[:, 0] * np.sin(action_traj[:, 1])
+        actions_x = walked_traj[:, 1] + action_traj[:, 0] * np.cos(action_traj[:, 1])
+
 
         with np.load(self.validation_traj_path) as demos:
             planned_traj = demos[str(ws_id)] * 10
@@ -200,15 +206,22 @@ class NavEvalCallback(BaseCallback):
         start, goal = planned_traj[0], planned_traj[-1]
 
         plt.close('all')
-        fig, axes = plt.subplots(1, 2)
-        for ax in axes:
+        fig, axes = plt.subplots(2, 2)
+        for ax in axes.flatten():
             ax.imshow(self.maze_map, cmap='gray')
             ax.plot(start[1], start[0], 'go')
             ax.plot(goal[1], goal[0], 'g+')
 
-        axes[0].set_title('Walked trajectory')
-        axes[0].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
-        axes[1].set_title('RRT planned trajectory')
-        axes[1].quiver(planned_traj[:, 1], planned_traj[:, 0], planned_u, planned_v, color='r')
+        axes[0, 0].set_title('Walked Trajectory')
+        axes[0, 0].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
+        axes[0, 1].set_title('RRT PlannedT Trajectory')
+        axes[0, 1].quiver(planned_traj[:, 1], planned_traj[:, 0], planned_u, planned_v, color='r')
+        axes[1, 0].set_title('Action Trajectory')
+        axes[1, 0].quiver(actions_x, actions_y, actions_u, actions_v, color='b')
+        axes[1, 1].set_title('Action + Walked Trajectory')
+        axes[1, 1].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
+        axes[1, 1].quiver(actions_x, actions_y, actions_u, actions_v, color='b', alpha=0.5)
+
+        fig.tight_layout()
 
         return fig

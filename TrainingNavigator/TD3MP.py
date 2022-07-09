@@ -334,7 +334,10 @@ class TD3MP(TD3):
         r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
         if self.use_demo_epsilon_offset:
             r = r + self.epsilon_to_goal  # add target epsilon offset
-        return np.array([r, theta])
+
+        rotation = theta
+
+        return np.array([r, theta, rotation])
 
     def _excluded_save_params(self) -> List[str]:
         return super(TD3MP, self)._excluded_save_params() + ["demonstrations"]
@@ -378,7 +381,7 @@ class CustomActor(Actor):
         out = self.mu(features)
         # transforming to r,theta
 
-        dx, dy = out[:, 0], out[:, 1]
+        dx, dy, rotation = out[:, 0], out[:, 1], out[:, 2]
         r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
 
         # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
@@ -388,8 +391,9 @@ class CustomActor(Actor):
         r_scaled = th.tanh(r)
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
         # theta_scaled = theta_scaled.clip(-1, 1)
+        rotation_scaled = 2 * (rotation - low[2]) / (high[2] - low[2]) - 1
 
-        return th.stack([r_scaled, theta_scaled], dim=1)
+        return th.stack([r_scaled, theta_scaled, rotation_scaled], dim=1)
 
 
 class CustomTD3Policy(TD3Policy):

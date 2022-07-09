@@ -37,6 +37,7 @@ class NavigatorEnv(gym.Env):
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.25,
+                 epsilon_rotation_to_hit_subgoal=np.pi/9,
                  max_vel_in_subgoal=9999,
                  rewards: Rewards = Rewards(),
                  done_on_collision=False,
@@ -68,6 +69,7 @@ class NavigatorEnv(gym.Env):
         self.max_stepper_steps = max_stepper_steps
         self.max_steps = max_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
+        self.epsilon_rotation_to_hit_subgoal = epsilon_rotation_to_hit_subgoal
         self.max_vel_in_subgoal = max_vel_in_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
@@ -89,26 +91,29 @@ class NavigatorEnv(gym.Env):
         if not maze_env.max_goal_velocity == max_vel_in_subgoal:
             print("WARNING: max_vel_in_subgoal is different in mazeEnv and navigatorEnv, changing mazeEnv")
             maze_env.max_goal_velocity = max_vel_in_subgoal
+        # make sure there is no requirement for angle at the rotation at goal (success is defined by the distance):
+        self.maze_env.target_heading_epsilon = np.inf
 
         self.visualize = False
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/TorqueStepperF1500.pt', 'auto')
+            raise ValueError("please update the line below with a stepper agent (with rotation)")
+            # stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/TorqueStepperF1500.pt', 'auto')
         elif isinstance(stepper_agent, str):
             stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
 
         # Ant's current state
-        self.ant_curr_obs = np.zeros(30)
+        self.ant_curr_obs = np.zeros(31)
         self.curr_subgoal = np.zeros(2)
+        self.curr_target_rotation_at_subgoal = 0
         self.target_goal = np.array(self.maze_env._target_loc[0:2], dtype=np.float32)
-        self.ant_prev_loc = np.zeros(2)
 
-        # Action -> [radius, azimuth (in radian)]
-        self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi], dtype=np.float32),
-                                high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
-                                shape=(2,))
+        # Action -> [radius, direction to subgoals (raidans), rotation at subgoal (radians)]
+        self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi, -math.pi], dtype=np.float32),
+                                high=np.array([stepper_radius_range[1], math.pi, math.pi], dtype=np.float32),
+                                shape=(3,))
 
 
         # Observation -> [ Agent_x, Agent_y,  Agent_Rotation, Target_x, Target_y]
@@ -121,7 +126,6 @@ class NavigatorEnv(gym.Env):
     def reset(self, **maze_env_kwargs) -> np.ndarray:
         self.curr_step = 0
         self.ant_curr_obs = self.maze_env.reset(**maze_env_kwargs)
-        self.ant_prev_loc = self.ant_curr_obs[0:2]
         self.wall_hit_count = 0
 
         nav_obs = np.concatenate([self.ant_curr_obs[0:2], [self.ant_curr_obs[8]], self.target_goal],
@@ -133,8 +137,13 @@ class NavigatorEnv(gym.Env):
             print("action:", action, "out of bounds")
 
         ant_xy = self.ant_curr_obs[0:2]
+        robot_rotation = self.ant_curr_obs[8]
+        rotation_diff = self.curr_target_rotation_at_subgoal - robot_rotation
+        rotation_diff = self.maze_env.compute_signed_rotation_diff(rotation_diff)
+
         # 2 first elements of action are range and direction to the subgoal
         self.curr_subgoal = ant_xy + pol2cart(action[0:2])
+        self.curr_target_rotation_at_subgoal = action[2]
 
         if visualize_subgoal:
             self.maze_env.set_subgoal_marker(self.curr_subgoal)
@@ -154,27 +163,33 @@ class NavigatorEnv(gym.Env):
             # to this env because it changes in each iteration in the loop
             r_theta_to_subgoal = cart2pol(self.curr_subgoal - ant_xy)
             # we used subgoal-ant_loc and not the opposite just like in mazeEnv._get_observation
+            # same applies to the rotation diff
 
             # stepper agent doesn't need x and y of the ant
             stepper_obs = self.ant_curr_obs[2:]
-            # update r and theta for the subgoal (the environment returns for the main goal)
+            # update r and theta and rotation for the subgoal (the environment returns for the main goal)
             stepper_obs[26:28] = r_theta_to_subgoal
+            stepper_obs[28] = rotation_diff
             stepper_action = self.stepper_agent.step(stepper_obs)
 
             # play ant step, reward is not required and is_done is determined using info
             self.ant_curr_obs, _, _, info = self.maze_env.step(stepper_action)
             ant_xy = self.ant_curr_obs[0:2]
             ant_velocity = np.sqrt(self.ant_curr_obs[3]**2 + self.ant_curr_obs[4]**2)
+            robot_rotation = self.ant_curr_obs[8]
+            rotation_diff = self.curr_target_rotation_at_subgoal - robot_rotation
+            rotation_diff = self.maze_env.compute_signed_rotation_diff(rotation_diff)
 
             # use info to check if finished (may override mazeEnv is_done in some cases):
-            if info['success'] or info['fell'] or info['timeout']:
+            if info['success'] or info['fell'] or info['TimeLimit.truncated']:
                 break
             if info['hit_maze']:
                 _hit_maze = True
                 if self.done_on_collision:
                     break
-            # check if close enough to subgoal and meets velocity criteria:
+            # check if meet subgoal criteria:
             if np.linalg.norm(self.curr_subgoal - ant_xy) < self.epsilon_to_hit_subgoal \
+                    and rotation_diff < self.epsilon_rotation_to_hit_subgoal \
                     and ant_velocity < self.max_vel_in_subgoal:
                 break
 
@@ -203,16 +218,14 @@ class NavigatorEnv(gym.Env):
         else:
             nav_reward += self.rewards_config.idle
 
+        nav_info['stepper_timeout'] = nav_info.pop('TimeLimit.truncated')
         self.curr_step += 1
         if self.curr_step >= self.max_steps:
-            nav_info['navigator_timeout'] = True
+            nav_info['TimeLimit.truncated'] = True
             nav_is_done = True
         else:
-            nav_info['navigator_timeout'] = False
+            nav_info['TimeLimit.truncated'] = False
 
-        nav_info['stepper_timeout'] = nav_info.pop('timeout')
-
-        self.ant_prev_loc = ant_xy
 
         nav_observation = self.normalize_obs_if_needed(nav_observation)
 
@@ -285,8 +298,6 @@ class MultiStartgoalNavigatorEnv(NavigatorEnv):
 
         self.curr_startgoal_pair_idx = start_goal_pair_idx
 
-        # TODO: changed to set_target_loc_and_heading. handle heading if needed
-        raise NotImplementedError("handle heading if needed")
         self.maze_env.set_target_loc_and_heading(self.start_goal_pairs[start_goal_pair_idx][1])
         self.maze_env.set_start_loc(self.start_goal_pairs[start_goal_pair_idx][0])
 

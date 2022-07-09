@@ -17,28 +17,29 @@ from MazeEnv.EnvAttributes import Rewards
 num_workspaces = 100
 
 
-def get_env():
-    targets_loc = np.genfromtxt("Training/workspaces/test_coords_0_6to3.csv", delimiter=',')
+def get_env(sticky_actions, timeout_steps):
+    target_list = np.genfromtxt("Training/workspaces/goals_06to3_test.csv", delimiter=',')
     tile_size = 0.1
     maze_size = mz.MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
     maze_map = make_circular_map(map_size, 5 / tile_size)
 
-    rewards = Rewards(target_distance_weight=0.01, target_distance_offset=5, fall=-1,
-                      target_arrival=1, collision=0, timeout=0, idle=0)
+    rewards = Rewards(target_distance_weight=0.01, rotation_weight=0.01, target_distance_offset=5, fall=-1,
+                      target_arrival=1, collision=0, timeout=0, idle=0,)
 
-    # TODO: add target heading list and epsilon
-    raise NotImplementedError
     maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
                                      maze_map=maze_map,
                                      tile_size=tile_size,
                                      start_loc=(5, 5),
-                                     target_loc_list=targets_loc,
+                                     target_loc_list=target_list[:, :2],
+                                     target_heading_list=target_list[:, 2],
                                      rewards=rewards,
                                      hit_target_epsilon=0.25,
-                                     success_steps_before_done=25,
-                                     timeout_steps=400,
-                                     sticky_actions=5,
+                                     target_heading_epsilon=np.pi/9,
+                                     done_on_goal_reached=False,
+                                     timeout_steps=timeout_steps,
+                                     sticky_actions=sticky_actions,
+                                     max_goal_velocity=9999,
                                      show_gui=False,
                                      xy_in_obs=False,
                                      noisy_ant_initialization=False)
@@ -85,7 +86,7 @@ def evaluate_stepper(agent, env: mz.MultiTargetMazeEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = ["Training/logs/StepperV2same_params(except_max_steps)"]
+    log_dirs = ["Training/logs/StepperV2--fixed--stickyActions8_max_steps_150"]
     stepper_checkpoints = []
 
     # for log_dir in log_dirs:
@@ -96,11 +97,11 @@ if __name__ == "__main__":
     #     if int(c.split("_")[-1].split(".")[0]) < 5000000:
     #         stepper_checkpoints.remove(c)
 
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_15000000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_18000000.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_15000000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_25000000.zip")
 
-    env = get_env()
+    env = get_env(sticky_actions=8, timeout_steps=150)
 
     run_name_list = []
     success_once_list = []
@@ -125,7 +126,7 @@ if __name__ == "__main__":
             continue
         print(f'saving results')
 
-        run_name_list.append(model_path.split("400steps")[-1])
+        run_name_list.append(model_path.split("V2")[-1])
         success_once_list.append(success_rate_once)
         success_last_list.append(success_rate_last_step)
         fall_rate_list.append(fall_rate)

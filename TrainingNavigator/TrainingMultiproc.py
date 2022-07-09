@@ -51,6 +51,7 @@ if __name__ == '__main__':
     nav_env_kwargs = dict(start_goal_pairs=start_goal_pairs,
                           maze_env_kwargs=maze_env_kwargs,
                           epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
+                          epsilon_rotation_to_hit_subgoal=config["epsilon_rotation_to_subgoal"],
                           max_vel_in_subgoal=config["max_velocity_in_subgoal"],
                           rewards=config["rewards"],
                           done_on_collision=config["done_on_collision"],
@@ -84,8 +85,8 @@ if __name__ == '__main__':
     eval_nav_env.visualize_mode(False)
 
     # set up model and run:
-    exploration_noise = NormalActionNoise(mean=np.array([0] * 2),
-                                          sigma=np.array([config["exploration_noise_std"]] * 2))
+    exploration_noise = NormalActionNoise(mean=np.array([0] * 3),
+                                          sigma=np.array([config["exploration_noise_std"]] * 3))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('running on:', device)
