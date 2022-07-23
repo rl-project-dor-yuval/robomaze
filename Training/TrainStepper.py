@@ -14,9 +14,9 @@ from stable_baselines3.common.noise import NormalActionNoise
 import wandb
 
 sys.path.append('.')
-from MazeEnv.EnvAttributes import Rewards
-from Utils import get_multi_targets_circle_envs, get_multi_targets_circle_envs_multiproc
-from Evaluation import EvalAndSaveCallback, MultiTargetEvalAndSaveCallback
+from MazeEnv.EnvAttributes import Rewards, Workspace
+from Utils import get_multi_workspace_circle_envs, get_multi_targets_circle_envs_multiproc
+from Evaluation import EvalAndSaveCallback, MultiWorkspaceEvalAndSaveCallback
 import torch
 
 if __name__ == '__main__':
@@ -35,16 +35,22 @@ if __name__ == '__main__':
     print("running on:", device)
 
     # setup W&B:
-    wb_run = wandb.init(project="Robomaze-TrainingStepper", name=config["run_name"],
+    wb_run = wandb.init(project="AntStepper-New-Workspaces", name=config["run_name"],
                         group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
-    targets = np.genfromtxt("Training/workspaces/goals_06to3_train.csv", delimiter=',')
-    test_targets = np.genfromtxt("Training/workspaces/goals_06to3_validation.csv", delimiter=',')
+    workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_train.csv", delimiter=',')
+    # workspaces contains: (start_heading, goal_x, goal_y, goal_heading) but should contain
+    # (start_x, start_y, start_heading, goal_x, goal_y, goal_heading) where start_xy are constant in our case.
+    workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5, workspaces), axis=1)
+    workspaces = Workspace.list_from_multiple_arrays(workspaces)
+    val_workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_validation.csv", delimiter=',')
+    val_workspaces = np.concatenate((np.ones((val_workspaces.shape[0], 2)) * 5, val_workspaces), axis=1)
+    val_workspaces = Workspace.list_from_multiple_arrays(val_workspaces)
 
     env_kwargs = dict(radius=config["map_radius"],
-                      target_list=targets,
-                      test_target_list=test_targets,
+                      workspace_list=workspaces,
+                      test_workspace_list=val_workspaces,
                       timeout_steps=config["timeout_steps"],
                       rewards=config["rewards"],
                       max_goal_velocity=config["max_goal_velocity"],
@@ -56,9 +62,9 @@ if __name__ == '__main__':
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
                       success_steps_before_done=config["success_steps_before_done"],
-                      done_on_goal_reached=config["done_on_goal_reached"],)
+                      done_on_goal_reached=config["done_on_goal_reached"], )
     if config["num_envs"] == 1:
-        maze_env, eval_maze_env = get_multi_targets_circle_envs(**env_kwargs)
+        maze_env, eval_maze_env = get_multi_workspace_circle_envs(**env_kwargs)
     else:
         print("training stepper with multiple envrionments is inefficient."
               " if you want to do this anyway, remove this line and make sure "
@@ -71,12 +77,12 @@ if __name__ == '__main__':
         maze_env.set_position_control(True)
         eval_maze_env.set_position_control(True)
 
-    callback = MultiTargetEvalAndSaveCallback(log_dir=config["dir"],
-                                              eval_env=eval_maze_env,
-                                              eval_freq=config["eval_freq"],
-                                              eval_video_freq=config["video_freq"],
-                                              wb_run=wb_run,
-                                              verbose=1)
+    callback = MultiWorkspaceEvalAndSaveCallback(log_dir=config["dir"],
+                                                 eval_env=eval_maze_env,
+                                                 eval_freq=config["eval_freq"],
+                                                 eval_video_freq=config["video_freq"],
+                                                 wb_run=wb_run,
+                                                 verbose=1)
 
     # create_model
     noise_sigma = [config["exploration_noise_std_shoulder"], config["exploration_noise_std_ankle"]] * 4

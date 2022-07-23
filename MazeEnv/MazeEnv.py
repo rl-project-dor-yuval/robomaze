@@ -9,7 +9,7 @@ import numpy as np
 import math
 import os
 from MazeEnv.Recorder import Recorder
-from MazeEnv.EnvAttributes import Rewards, MazeSize
+from MazeEnv.EnvAttributes import Rewards, MazeSize, Workspace
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
 from MazeEnv.Maze import Maze
@@ -50,9 +50,7 @@ class MazeEnv(gym.Env):
                  maze_size=MazeSize.MEDIUM,
                  maze_map: np.ndarray = None,
                  tile_size=0.1,
-                 start_loc=(1, 1),
-                 target_loc=(3, 3),
-                 target_heading=0,
+                 workspace: Workspace = Workspace(),
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
@@ -102,15 +100,13 @@ class MazeEnv(gym.Env):
                                                                                         maze_size=maze_size,
                                                                                         tile_size=tile_size))
         # will raise an exception if something is wrong:
-        self._check_start_state(maze_size, start_loc, target_loc)
+        self._check_start_state(maze_size, workspace.start_loc_tuple(), workspace.goal_loc_tuple())
 
         if timeout_steps < 0:
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.maze_size = maze_size
-        self._start_loc = [start_loc[0], start_loc[1], _ANT_START_Z_COORD]
-        self._target_loc = [target_loc[0], target_loc[1], 0]
-        self._target_heading = target_heading
+        self._workspace = workspace
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
@@ -149,11 +145,13 @@ class MazeEnv(gym.Env):
         self._pclient.configureDebugVisualizer(self._pclient.COV_ENABLE_GUI, False)  # dont show debugging windows
 
         # load maze:
-        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, self._target_loc, self._target_heading,
+        target_loc3d = workspace.goal_loc_tuple() + (0,)
+        self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, target_loc3d, workspace.goal_heading,
                           optimize_maze_boarders)
 
         # load ant robot:
-        self._ant = Ant(self._pclient, self._start_loc)
+        ant_loc_3d = workspace.start_loc_tuple() + (_ANT_START_Z_COORD,)
+        self._ant = Ant(self._pclient, ant_loc_3d, workspace.start_heading)
 
         # create collision detector and pass relevant uids:
         maze_uids, target_sphere_uid, floorUid = self._maze.get_maze_objects_uids()
@@ -193,6 +191,8 @@ class MazeEnv(gym.Env):
         for _ in range(self.sticky_actions):  # loop incase we want sticky actions
             self._ant.action(action)
             self._pclient.stepSimulation()
+            self._ant.update_direction_pointer(visible=True)
+            # I left the option to choose not to show ant direction pointer in case we want this. just pass false.
 
         self.step_count += 1
 
@@ -217,14 +217,14 @@ class MazeEnv(gym.Env):
             info['hit_maze'] = True
             reward += self.rewards.collision
 
-        target_loc_xy = np.array([self._target_loc[0], self._target_loc[1]])
-        target_distance = np.linalg.norm(target_loc_xy - ant_xy)
+        goal_loc_xy = np.array(self._workspace.goal_loc_tuple())
+        goal_distance = np.linalg.norm(goal_loc_xy - ant_xy)
 
-        reward += self.rewards.compute_target_distance_reward(target_distance=target_distance)
+        reward += self.rewards.compute_target_distance_reward(target_distance=goal_distance)
         reward += self.rewards.compute_rotation_reward(rotation_diff=ant_heading_diff)
 
         # check if goal is reached and update info/reward/is_done:
-        if target_distance < self.hit_target_epsilon and abs(ant_heading_diff) < self.target_heading_epsilon:
+        if goal_distance < self.hit_target_epsilon and abs(ant_heading_diff) < self.target_heading_epsilon:
             # check if meets velocity condition:
             vx, vy = observation[3], observation[4]
             if np.sqrt(vx ** 2 + vy ** 2) < self.max_goal_velocity:
@@ -306,36 +306,51 @@ class MazeEnv(gym.Env):
         else:
             self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
 
-    def set_target_loc_and_heading(self, new_loc, new_heading=None):
+    def set_workspace(self, workspace: Workspace):
         """
-        set the target location. Call this Only Before reset()!
-        :param new_loc: the position of the target
-        :param new_heading: the heading at the target. optional if not given the heading will be 0
+        sets new workspace. please use it just before calling reset.
+        It shouldn't have any effect before reset
         """
-        self._target_loc[0], self._target_loc[1] = new_loc
-        if new_heading is not None:
-            self._target_heading = new_heading
-        else:
-            self._target_heading = 0
+        self._check_start_state(self.maze_size, workspace.start_loc_tuple(), workspace.goal_loc_tuple())
+        self._workspace = workspace
 
-        # physically move and rotate goal
-        self._maze.set_new_goal(self._target_loc, self._target_heading)
+        goal_loc_3d = workspace.goal_loc_tuple() + (0,)
+        self._maze.set_new_goal(goal_loc_3d, workspace.goal_heading)
 
-    def set_start_loc(self, start_loc):
-        """
-        change the start location of the ant in the next reset
-        :param start_loc: tuple of the start location
-        :return: None
-        """
-        self._check_start_state(self._maze.maze_size, start_loc, self._target_loc)
-        self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
-        self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
+        ant_loc_3d = workspace.start_loc_tuple() + (_ANT_START_Z_COORD,)
+        self._ant.set_start_state(ant_loc_3d, workspace.start_heading)
 
-    def get_target_loc(self):
-        """
-        :return: the target location
-        """
-        return self._target_loc[:2]
+    # TODO: Remove those methods after checking that everything is working fine:
+    # def set_target_loc_and_heading(self, new_loc, new_heading=None):
+    #     """
+    #     set the target location. Call this Only Before reset()!
+    #     :param new_loc: the position of the target
+    #     :param new_heading: the heading at the target. optional if not given the heading will be 0
+    #     """
+    #     self._target_loc[0], self._target_loc[1] = new_loc
+    #     if new_heading is not None:
+    #         self._target_heading = new_heading
+    #     else:
+    #         self._target_heading = 0
+    #
+    #     # physically move and rotate goal
+    #     self._maze.set_new_goal(self._target_loc, self._target_heading)
+    #
+    # def set_start_loc(self, start_loc):
+    #     """
+    #     change the start location of the ant in the next reset
+    #     :param start_loc: tuple of the start location
+    #     :return: None
+    #     """
+    #     self._check_start_state(self._maze.maze_size, start_loc, self._target_loc)
+    #     self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
+    #     self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
+    #
+    # def get_target_loc(self):
+    #     """
+    #     :return: the target location
+    #     """
+    #     return self._target_loc[:2]
 
     def set_timeout_steps(self, timeout_steps):
         """
@@ -367,14 +382,14 @@ class MazeEnv(gym.Env):
 
         # next two elements are angel and distance from target
         ant_loc = observation[0:2]
-        target_loc = np.array(self._target_loc[0:2])
+        target_loc = np.array(self._workspace.goal_loc_tuple())
         relative_target = target_loc - ant_loc
         observation[28] = np.linalg.norm(relative_target)
         observation[29] = np.arctan2(relative_target[1], relative_target[0])
 
         # last element is rotation angle between ant and target heading
         robot_rotation = observation[8]
-        rotation_diff = self._target_heading - robot_rotation
+        rotation_diff = self._workspace.goal_heading - robot_rotation
         observation[30] = self.compute_signed_rotation_diff(rotation_diff)
 
         return observation

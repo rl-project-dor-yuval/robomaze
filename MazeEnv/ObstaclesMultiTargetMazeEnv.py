@@ -1,10 +1,10 @@
 import numpy as np
 
-from MazeEnv.MultiTargetMazeEnv import MultiTargetMazeEnv
+from MazeEnv.MultWorkspaceMazeEnv import MultiWorkspaceMazeEnv
 from MazeEnv.EnvAttributes import MazeSize, Rewards
 
 
-class ObstaclesMultiTargetMazeEnv(MultiTargetMazeEnv):
+class ObstaclesMultiTargetMazeEnv(MultiWorkspaceMazeEnv):
 
     min_ant_goal_distance_to_place_obstacle = 1.5
     obstacle_radius_random_offset_range = 0.1

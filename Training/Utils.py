@@ -5,7 +5,7 @@ import ipyplot
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-import MazeEnv.MultiTargetMazeEnv as mtmz
+import MazeEnv.MultWorkspaceMazeEnv as mtmz
 import MazeEnv.ObstaclesMultiTargetMazeEnv as obsmtmz
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_checker import check_env
@@ -36,13 +36,13 @@ def make_circular_map(size, radius):
     return maze_map
 
 
-def get_multi_targets_circle_envs(radius,
-                                  target_list,
-                                  test_target_list,
-                                  show_gui=False,
-                                  with_obstacles=False,
-                                  **env_kwargs):
-    maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiTargetMazeEnv
+def get_multi_workspace_circle_envs(radius,
+                                    workspace_list,
+                                    test_workspace_list,
+                                    show_gui=False,
+                                    with_obstacles=False,
+                                    **env_kwargs):
+    maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiWorkspaceMazeEnv
 
     # create environment :
     tile_size = 0.1
@@ -55,10 +55,8 @@ def get_multi_targets_circle_envs(radius,
     maze_env = maze_cls(maze_size=maze_size,
                         maze_map=maze_map,
                         tile_size=tile_size,
-                        start_loc=start_loc,
                         show_gui=show_gui,
-                        target_loc_list=target_list[:, :2],
-                        target_heading_list=target_list[:, 2],
+                        workspace_list=workspace_list,
                         **env_kwargs)
     # create environment :
     maze_env = Monitor(maze_env)
@@ -69,10 +67,8 @@ def get_multi_targets_circle_envs(radius,
     eval_maze_env = maze_cls(maze_size=maze_size,
                              maze_map=maze_map,
                              tile_size=tile_size,
-                             start_loc=start_loc,
                              show_gui=False,
-                             target_loc_list=test_target_list[:, :2],
-                             target_heading_list=test_target_list[:, 2],
+                             workspace_list=test_workspace_list,
                              **env_kwargs)
     return maze_env, eval_maze_env
 

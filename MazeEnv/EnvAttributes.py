@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from typing import List
+
 import numpy as np
 
 
@@ -55,3 +57,35 @@ class Rewards:
     @classmethod
     def from_yaml(cls, loader, node):
         return cls(**loader.construct_mapping(node))
+
+
+@dataclass
+class Workspace:
+    start_x: float = 2
+    start_y: float = 2
+    start_heading: float = 0
+    goal_x: float = 4
+    goal_y: float = 4
+    goal_heading: float = 0
+
+    def start_loc_tuple(self):
+        return self.start_x, self.start_y
+
+    def goal_loc_tuple(self):
+        return self.goal_x, self.goal_y
+
+    @classmethod
+    def from_array(cls, arr: np.ndarray):
+        """ from a numpy array that contains [start_x, start_y, start_heading, goal_x, goal_y, goal_heading] """
+        assert arr.shape == (6,)
+        return cls(start_x=arr[0], start_y=arr[1], start_heading=arr[2], goal_x=arr[3], goal_y=arr[4],
+                   goal_heading=arr[5])
+
+    @classmethod
+    def list_from_multiple_arrays(cls, arr) -> List:
+        """
+         from a list of numpy arrays that contains
+         [start_x, start_y, start_heading, goal_x, goal_y, goal_heading]
+        """
+        return [cls.from_array(arr_) for arr_ in arr]
+

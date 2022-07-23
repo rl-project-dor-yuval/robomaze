@@ -36,6 +36,7 @@ if __name__ == '__main__':
     ws_id = 29
 
     # prepare environment:
+    raise NotImplementedError("Fix to new workspaces")
     maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, xy_in_obs=True,
                        show_gui=True)
 

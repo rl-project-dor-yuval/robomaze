@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
-import MazeEnv.MultiTargetMazeEnv as mz
+import MazeEnv.MultWorkspaceMazeEnv as mz
 from Training.Utils import make_circular_map
 from TrainingNavigator.StepperAgent import StepperAgent
 from MazeEnv.EnvAttributes import Rewards
@@ -27,6 +27,7 @@ def get_env(sticky_actions, timeout_steps):
     rewards = Rewards(target_distance_weight=0.01, rotation_weight=0.01, target_distance_offset=5, fall=-1,
                       target_arrival=1, collision=0, timeout=0, idle=0,)
 
+    raise NotImplementedError("Fix to new workspaces")
     maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
                                      maze_map=maze_map,
                                      tile_size=tile_size,
@@ -47,7 +48,7 @@ def get_env(sticky_actions, timeout_steps):
     return maze_env
 
 
-def evaluate_stepper(agent, env: mz.MultiTargetMazeEnv):
+def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
     fall_count = 0
     last_step_success_count = 0
     ep_success_count_list = []

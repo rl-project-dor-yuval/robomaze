@@ -68,6 +68,7 @@ if __name__ == '__main__':
 
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
+    raise NotImplementedError("Fix to new workspaces")
     eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
                             target_loc=validation_start_goal_pairs[0][-1], xy_in_obs=True, show_gui=False)
     eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=validation_start_goal_pairs,

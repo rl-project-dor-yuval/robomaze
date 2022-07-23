@@ -1,5 +1,5 @@
-"run_name": "--Fixed--stickyActions8_max_steps_400"
-"group": "rotation_at_goal"
+"run_name": "TD3_StickyActions5_MaxSteps300"
+"group": "new_ws_first_iteration"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [43 ** 3]
@@ -8,7 +8,7 @@
 "train_steps": 25000000
 "buffer_size": 500000
 "learning_starts": 10000
-"timeout_steps": 400
+"timeout_steps": 300
 "map_radius": 5
 "learning_rate": 0.5e-5
 "gamma": 0.99
@@ -32,11 +32,11 @@ done_on_goal_reached: False
 success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
                             # ignored when done_on_goal_reached is False
 
-sticky_actions: 8
+sticky_actions: 5
 
 position_control: False
 
-"use_td3": False  # otherwise DDPG
+"use_td3": True  # otherwise DDPG
 # td3 specific parameters, ignored if use_td3=False
 "td3_smoothing_noise": 0.2
 "td3_smoothing_noise_clip": 0.5

@@ -13,7 +13,7 @@ import wandb
 
 sys.path.append('..')
 from MazeEnv.MazeEnv import MazeEnv
-from MazeEnv.MultiTargetMazeEnv import MultiTargetMazeEnv
+from MazeEnv.MultWorkspaceMazeEnv import MultiWorkspaceMazeEnv
 
 
 class BaseEvalAndSaveCallback(BaseCallback):
@@ -163,16 +163,16 @@ class EvalAndSaveCallback(BaseEvalAndSaveCallback):
         return rewards, episodes_length, success_rate, mean_terminal_velocity
 
 
-class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
+class MultiWorkspaceEvalAndSaveCallback(BaseEvalAndSaveCallback):
     """
-    Only works with MultiTargetMazeEnv.
+    Only works with MultiWorkspaceMazeEnv.
     Each evaluation is for all the targets in the environment and result is averaged
     """
-    eval_env: MultiTargetMazeEnv
+    eval_env: MultiWorkspaceMazeEnv
 
-    def __init__(self, log_dir: str, eval_env: MultiTargetMazeEnv, wb_run: wandb.run, eval_freq: int = 200,
+    def __init__(self, log_dir: str, eval_env: MultiWorkspaceMazeEnv, wb_run: wandb.run, eval_freq: int = 200,
                  eval_video_freq=-1, verbose=1):
-        eval_episodes = eval_env.target_count
+        eval_episodes = eval_env.workspace_count
         super().__init__(log_dir, eval_env, wb_run, eval_freq, eval_episodes,
                          eval_video_freq, verbose)
 
@@ -187,7 +187,7 @@ class MultiTargetEvalAndSaveCallback(BaseEvalAndSaveCallback):
         # evaluate on all targets
         for i in range(self.eval_episodes):
             # play episode:
-            obs = self.eval_env.reset(target_index=i)
+            obs = self.eval_env.reset(workspace_index=i)
             step_count = 0
             total_reward = 0
             done = False

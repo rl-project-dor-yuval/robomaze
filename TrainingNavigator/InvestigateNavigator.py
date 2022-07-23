@@ -127,6 +127,7 @@ if __name__ == '__main__':
     video_path = os.path.join(dir_name, tested_nav_name)
 
     # create the maze environment
+    raise NotImplementedError("Fix to new workspaces")
     eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
                             show_gui=config["show_gui"])
     eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,

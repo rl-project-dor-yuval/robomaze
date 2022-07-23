@@ -65,6 +65,7 @@ def get_vanilla_navigator_env(start_loc=(1., 7.5),
     maze_map = - (cv2.imread(map_path, cv2.IMREAD_GRAYSCALE) / 255) + 1
     maze_map = maze_map.T
 
+    raise NotImplementedError("Fix to new workspaces")
     env = mz.MazeEnv(maze_size=mz.MazeSize.SQUARE10,
                      maze_map=maze_map,
                      tile_size=0.05,

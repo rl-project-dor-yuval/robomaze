@@ -14,22 +14,26 @@ ANKLE_1_4_HIGH = 1.745
 ANKLE_1_4_LOW = 0.523
 ANKLE_2_3_HIGH = -0.523
 ANKLE_2_3_LOW = -1.745
-INIT_JOINT_STATES = [0, (ANKLE_1_4_HIGH+ANKLE_1_4_LOW)/2,
-                     0, (ANKLE_2_3_HIGH+ANKLE_2_3_LOW)/2,
-                     0, (ANKLE_2_3_HIGH+ANKLE_2_3_LOW)/2,
-                     0, (ANKLE_1_4_HIGH+ANKLE_1_4_LOW)/2]
+INIT_JOINT_STATES = [0, (ANKLE_1_4_HIGH + ANKLE_1_4_LOW) / 2,
+                     0, (ANKLE_2_3_HIGH + ANKLE_2_3_LOW) / 2,
+                     0, (ANKLE_2_3_HIGH + ANKLE_2_3_LOW) / 2,
+                     0, (ANKLE_1_4_HIGH + ANKLE_1_4_LOW) / 2]
+
+POINTER_COLOR = [0, 1, 0, 0.5]
 
 
 # this function scales the given value to
 def scale(value, old_high, old_low, new_high, new_low):
     return ((value - old_low) / (old_high - old_low)) * (new_high - new_low) + new_low
 
+
 # TODO: Refactor this position/torque control shit or remove one of them completely
 
 class Ant:
-    def __init__(self, pybullet_client, position3d):
-        self.start_position = position3d
+    def __init__(self, pybullet_client, position3d, heading):
         self._pclient = pybullet_client
+        self.start_position = position3d
+        self.heading = heading
         self.position_control = False
 
         # load ant and save it's initial orientation,
@@ -40,11 +44,21 @@ class Ant:
         for link in range(self._pclient.getNumJoints(self.uid)):
             self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
         self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
-        # change front legs color:
-        for link in [0, 2, 4, 5, 7, 9]:
-            self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.6, 0.6, 0.6, 1])
 
-        self.initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
+        initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
+        initial_orientation_euler = list(self._pclient.getEulerFromQuaternion(initial_orientation))
+        initial_orientation_euler[2] = heading
+        self.initial_orientation = self._pclient.getQuaternionFromEuler(initial_orientation_euler)
+
+        pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, heading))
+        pointer_position = list(position3d)
+        pointer_position[2] += 0.75
+        self._direction_pointer = self._pclient.loadURDF("direction_pointer.urdf",
+                                                         basePosition=pointer_position,
+                                                         baseOrientation=pointer_orientation,
+                                                         globalScaling=1.25)
+        self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
+        self._pclient.changeVisualShape(self._direction_pointer, -1, rgbaColor=[0, 0, 0, 1])
 
         self.reset()
 
@@ -56,8 +70,9 @@ class Ant:
 
         initial_orientation = self.initial_orientation
         if noisy_state:
-            initial_orientation = self._pclient.getEulerFromQuaternion(initial_orientation)
-            initial_orientation = [np.random.uniform(-0.3, 0.3) + oriant for oriant in initial_orientation]
+            initial_orientation = list(self._pclient.getEulerFromQuaternion(initial_orientation))
+            initial_orientation = [np.random.uniform(-0.3, 0.3) + oriant for oriant in initial_orientation[:2]] + \
+                                  initial_orientation[2:]
             initial_orientation = self._pclient.getQuaternionFromEuler(initial_orientation)
         self._pclient.resetBasePositionAndOrientation(self.uid,
                                                       self.start_position,
@@ -76,12 +91,14 @@ class Ant:
                 velocity += np.random.uniform(-0.5, 0.5)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
+        self.update_direction_pointer()
+
     def action(self, in_action: np.array):
         action = np.array(in_action, dtype=np.float32)
 
         if not self.position_control:  # torque control
             mode = self._pclient.TORQUE_CONTROL
-            self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action*1500)
+            self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 1500)
 
         else:
             # this is old code from when we used position control and we had to scale actions:
@@ -100,7 +117,6 @@ class Ant:
             #      O
             #  3  / \  4
 
-
             # scale the given values from the input range to the practical range
             # scale the shoulder position values in the odd indices
             action[::2] = scale(action[::2], 1, -1, SHOULDER_HIGH, SHOULDER_LOW)
@@ -111,7 +127,21 @@ class Ant:
             action[3] = scale(action[3], 1, -1, ANKLE_2_3_HIGH, ANKLE_2_3_LOW)
 
             self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, self._pclient.POSITION_CONTROL,
-                                                    action, forces=[2000]*8)
+                                                    action, forces=[2000] * 8)
+
+    def update_direction_pointer(self, visible=True):
+        if visible:
+            position, orientation_quat = self._pclient.getBasePositionAndOrientation(self.uid)
+            orientation = self._pclient.getEulerFromQuaternion(orientation_quat)
+
+            pointer_position = list(position)
+            pointer_position[2] += 0.75
+
+            self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position,
+                                                          self._pclient.getQuaternionFromEuler((0, 0, orientation[2])))
+            self._pclient.changeVisualShape(self._direction_pointer, -1, rgbaColor=POINTER_COLOR)
+        else:
+            self._pclient.changeVisualShape(self._direction_pointer, -1, rgbaColor=[0, 0, 0, 0])
 
     def get_pos_orientation_velocity(self):
         """
@@ -139,13 +169,19 @@ class Ant:
         positions = np.array([j_state[0] for j_state in joint_states_tuple])
         velocities = np.array([j_state[1] for j_state in joint_states_tuple])
 
-        positions[::2] = scale(positions[::2], SHOULDER_HIGH, SHOULDER_LOW, 1, -1,)
+        positions[::2] = scale(positions[::2], SHOULDER_HIGH, SHOULDER_LOW, 1, -1, )
         positions[1] = -scale(positions[1], ANKLE_1_4_HIGH, ANKLE_1_4_LOW, 1, -1)
         positions[7] = -scale(positions[7], ANKLE_1_4_HIGH, ANKLE_1_4_LOW, 1, -1)
         positions[5] = scale(positions[5], ANKLE_2_3_HIGH, ANKLE_2_3_LOW, 1, -1)
         positions[3] = scale(positions[3], ANKLE_2_3_HIGH, ANKLE_2_3_LOW, 1, -1)
 
         return np.concatenate((positions, velocities))
+
+    def set_start_state(self, position3d, heading):
+        self.start_position = position3d
+        orientation_euler = list(self._pclient.getEulerFromQuaternion(self.initial_orientation))
+        orientation_euler[2] = heading
+        self.initial_orientation = self._pclient.getQuaternionFromEuler(orientation_euler)
 
     def set_position_control(self, position_control):
         self.position_control = position_control
@@ -154,5 +190,3 @@ class Ant:
             # turn off velocity motors, we use torque control
             for joint in JOINTS_INDICES:
                 self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
-
-

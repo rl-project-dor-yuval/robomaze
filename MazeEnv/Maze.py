@@ -46,10 +46,17 @@ class Maze:
         self._target_sphereUid = self._pclient.loadURDF("goalSphere.urdf",
                                                         basePosition=target_position3d)
 
+        # setup direction pointer (disable collision and change color)
         pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
+        pointer_position = list(target_position3d)
+        pointer_position[2] += 0.75
         self._direction_pointer = self._pclient.loadURDF("direction_pointer.urdf",
-                                                         basePosition=target_position3d,
-                                                         baseOrientation=pointer_orientation)
+                                                         basePosition=pointer_position,
+                                                         baseOrientation=pointer_orientation,
+                                                         globalScaling=1.25)
+        self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
+        self._pclient.changeVisualShape(self._direction_pointer, linkIndex=-1, rgbaColor=[0, 0, 0.3, 0.5])
+
 
         if optimize_boarders:
             maze_map_boarders, maze_map_fill = self._get_maze_map_boarders(maze_map)
@@ -72,8 +79,10 @@ class Maze:
         _, old_orientation = self._pclient.getBasePositionAndOrientation(self._target_sphereUid)
         self._pclient.resetBasePositionAndOrientation(self._target_sphereUid, target_position3d, old_orientation)
 
+        pointer_position = list(target_position3d)
+        pointer_position[2] += 0.75
         pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
-        self._pclient.resetBasePositionAndOrientation(self._direction_pointer, target_position3d, pointer_orientation)
+        self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position, pointer_orientation)
 
 
     def _load_maze_edges(self):
