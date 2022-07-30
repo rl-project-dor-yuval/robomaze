@@ -11,7 +11,7 @@ import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
+from TrainingNavigator.NavigatorEnv import MultiWorkspaceNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 from DDPGMP import DDPGMP
 import torch
@@ -19,7 +19,7 @@ from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
 import yaml
-from Utils import blackwhiteswitch
+from Utils import blackwhiteswitch, make_workspace_list
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,13 +42,14 @@ if __name__ == '__main__':
 
     # Setup Training Environment
     maze_map = blackwhiteswitch(config["maze_map_path"])
-    start_goal_pairs = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
-    validation_start_goal_pairs = np.load(config["validation_workspaces_path"]) / 10
+    workspaces = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
+    workspaces = make_workspace_list(workspaces)
+    validation_workspaces = np.load(config["validation_workspaces_path"]) / 10
+    validation_workspaces = make_workspace_list(validation_workspaces)
 
-    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
-                           target_loc=start_goal_pairs[0][-1], xy_in_obs=True,
+    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
                            show_gui=config["show_gui"], )
-    nav_env_kwargs = dict(start_goal_pairs=start_goal_pairs,
+    nav_env_kwargs = dict(workspace_list=workspaces,
                           maze_env_kwargs=maze_env_kwargs,
                           epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
                           epsilon_rotation_to_hit_subgoal=config["epsilon_rotation_to_subgoal"],
@@ -62,16 +63,14 @@ if __name__ == '__main__':
                           wall_hit_limit=config["wall_hit_limit"],
                           repeat_failed_ws_prob=config["repeat_failed_ws_prob"],)
 
-    nav_env = make_vec_env(MultiStartgoalNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
+    nav_env = make_vec_env(MultiWorkspaceNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
     nav_env.env_method('visualize_mode', False)
 
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
-    raise NotImplementedError("Fix to new workspaces")
-    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, start_loc=start_goal_pairs[0][0],
-                            target_loc=validation_start_goal_pairs[0][-1], xy_in_obs=True, show_gui=False)
-    eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=validation_start_goal_pairs,
+    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True, show_gui=False)
+    eval_nav_env = MultiWorkspaceNavigatorEnv(workspace_list=validation_workspaces,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
                                               max_vel_in_subgoal=config["max_velocity_in_subgoal"],

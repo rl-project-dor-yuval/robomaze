@@ -37,7 +37,7 @@ class NavigatorEnv(gym.Env):
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.25,
-                 epsilon_rotation_to_hit_subgoal=np.pi/9,
+                 epsilon_rotation_to_hit_subgoal=np.pi / 9,
                  max_vel_in_subgoal=9999,
                  rewards: Rewards = Rewards(),
                  done_on_collision=False,
@@ -91,15 +91,14 @@ class NavigatorEnv(gym.Env):
         if not maze_env.max_goal_velocity == max_vel_in_subgoal:
             print("WARNING: max_vel_in_subgoal is different in mazeEnv and navigatorEnv, changing mazeEnv")
             maze_env.max_goal_velocity = max_vel_in_subgoal
-        # make sure there is no requirement for angle at the rotation at goal (success is defined by the distance):
+        # make sure there is no requirement for heading angle at the at goal (success is only defined by distance):
         self.maze_env.target_heading_epsilon = np.inf
 
         self.visualize = False
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            raise ValueError("please update the line below with a stepper agent (with rotation)")
-            # stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/TorqueStepperF1500.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/StepperWithRotation.pt', 'auto')
         elif isinstance(stepper_agent, str):
             stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
@@ -108,15 +107,14 @@ class NavigatorEnv(gym.Env):
         self.ant_curr_obs = np.zeros(31)
         self.curr_subgoal = np.zeros(2)
         self.curr_target_rotation_at_subgoal = 0
-        self.target_goal = np.array(self.maze_env._target_loc[0:2], dtype=np.float32)
+        self.target_goal = np.array(self.maze_env.workspace.goal_loc_tuple(), dtype=np.float32)
 
-        # Action -> [radius, direction to subgoals (raidans), rotation at subgoal (radians)]
+        # Action -> [radius, direction to subgoals (raidans), heading (rotation) at subgoal (radians)]
         self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi, -math.pi], dtype=np.float32),
                                 high=np.array([stepper_radius_range[1], math.pi, math.pi], dtype=np.float32),
                                 shape=(3,))
 
-
-        # Observation -> [ Agent_x, Agent_y,  Agent_Rotation, Target_x, Target_y]
+        # Observation -> [ Agent_x, Agent_y,  Agent_Heading, Goal_x, Goal_y]
         self.observation_space = Box(-np.inf, np.inf, (5,))
 
         self.curr_step = 0
@@ -138,15 +136,16 @@ class NavigatorEnv(gym.Env):
 
         ant_xy = self.ant_curr_obs[0:2]
         robot_rotation = self.ant_curr_obs[8]
-        rotation_diff = self.curr_target_rotation_at_subgoal - robot_rotation
-        rotation_diff = self.maze_env.compute_signed_rotation_diff(rotation_diff)
 
         # 2 first elements of action are range and direction to the subgoal
         self.curr_subgoal = ant_xy + pol2cart(action[0:2])
         self.curr_target_rotation_at_subgoal = action[2]
 
+        rotation_diff = self.curr_target_rotation_at_subgoal - robot_rotation
+        rotation_diff = self.maze_env.compute_signed_rotation_diff(rotation_diff)  # make sure it is in [-pi, pi]
+
         if visualize_subgoal:
-            self.maze_env.set_subgoal_marker(self.curr_subgoal)
+            self.maze_env.set_subgoal_marker(self.curr_subgoal, self.curr_target_rotation_at_subgoal)
         else:
             self.maze_env.set_subgoal_marker(visible=False)
 
@@ -154,7 +153,7 @@ class NavigatorEnv(gym.Env):
 
         for i in range(self.max_stepper_steps):
             if self.visualize:
-                time.sleep(1./float(self.visualize_fps))
+                time.sleep(1. / float(self.visualize_fps))
 
             self.total_stepper_steps += 1
 
@@ -175,7 +174,7 @@ class NavigatorEnv(gym.Env):
             # play ant step, reward is not required and is_done is determined using info
             self.ant_curr_obs, _, _, info = self.maze_env.step(stepper_action)
             ant_xy = self.ant_curr_obs[0:2]
-            ant_velocity = np.sqrt(self.ant_curr_obs[3]**2 + self.ant_curr_obs[4]**2)
+            ant_velocity = np.sqrt(self.ant_curr_obs[3] ** 2 + self.ant_curr_obs[4] ** 2)
             robot_rotation = self.ant_curr_obs[8]
             rotation_diff = self.curr_target_rotation_at_subgoal - robot_rotation
             rotation_diff = self.maze_env.compute_signed_rotation_diff(rotation_diff)
@@ -193,8 +192,7 @@ class NavigatorEnv(gym.Env):
                     and ant_velocity < self.max_vel_in_subgoal:
                 break
 
-        ant_rotation = self.ant_curr_obs[8]
-        nav_observation = np.concatenate([ant_xy, [ant_rotation], self.target_goal])
+        nav_observation = self.get_curr_nav_obs()
 
         nav_info = info
         nav_info['too_many_wallhits'] = False
@@ -226,7 +224,6 @@ class NavigatorEnv(gym.Env):
         else:
             nav_info['TimeLimit.truncated'] = False
 
-
         nav_observation = self.normalize_obs_if_needed(nav_observation)
 
         return nav_observation, nav_reward, nav_is_done, nav_info
@@ -242,17 +239,18 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = fps
 
     def normalize_obs_if_needed(self, obs):
+        norm_obs = obs.copy()
         if self.normalize_observations:
             # normalize x and y of robot and goal:
             maze_size_x, maze_size_y = self.maze_env.maze_size
             max_xy = np.array([maze_size_x, maze_size_y])
-            obs[0:2] = 2 * (obs[0:2] / max_xy) - 1
-            obs[3:5] = 2 * (obs[3:5] / max_xy) - 1
+            norm_obs[0:2] = 2 * (norm_obs[0:2] / max_xy) - 1
+            norm_obs[3:5] = 2 * (norm_obs[3:5] / max_xy) - 1
 
             # normalize rotation:
-            obs[2] = obs[2] / np.pi
+            norm_obs[2] = norm_obs[2] / np.pi
 
-        return obs
+        return norm_obs
 
     def unormalize_obs_if_needed(self, obs):
         unorm_obs = obs.copy()
@@ -266,51 +264,55 @@ class NavigatorEnv(gym.Env):
 
         return unorm_obs
 
-class MultiStartgoalNavigatorEnv(NavigatorEnv):
+    def get_curr_nav_obs(self):
+        return np.concatenate([self.ant_curr_obs[0:2], [self.ant_curr_obs[8]], self.target_goal],
+                              dtype=np.float32)
+
+
+class MultiWorkspaceNavigatorEnv(NavigatorEnv):
     """
      Navigator Environment with multiple start and goal pairs, varying every episode
     """
-    def __init__(self, start_goal_pairs: np.ndarray, repeat_failed_ws_prob=0, **navigator_kwargs):
-        super(MultiStartgoalNavigatorEnv, self).__init__(**navigator_kwargs)
 
-        self.start_goal_pairs = start_goal_pairs
+    def __init__(self, workspace_list: list, repeat_failed_ws_prob=0, **navigator_kwargs):
+        super(MultiWorkspaceNavigatorEnv, self).__init__(**navigator_kwargs)
+
+        self.workspace_list = workspace_list
         self.repeat_failed_ws_prob = repeat_failed_ws_prob
 
-        self.start_goal_pairs_count = len(self.start_goal_pairs)
-        self.curr_startgoal_pair_idx = None
+        self.workspace_count = len(self.workspace_list)
+        self.curr_ws_index = None
 
         self.is_last_failed = False
 
-    def reset(self, start_goal_pair_idx: int = None, **kwargs):
+    def reset(self, workspace_idx: int = None, **kwargs):
         """
         Reset the environment to a new start-goal pair
-        :param start_goal_pair_idx: idx of the start-goal pair, if none a random one is chosen
+        :param workspace_idx: idx of the start-goal pair, if none a random one is chosen
         :return: observation
         """
-        if start_goal_pair_idx is None:
+        if workspace_idx is None:
             if self.is_last_failed and np.random.rand() < self.repeat_failed_ws_prob:
-                start_goal_pair_idx = self.curr_startgoal_pair_idx
+                workspace_idx = self.curr_ws_index
             else:
-                start_goal_pair_idx = np.random.randint(0, self.start_goal_pairs_count)
+                workspace_idx = np.random.randint(0, self.workspace_count)
 
-        if start_goal_pair_idx >= self.start_goal_pairs_count:
-            raise ValueError("start_goal_pair_idx is out of range")
+        if workspace_idx >= self.workspace_count:
+            raise ValueError("workspace index is out of range")
 
-        self.curr_startgoal_pair_idx = start_goal_pair_idx
+        self.curr_ws_index = workspace_idx
 
-        self.maze_env.set_target_loc_and_heading(self.start_goal_pairs[start_goal_pair_idx][1])
-        self.maze_env.set_start_loc(self.start_goal_pairs[start_goal_pair_idx][0])
+        self.maze_env.set_workspace(self.workspace_list[workspace_idx])
+        self.target_goal = self.workspace_list[workspace_idx].goal_loc_tuple()
 
-        self.target_goal = self.start_goal_pairs[start_goal_pair_idx][1]
-
-        return super(MultiStartgoalNavigatorEnv, self).reset(**kwargs)
+        return super(MultiWorkspaceNavigatorEnv, self).reset(**kwargs)
 
     def step(self, action, visualize_subgoal=True):
         """
         same as NavigatorEnv.step. only difference is that info contains the start-goal pair idx
 
         """
-        obs, reward, is_done, info = super(MultiStartgoalNavigatorEnv, self).step(action, visualize_subgoal)
+        obs, reward, is_done, info = super(MultiWorkspaceNavigatorEnv, self).step(action, visualize_subgoal)
         self.is_last_failed = not info['success']
-        info['start_goal_pair_idx'] = self.curr_startgoal_pair_idx
+        info['workspace_idx'] = self.curr_ws_index
         return obs, reward, is_done, info

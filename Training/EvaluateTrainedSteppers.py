@@ -2,6 +2,7 @@
     we dont use random initialization here because we want to evaluate the trained steppers equally."""
 
 import os, sys
+
 sys.path.append('../..')
 
 import numpy as np
@@ -11,39 +12,38 @@ import glob
 import MazeEnv.MultWorkspaceMazeEnv as mz
 from Training.Utils import make_circular_map
 from TrainingNavigator.StepperAgent import StepperAgent
-from MazeEnv.EnvAttributes import Rewards
+from MazeEnv.EnvAttributes import Rewards, Workspace
 
 
-num_workspaces = 100
+num_workspaces = 1000
 
 
-def get_env(sticky_actions, timeout_steps):
-    target_list = np.genfromtxt("Training/workspaces/goals_06to3_test.csv", delimiter=',')
+def get_env(sticky_actions, timeout_steps, noisy_initialization=False):
+    workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_test.csv", delimiter=',')
+    workspaces = np.concatenate((5 * np.ones((workspaces.shape[0], 2)), workspaces), axis=1)
     tile_size = 0.1
     maze_size = mz.MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
     maze_map = make_circular_map(map_size, 5 / tile_size)
 
     rewards = Rewards(target_distance_weight=0.01, rotation_weight=0.01, target_distance_offset=5, fall=-1,
-                      target_arrival=1, collision=0, timeout=0, idle=0,)
+                      target_arrival=1, collision=0, timeout=0, idle=0, )
+    workspace_list = Workspace.list_from_multiple_arrays(workspaces)
 
-    raise NotImplementedError("Fix to new workspaces")
-    maze_env = mz.MultiTargetMazeEnv(maze_size=maze_size,
-                                     maze_map=maze_map,
-                                     tile_size=tile_size,
-                                     start_loc=(5, 5),
-                                     target_loc_list=target_list[:, :2],
-                                     target_heading_list=target_list[:, 2],
-                                     rewards=rewards,
-                                     hit_target_epsilon=0.25,
-                                     target_heading_epsilon=np.pi/9,
-                                     done_on_goal_reached=False,
-                                     timeout_steps=timeout_steps,
-                                     sticky_actions=sticky_actions,
-                                     max_goal_velocity=9999,
-                                     show_gui=False,
-                                     xy_in_obs=False,
-                                     noisy_ant_initialization=False)
+    maze_env = mz.MultiWorkspaceMazeEnv(maze_size=maze_size,
+                                        maze_map=maze_map,
+                                        tile_size=tile_size,
+                                        workspace_list=workspace_list,
+                                        rewards=rewards,
+                                        hit_target_epsilon=0.25,
+                                        target_heading_epsilon=np.pi / 9,
+                                        done_on_goal_reached=False,
+                                        timeout_steps=timeout_steps,
+                                        sticky_actions=sticky_actions,
+                                        max_goal_velocity=9999,
+                                        show_gui=True,
+                                        xy_in_obs=False,
+                                        noisy_ant_initialization=noisy_initialization,)
 
     return maze_env
 
@@ -53,9 +53,10 @@ def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
     last_step_success_count = 0
     ep_success_count_list = []
     episodes_length_list = []
+    first_success_step_list = []
 
     for i in range(num_workspaces):
-        obs = env.reset(target_index=i)
+        obs = env.reset(workspace_index=i)
         step_count = 0
         ep_success_steps_count = 0
 
@@ -67,6 +68,8 @@ def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
             step_count += 1
             if info['success']:
                 ep_success_steps_count += 1
+                if ep_success_steps_count == 1:
+                    first_success_step_list.append(step_count)
             if info['fell']:
                 fall_count += 1
 
@@ -75,6 +78,9 @@ def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
         episodes_length_list.append(step_count)
 
     episodes_with_success = np.sum(np.array(ep_success_count_list) > 0)
+
+    print(f"mean steps for success: {np.mean(first_success_step_list)}")
+    print(f"max steps for success: {np.max(first_success_step_list)}")
 
     success_rate_once = float(episodes_with_success) / float(num_workspaces)
     success_rate_last_step = float(last_step_success_count) / float(num_workspaces)
@@ -87,7 +93,7 @@ def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = ["Training/logs/StepperV2--fixed--stickyActions8_max_steps_150"]
+    log_dirs = ["Training/logs/StepperV2DDPG_StickyActions8_MaxSteps150"]
     stepper_checkpoints = []
 
     # for log_dir in log_dirs:
@@ -98,11 +104,11 @@ if __name__ == "__main__":
     #     if int(c.split("_")[-1].split(".")[0]) < 5000000:
     #         stepper_checkpoints.remove(c)
 
-    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
-    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_15000000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_25000000.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_19600000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_22000000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_23000000.zip")
 
-    env = get_env(sticky_actions=8, timeout_steps=150)
+    env = get_env(sticky_actions=8, timeout_steps=150, noisy_initialization=False)
 
     run_name_list = []
     success_once_list = []
@@ -123,8 +129,8 @@ if __name__ == "__main__":
         success_rate_once, success_rate_last_step, fall_rate, mean_episodes_length = \
             evaluate_stepper(agent, env)
         # filter poor results in advance:
-        if success_rate_once < 0.85 or fall_rate > 0.05:
-            continue
+        # if success_rate_once < 0.85 or fall_rate > 0.05:
+        #     continue
         print(f'saving results')
 
         run_name_list.append(model_path.split("V2")[-1])
@@ -135,13 +141,10 @@ if __name__ == "__main__":
 
     results = [run_name_list, success_once_list, success_last_list, fall_rate_list, ep_len_list]
     df = pd.DataFrame(results).T
-    df.set_axis(['run_name', 'success_rate_once', 'success_rate_last_step', 'fall_rate', 'mean_episodes_length'], axis=1, inplace=True)
+    df.set_axis(['run_name', 'success_rate_once', 'success_rate_last_step', 'fall_rate', 'mean_episodes_length'],
+                axis=1, inplace=True)
     df.set_index('run_name', inplace=True)
     df.plot.bar(y=['success_rate_once', 'success_rate_last_step', 'fall_rate'], rot=0)
     plt.xticks(fontsize=5)
     plt.show()
     df.to_csv('Training/trained_stepper_results.csv')
-
-
-
-

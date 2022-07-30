@@ -7,14 +7,14 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
-from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
-from TrainingNavigator.Utils import compute_traj_rotation
+from TrainingNavigator.NavigatorEnv import MultiWorkspaceNavigatorEnv
+from TrainingNavigator.Utils import trajectory_to_transitions
 import wandb
 
 
 class NavEvalCallback(BaseCallback):
     def __init__(self, dir: str,
-                 eval_env: MultiStartgoalNavigatorEnv,
+                 eval_env: MultiWorkspaceNavigatorEnv,
                  wandb_run: wandb.run,
                  validation_traj_path: str,
                  eval_freq: int = 5000,
@@ -86,7 +86,7 @@ class NavEvalCallback(BaseCallback):
             avg_reward, avg_length, success_rate, avg_wallhits = self._evaluate_all_workspaces()
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
                                 'eval_success_rate': success_rate, 'eval_avg_wallhits': avg_wallhits,
-                                'navStep': self.n_calls, 'TotalSimulationSteps': simulation_steps,})
+                                'navStep': self.n_calls, 'TotalSimulationSteps': simulation_steps, })
             self.evals_count += 1
 
         if self.eval_video_freq > 0 and \
@@ -122,7 +122,7 @@ class NavEvalCallback(BaseCallback):
         wallhits = []
 
         for i in range(self.eval_workspaces):
-            obs = self.eval_env.reset(start_goal_pair_idx=i)
+            obs = self.eval_env.reset(workspace_idx=i)
             curr_reward = 0
             curr_wallhits = 0
             steps = 0
@@ -173,7 +173,7 @@ class NavEvalCallback(BaseCallback):
             if done:
                 break
 
-        ws_id = info['start_goal_pair_idx']
+        ws_id = info['workspace_idx']
         self.eval_env.reset()  # to make sure video is saved
 
         if self.verbose > 0:
@@ -186,9 +186,14 @@ class NavEvalCallback(BaseCallback):
         returns a plot of the walked trajectory near the RRT planned
          trajectory for that workspace
         """
-        walked_traj = walked_traj * 10
-        walked_u = np.cos(walked_traj[:, 2])
-        walked_v = np.sin(walked_traj[:, 2])
+        # TODO: important note : if you get to refactor this, instead of getting to the rabbit hole of plotting
+        # TODO: the angle of heading by switching and negating axes, just rotate the angle by 90 degrees in the angle
+        # TODO: space before converting to u and v just like i did to walked heading
+        walked_traj[:, :2] = walked_traj[:, :2] * 10
+
+        walked_heading = walked_traj[:, 2] - np.pi / 2
+        walked_u = np.cos(walked_heading)
+        walked_v = np.sin(walked_heading)
 
         actions_u = np.cos(action_traj[:, 2])
         actions_v = np.sin(action_traj[:, 2])
@@ -196,10 +201,12 @@ class NavEvalCallback(BaseCallback):
         actions_y = walked_traj[:, 0] + action_traj[:, 0] * np.sin(action_traj[:, 1])
         actions_x = walked_traj[:, 1] + action_traj[:, 0] * np.cos(action_traj[:, 1])
 
-
         with np.load(self.validation_traj_path) as demos:
             planned_traj = demos[str(ws_id)] * 10
-        planned_rotation = compute_traj_rotation(planned_traj)
+        planned_obs, planned_actions, _, _, _ = trajectory_to_transitions(planned_traj,
+                                                                          self.eval_env.rewards_config,
+                                                                          self.eval_env.epsilon_to_hit_subgoal)
+        planned_rotation = np.array(planned_actions)[:, 2]
         planned_u = np.cos(planned_rotation)
         planned_v = np.sin(planned_rotation)
 
@@ -214,13 +221,13 @@ class NavEvalCallback(BaseCallback):
 
         axes[0, 0].set_title('Walked Trajectory')
         axes[0, 0].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
-        axes[0, 1].set_title('RRT PlannedT Trajectory')
-        axes[0, 1].quiver(planned_traj[:, 1], planned_traj[:, 0], planned_u, planned_v, color='r')
+        axes[0, 1].set_title('RRT Planned Trajectory')
+        axes[0, 1].quiver(planned_traj[1:, 1], planned_traj[1:, 0], planned_v, -planned_u, color='r')
         axes[1, 0].set_title('Action Trajectory')
-        axes[1, 0].quiver(actions_x, actions_y, actions_u, actions_v, color='b')
+        axes[1, 0].quiver(actions_x, actions_y, actions_v, -actions_u, color='b')
         axes[1, 1].set_title('Action + Walked Trajectory')
         axes[1, 1].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
-        axes[1, 1].quiver(actions_x, actions_y, actions_u, actions_v, color='b', alpha=0.5)
+        axes[1, 1].quiver(actions_x, actions_y, actions_v, -actions_u, color='b', alpha=0.5)
 
         fig.tight_layout()
 

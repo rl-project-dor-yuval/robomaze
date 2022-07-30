@@ -14,7 +14,7 @@ from stable_baselines3.common.utils import should_collect_more_steps, polyak_upd
 from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
 from torch.nn import functional as F
-from TrainingNavigator.Utils import compute_traj_rotation
+from TrainingNavigator.Utils import trajectory_to_transitions
 
 
 class TD3MP(TD3):
@@ -251,17 +251,19 @@ class TD3MP(TD3):
                         self._dump_logs()
 
                     info = infos[idx]
-                    if info['hit_maze'] or info['fell'] or info['navigator_timeout']:
+                    if info['hit_maze'] or info['fell'] or info['TimeLimit.truncated']:
                         # insert demonstration to replay buffer with probability self.demo_on_fail_prob
                         if np.random.rand() < self.demo_on_fail_prob:
                             if self.verbose > 0:
                                 print("Failed Episode. Inserting demonstration to replay buffer.")
 
+                            # It's inefficient to load the whole demo buffer every time, then create
+                            # transitions from it, but it's still negligible compared to the time it takes
+                            # to simulate one episode. Maybe one day we can optimize this.
                             with np.load(self.demonstrations_path) as demos:
-                                demo_traj = demos[str(info['start_goal_pair_idx'])]
-                            demo_traj = self.normalize_tarj_if_needed(demo_traj)
+                                demo_traj = demos[str(info['workspace_idx'])]
                             self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
-                                                               info['start_goal_pair_idx'])
+                                                               info['workspace_idx'])
 
                             self.n_demos_inserted += 1
                             self.demo_on_fail_prob *= self.demo_prob_decay
@@ -282,42 +284,35 @@ class TD3MP(TD3):
         # therefore we insert just every num_envs'th transition from the demo trajectory
         # until we collect that number of transitions, we save them in temporary buffers.
 
-        # create rotations for the demo trajectory:
-        rotation = compute_traj_rotation(demo_traj)
-        if self.normalize_obs:
-            rotation = rotation / np.pi
+        rewards_config = self.env.get_attr('rewards_config', 0)[0]
+        observations, actions, rewards, next_observations, dones = \
+            trajectory_to_transitions(demo_traj, rewards_config, self.epsilon_to_goal)
 
-        for i in range(len(demo_traj) - 1):
+        for i in range(len(observations)):
+            self.obs_buff[self.curr_buff_idx] = self.normalize_obs_if_needed(observations[i])
+            self.new_obs_buff[self.curr_buff_idx] = self.normalize_obs_if_needed(next_observations[i])
 
-            # Observation: [ Agent_x, Agent_y, Agent_Rotation, Target_x, Target_y]
-            self.obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i], [rotation[i]], demo_traj[-1]])
-            self.new_obs_buff[self.curr_buff_idx] = np.concatenate([demo_traj[i + 1], [rotation[i+1]], demo_traj[-1]])
-
-            self.action_buff[self.curr_buff_idx] = self._compute_fake_action(self.obs_buff[self.curr_buff_idx],
-                                                                             self.new_obs_buff[self.curr_buff_idx])
             # important - rescale action!
-            self.action_buff[self.curr_buff_idx] = self.policy.scale_action(self.action_buff[self.curr_buff_idx])
-            self.action_buff[self.curr_buff_idx] = np.clip(self.action_buff[self.curr_buff_idx], -1, 1)
+            actions[i] = self.policy.scale_action(actions[i])
+            self.action_buff[self.curr_buff_idx] = np.clip(actions[i], -1, 1)
 
-            dist_to_goal = np.linalg.norm(demo_traj[i + 1] - demo_traj[-1])
-            if i == len(demo_traj) - 2 or dist_to_goal < self.epsilon_to_goal:
-                # last transition or close enough to goal:
-                self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].target_arrival
-                self.done_buff[self.curr_buff_idx] = True
-                self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                                                      'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                                                      'success': True}
+            self.done_buff[self.curr_buff_idx] = dones[i]
+            self.reward_buff[self.curr_buff_idx] = rewards[i]
+
+            self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
+                                                  'navigator_timeout': False, 'workspace_idx': demo_traj_idx,
+                                                  'TimeLimit.truncated': False}
+            if i == len(observations) - 1:
+                self.info_buff[self.curr_buff_idx]['success'] = True
             else:
-                self.reward_buff[self.curr_buff_idx] = self.env.get_attr('rewards_config', 0)[0].idle
-                self.done_buff[self.curr_buff_idx] = False
-                self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                                                      'navigator_timeout': False, 'start_goal_pair_idx': demo_traj_idx,
-                                                      'success': False}
+                self.info_buff[self.curr_buff_idx]['success'] = False
 
             if self.curr_buff_idx + 1 != replay_buffer.n_envs:
+                # dont insert yet
                 self.curr_buff_idx += 1
                 continue
 
+            # collected enough transitions, insert them to the replay buffer
             replay_buffer.add(
                 self.obs_buff,
                 self.new_obs_buff,
@@ -327,17 +322,6 @@ class TD3MP(TD3):
                 self.info_buff,
             )
             self.curr_buff_idx = 0
-
-    def _compute_fake_action(self, obs, new_obs):
-        # works for observations with velocities as well
-        dx, dy = new_obs[0] - obs[0], new_obs[1] - obs[1]
-        r, theta = math.sqrt(dx ** 2 + dy ** 2), math.atan2(dy, dx)
-        if self.use_demo_epsilon_offset:
-            r = r + self.epsilon_to_goal  # add target epsilon offset
-
-        rotation = theta
-
-        return np.array([r, theta, rotation])
 
     def _excluded_save_params(self) -> List[str]:
         return super(TD3MP, self)._excluded_save_params() + ["demonstrations"]
@@ -354,7 +338,26 @@ class TD3MP(TD3):
 
         self.logger.record(log_name, total_norm)
 
+    # noinspection DuplicatedCode
+    def normalize_obs_if_needed(self, obs):
+        """
+        almost copy of implementation in NavigatorEnv Because we dont want to invoke methods of object in other proccesses
+        """
+        norm_obs = obs.copy()
+        if self.normalize_obs:
+            # normalize x and y of robot and goal:
+            maze_size_x, maze_size_y = self.maze_size
+            max_xy = np.array([maze_size_x, maze_size_y])
+            norm_obs[0:2] = 2 * (norm_obs[0:2] / max_xy) - 1
+            norm_obs[3:5] = 2 * (norm_obs[3:5] / max_xy) - 1
+
+            # normalize rotation:
+            norm_obs[2] = norm_obs[2] / np.pi
+
+        return norm_obs
+
     def normalize_tarj_if_needed(self, demo_traj):
+        """ delete this?"""
         if self.normalize_obs:
             demo_traj[:, 0] /= self.maze_size[0]
             demo_traj[:, 1] /= self.maze_size[1]

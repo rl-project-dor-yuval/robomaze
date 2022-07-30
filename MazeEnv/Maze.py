@@ -57,6 +57,18 @@ class Maze:
         self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
         self._pclient.changeVisualShape(self._direction_pointer, linkIndex=-1, rgbaColor=[0, 0, 0.3, 0.5])
 
+        # setup subgoal marker as well as direction pointer for it. It is invisible at the beginning:
+        self._subgoal_marker = self._pclient.loadURDF("goalSphere.urdf",
+                                                      basePosition=(0, 0, 0),
+                                                      globalScaling=0.5)
+        self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
+        self._pclient.setCollisionFilterGroupMask(self._subgoal_marker, -1, 0, 0)
+
+        self._subgoal_pointer = self._pclient.loadURDF("direction_pointer.urdf",
+                                                       basePosition=(0, 0, 0),
+                                                       globalScaling=1)
+        self._pclient.setCollisionFilterGroupMask(self._subgoal_pointer, -1, 0, 0)
+        self._pclient.changeVisualShape(self._subgoal_pointer, linkIndex=-1, rgbaColor=[0, 0, 0, 0])
 
         if optimize_boarders:
             maze_map_boarders, maze_map_fill = self._get_maze_map_boarders(maze_map)
@@ -84,6 +96,26 @@ class Maze:
         pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
         self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position, pointer_orientation)
 
+    def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
+        """
+        put a marker on the given position
+        :param position: the position of the marker
+        :param heading: heading of the pointer above the marker
+        :param visible: set to false in order to remove the marker
+        """
+        if visible:
+            position = (*position, 0)
+            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0.5, 0.5, 0.5, 0.75])
+            self._pclient.resetBasePositionAndOrientation(self._subgoal_marker, position, [0, 0, 0, 1])
+
+            pointer_position = list(position)
+            pointer_position[2] += 0.75
+            pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, heading))
+            self._pclient.changeVisualShape(self._subgoal_pointer, -1, rgbaColor=[0.2, 0.2, 0.2, 0.75])
+            self._pclient.resetBasePositionAndOrientation(self._subgoal_pointer, pointer_position, pointer_orientation)
+        else:
+            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
+            self._pclient.changeVisualShape(self._subgoal_pointer, -1, rgbaColor=[0, 0, 0, 0])
 
     def _load_maze_edges(self):
         """load the blocks for the edges of the maze"""

@@ -1,4 +1,7 @@
 import sys
+
+from MazeEnv.EnvAttributes import Rewards
+
 sys.path.append("../")
 import numpy as np
 import cv2
@@ -110,15 +113,70 @@ def plot_trajectory(trajectory, map, save_loc=None):
         plt.show()
 
 
-def compute_traj_rotation(trajectory):
+def trajectory_to_transitions(trajectory: np.ndarray, rewards_: Rewards, epsilon_to_hit_subgoal: float,):
     """
-    for a given trajectory of [(x, y), (x, y), ...]
-    compute an array of rotation assuming the rotation of the first point is 0 and at each point
-    the rotation is the angle between the previous point and the current point
+    convert a tajectory [(x, y), (x, y), ...] to transitions as lists of:
+    observations, actions, rewards, next_states, dones.
+    :param trajectory: a trajectory of [(x, y), (x, y), ...]
+    :param rewards: reward objects that defines the reward (used for idle and goal reward)
+    :return: 5 lists
     """
-    rotations = np.zeros(trajectory.shape[0])
-    for i in range(1, trajectory.shape[0]):
-        # we swtich x and y since x is the vertical axis in our map and we use -x since this axis is inverted
-        rotations[i] = np.arctan2(-(trajectory[i, 0] - trajectory[i-1, 0]), trajectory[i, 1] - trajectory[i-1, 1])
-    return rotations
+    trajectory_len = trajectory.shape[0]
+    start_loc = trajectory[0]
+    goal_loc = trajectory[-1]
+
+    rewards = []
+    dones = []
+    observations = []
+    actions = []
+    next_observations = []
+
+    # robot starts heading to the goal:
+    prev_heading_at_goal = np.arctan2(goal_loc[1] - start_loc[1], goal_loc[0] - start_loc[0])
+    for i in range(trajectory_len - 1):
+        curr_loc = trajectory[i]
+        next_loc = trajectory[i+1]
+        dx, dy = next_loc[0] - curr_loc[0], next_loc[1] - curr_loc[1]
+        dist_to_goal = np.linalg.norm(next_loc - goal_loc)
+
+        r_action, theta_action = np.sqrt(dx ** 2 + dy ** 2), np.arctan2(dy, dx)
+        heading_action = theta_action
+        action = np.array((r_action, theta_action, heading_action))
+        obs = np.concatenate((curr_loc, [prev_heading_at_goal], goal_loc))
+        next_obs = np.concatenate((next_loc, [heading_action], goal_loc))
+
+        observations.append(obs)
+        actions.append(action)
+        next_observations.append(next_obs)
+
+        if dist_to_goal < epsilon_to_hit_subgoal or i == trajectory_len - 2:
+            # last transition
+            rewards.append(rewards_.target_arrival)
+            dones.append(True)
+            break
+
+        rewards.append(rewards_.idle)
+        dones.append(False)
+
+        prev_heading_at_goal = heading_action
+
+    return observations, actions, rewards, next_observations, dones
+
+def make_workspace_list(workspaces):
+    """
+    Create workspace objects list to pass to MazeEnv given workspaces array of start and goal points.
+    Since MazeEnv needs start and goal heading in addition, they will be set for each workspace as
+    the angle between the start and goal points for convinence.
+    :param workspaces: array of workspaces, each workspace is a tuple of start and goal points
+    :return: list of workspaces
+    """
+    workspaces_list = []
+    for workspace in workspaces:
+        start_loc = workspace[0]
+        goal_loc = workspace[-1]
+        heading = np.arctan2(goal_loc[1] - start_loc[1], goal_loc[0] - start_loc[0], )
+
+        ws_tuple = (*start_loc, heading, *goal_loc, heading)
+        workspaces_list.append(mz.Workspace.from_array(np.array(ws_tuple)))
+    return workspaces_list
 

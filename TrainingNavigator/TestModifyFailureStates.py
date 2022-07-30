@@ -8,7 +8,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from Utils import blackwhiteswitch
-from TrainingNavigator.NavigatorEnv import MultiStartgoalNavigatorEnv
+from TrainingNavigator.NavigatorEnv import MultiWorkspaceNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
 from MazeEnv.EnvAttributes import Rewards
 

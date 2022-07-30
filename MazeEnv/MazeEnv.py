@@ -35,7 +35,6 @@ class MazeEnv(gym.Env):
     _collision_manager: CollisionManager
     _maze: Maze
     _ant: Ant
-    _subgoal_marker: int
     _recorder: Recorder
 
     _start_loc: List
@@ -63,7 +62,7 @@ class MazeEnv(gym.Env):
                  noisy_ant_initialization=False,
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
-                 sticky_actions=5):
+                 sticky_actions=8):
         """
         # TODO: Update docstring
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -106,7 +105,7 @@ class MazeEnv(gym.Env):
             raise Exception("timeout_steps value must be positive or zero for no limitation")
 
         self.maze_size = maze_size
-        self._workspace = workspace
+        self.workspace = workspace
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.xy_in_obs = xy_in_obs
@@ -161,13 +160,6 @@ class MazeEnv(gym.Env):
                                                    self._ant.uid,
                                                    floorUid)
 
-        # create subgoal marker:
-        self._subgoal_marker = self._pclient.loadURDF("goalSphere.urdf",
-                                                      basePosition=(0, 0, 0),
-                                                      globalScaling=0.5)
-        self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
-        self._pclient.setCollisionFilterGroupMask(self._subgoal_marker, -1, 0, 0)  # disable collisions
-
         # setup camera for a bird view:
         self._pclient.resetDebugVisualizerCamera(cameraDistance=self._maze.maze_size[1] / self.zoom,
                                                  cameraYaw=0,
@@ -217,7 +209,7 @@ class MazeEnv(gym.Env):
             info['hit_maze'] = True
             reward += self.rewards.collision
 
-        goal_loc_xy = np.array(self._workspace.goal_loc_tuple())
+        goal_loc_xy = np.array(self.workspace.goal_loc_tuple())
         goal_distance = np.linalg.norm(goal_loc_xy - ant_xy)
 
         reward += self.rewards.compute_target_distance_reward(target_distance=goal_distance)
@@ -293,18 +285,14 @@ class MazeEnv(gym.Env):
             observation = observation[2:]
         return observation
 
-    def set_subgoal_marker(self, position=(0, 0), visible=True):
+    def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
         """
         put a marker on the given position
-        :param visible: set to false in order to remove the marker
         :param position: the position of the marker
+        :param heading: heading of the pointer above the marker
+        :param visible: set to false in order to remove the marker
         """
-        if visible:
-            position = (*position, 0)
-            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
-            self._pclient.resetBasePositionAndOrientation(self._subgoal_marker, position, [0, 0, 0, 1])
-        else:
-            self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
+        self._maze.set_subgoal_marker(position, heading, visible)
 
     def set_workspace(self, workspace: Workspace):
         """
@@ -312,7 +300,7 @@ class MazeEnv(gym.Env):
         It shouldn't have any effect before reset
         """
         self._check_start_state(self.maze_size, workspace.start_loc_tuple(), workspace.goal_loc_tuple())
-        self._workspace = workspace
+        self.workspace = workspace
 
         goal_loc_3d = workspace.goal_loc_tuple() + (0,)
         self._maze.set_new_goal(goal_loc_3d, workspace.goal_heading)
@@ -382,14 +370,14 @@ class MazeEnv(gym.Env):
 
         # next two elements are angel and distance from target
         ant_loc = observation[0:2]
-        target_loc = np.array(self._workspace.goal_loc_tuple())
+        target_loc = np.array(self.workspace.goal_loc_tuple())
         relative_target = target_loc - ant_loc
         observation[28] = np.linalg.norm(relative_target)
         observation[29] = np.arctan2(relative_target[1], relative_target[0])
 
         # last element is rotation angle between ant and target heading
         robot_rotation = observation[8]
-        rotation_diff = self._workspace.goal_heading - robot_rotation
+        rotation_diff = self.workspace.goal_heading - robot_rotation
         observation[30] = self.compute_signed_rotation_diff(rotation_diff)
 
         return observation
