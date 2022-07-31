@@ -7,7 +7,7 @@ import numpy as np
 import seaborn as sns
 from pathlib import Path
 import argparse
-from TrainingNavigator.Utils import get_freespace_map, blackwhiteswitch
+from TrainingNavigator.Utils import get_freespace_map, get_freespace_map_circular_robot, blackwhiteswitch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('map', type=str, help='map path. everything is created in the same dir')
@@ -36,7 +36,7 @@ num_of_validation_workspaces = args.num_validation_workspaces
 num_of_test_workspaces = args.num_test_workspaces
 min_distance = args.min_distance
 
-free_space_map = get_freespace_map(maze_map, args.ant_size)  # was 24 before for bottleneck
+free_space_map = get_freespace_map_circular_robot(maze_map, args.ant_size)  # was 24 before for bottleneck
 free_space_rotated = cv2.rotate(free_space_map, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
 free_space_map_path = args.map.replace('.png', '_freespace.png')
 cv2.imwrite(free_space_map_path, (-free_space_map + 1) * 255)

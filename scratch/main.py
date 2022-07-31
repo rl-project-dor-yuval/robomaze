@@ -19,7 +19,7 @@ start = time.time()
 tile_size = 0.1
 maze_size = mz.MazeSize.SQUARE10
 map_size = np.dot(maze_size, int(1 / tile_size))
-maze_map = make_circular_map(map_size, 5 / tile_size)
+maze_map = make_circular_map(map_size, 1.1 / tile_size)
 # maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             #     action = - action
             #
             # action = agent.step(obs)
-            action = [0] * 8
+            action = [1] * 8
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
             if reward != 0:

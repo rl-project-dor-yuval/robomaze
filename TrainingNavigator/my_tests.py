@@ -24,11 +24,11 @@ def compute_fake_action(curr_loc, new_loc):
 
 workspaces = np.load('TrainingNavigator/workspaces/bottleneck/test_workspaces.npy') / 10
 workspaces = make_workspace_list(workspaces)
-maze_map = - (cv2.imread('TrainingNavigator/workspaces/bottleneck/bottleneck.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
+maze_map = - (cv2.imread('TrainingNavigator/workspaces/S-narrow/S-narrow.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
 
 demos = np.load("TrainingNavigator/workspaces/bottleneck/trajectories_test.npz")
 
-maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, xy_in_obs=True, show_gui=True)
+maze_env = MazeEnv(maze_size=(15, 15), maze_map=maze_map, xy_in_obs=True, show_gui=True)
 
 nav_env = MultiWorkspaceNavigatorEnv(workspaces,
                                      maze_env=maze_env,
@@ -46,7 +46,7 @@ nav_env.visualize_mode(True, fps=120)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-for i in range(7, 20):
+for i in range(8, 20):
     obs = nav_env.reset(i)
     ws_id = nav_env.curr_ws_index
     demo_traj = demos[str(ws_id)]

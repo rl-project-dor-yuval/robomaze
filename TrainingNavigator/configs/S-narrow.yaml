@@ -1,7 +1,7 @@
-"run_name": "NoDemoAtAll"
-"group": "DifferentDemos"
-"project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
-"config_file": "BN_NoKillOnWall.yaml"
+"run_name": "TestNewCameraAngle"
+"group": "TestNewCameraAngle"
+"project": "Robomaze-Tests"  # "Robomaze-tests"
+"config_file": "S-narrow.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
   [42 ** 3]
@@ -19,7 +19,7 @@ use_TD3MP: True # otherwise DDPGMP
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"demo_on_fail_prob": 0.0
+"demo_on_fail_prob": 0.2
 "demo_prob_decay": 1
 "learning_starts": !!python/object/apply:eval
   [10 ** 3]
@@ -40,25 +40,25 @@ use_TD3MP: True # otherwise DDPGMP
     timeout: 0
 "use_demo_epsilon_offset": False
 "max_stepper_steps": 100 # maybe you can change this
-"max_navigator_steps": 30 # or this
-"wall_hit_limit": 10
+"max_navigator_steps": 45 # or this
+"wall_hit_limit": 15
 "repeat_failed_ws_prob": 0.0
 
 # workspace paths:
-"maze_map_path": 'TrainingNavigator/workspaces/bottleneck/bottleneck.png'
-"workspaces_path": 'TrainingNavigator/workspaces/bottleneck/workspaces.npy'
-"validation_workspaces_path": 'TrainingNavigator/workspaces/bottleneck/validation_workspaces.npy'
-"demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_train_no_freespace.npz'
-"validation_demonstration_path": 'TrainingNavigator/workspaces/bottleneck/trajectories_validation_no_freespace.npz'
+"maze_map_path": 'TrainingNavigator/workspaces/S-narrow/S-narrow.png'
+"workspaces_path": 'TrainingNavigator/workspaces/S-narrow/workspaces.npy'
+"validation_workspaces_path": 'TrainingNavigator/workspaces/S-narrow/validation_workspaces.npy'
+"demonstration_path": 'TrainingNavigator/workspaces/S-narrow/trajectories_train.npz'
+"validation_demonstration_path": 'TrainingNavigator/workspaces/S-narrow/trajectories_validation.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperWithRotation.pt'
 
 # logging parameters
-"eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 1000
-"eval_freq2": 1000
+"eval_workspaces": 1  # will take the first workspaces
+"eval_freq": 50
+"eval_freq2": 20
 "change_eval_freq_after": 6
-"video_freq": 5
+"video_freq": 1
 "save_model_freq": 5000
 
 # Constants:
-"maze_size": !!python/tuple [10, 10]
+"maze_size": !!python/tuple [15, 15]

@@ -47,6 +47,31 @@ def get_freespace_map(maze_map, robot_cube_size):
     return freespace_map
 
 
+def get_freespace_map_circular_robot(maze_map, robot_diameter):
+    assert robot_diameter % 2 == 0, "robot_diameter must be even"
+    robot_radius = robot_diameter // 2
+    map_h = maze_map.shape[0]
+    map_w = maze_map.shape[1]
+
+    freespace_map = np.copy(maze_map)
+
+    window_center = np.array([robot_radius, robot_radius])
+    for i in range(map_h - robot_radius):
+        for j in range(map_w - robot_radius):
+            window = maze_map[i: i+robot_diameter, j: j+robot_diameter]
+            window_filled_pixels = np.argwhere(window > 0)
+
+            if any(np.linalg.norm(window_center - window_filled_pixels, axis=1) < robot_radius):
+                # center of that window is not free space
+                freespace_map[i + robot_radius, j + robot_radius] = 1
+
+    # # too close to the edges is not free space:
+    freespace_map[0:robot_radius, :] = freespace_map[map_h-robot_radius: map_h] = 1
+    freespace_map[:, 0:robot_radius] = freespace_map[:, map_w-robot_radius:map_w] = 1
+
+    return freespace_map
+
+
 def get_vanilla_navigator_env(start_loc=(1., 7.5),
                               target_loc=(9, 3),
                               subgoal_epsilon=0.4,
