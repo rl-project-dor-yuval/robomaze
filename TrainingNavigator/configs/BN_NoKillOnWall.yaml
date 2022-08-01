@@ -1,6 +1,6 @@
-"run_name": "NoDemoAtAll"
-"group": "DifferentDemos"
-"project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
+"run_name": "Test_Robot_Refacotor2"
+"group": "Test_Robot_Refacotor"
+"project": "Robomaze-Tests"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
@@ -19,7 +19,7 @@ use_TD3MP: True # otherwise DDPGMP
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"demo_on_fail_prob": 0.0
+"demo_on_fail_prob": 0.5
 "demo_prob_decay": 1
 "learning_starts": !!python/object/apply:eval
   [10 ** 3]
@@ -57,7 +57,7 @@ use_TD3MP: True # otherwise DDPGMP
 "eval_freq": 1000
 "eval_freq2": 1000
 "change_eval_freq_after": 6
-"video_freq": 5
+"video_freq": 1
 "save_model_freq": 5000
 
 # Constants:

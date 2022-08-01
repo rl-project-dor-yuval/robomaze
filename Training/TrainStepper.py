@@ -73,10 +73,6 @@ if __name__ == '__main__':
         maze_env, eval_maze_env = get_multi_targets_circle_envs_multiproc(**env_kwargs,
                                                                           num_envs=config["num_envs"])
 
-    if config["position_control"]:
-        maze_env.set_position_control(True)
-        eval_maze_env.set_position_control(True)
-
     callback = MultiWorkspaceEvalAndSaveCallback(log_dir=config["dir"],
                                                  eval_env=eval_maze_env,
                                                  eval_freq=config["eval_freq"],

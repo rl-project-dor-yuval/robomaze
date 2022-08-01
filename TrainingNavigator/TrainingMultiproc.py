@@ -32,7 +32,7 @@ if __name__ == '__main__':
     config = yaml.load(open("TrainingNavigator/configs/" + args.config_name, "r"), yaml_loader)
     print(config)
     # noinspection DuplicatedCode
-    config["dir"] = "./TrainingNavigator/logs/" + config["run_name"]
+    config["dir"] = f"./TrainingNavigator/logs/{config['group']}/{config['run_name']}"
     # ---
 
     # setup W&B:

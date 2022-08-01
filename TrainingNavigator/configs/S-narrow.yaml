@@ -1,6 +1,6 @@
-"run_name": "TestNewCameraAngle"
-"group": "TestNewCameraAngle"
-"project": "Robomaze-Tests"  # "Robomaze-tests"
+"run_name": "NoWallhitLimit_NoDemo"
+"group": "S-narrow-firstTries"
+"project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
 "config_file": "S-narrow.yaml"
 "show_gui": False
 "seed": !!python/object/apply:eval
@@ -19,7 +19,7 @@ use_TD3MP: True # otherwise DDPGMP
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
-"demo_on_fail_prob": 0.2
+"demo_on_fail_prob": 0.0
 "demo_prob_decay": 1
 "learning_starts": !!python/object/apply:eval
   [10 ** 3]
@@ -41,7 +41,7 @@ use_TD3MP: True # otherwise DDPGMP
 "use_demo_epsilon_offset": False
 "max_stepper_steps": 100 # maybe you can change this
 "max_navigator_steps": 45 # or this
-"wall_hit_limit": 15
+"wall_hit_limit": 45
 "repeat_failed_ws_prob": 0.0
 
 # workspace paths:
@@ -53,11 +53,11 @@ use_TD3MP: True # otherwise DDPGMP
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperWithRotation.pt'
 
 # logging parameters
-"eval_workspaces": 1  # will take the first workspaces
-"eval_freq": 50
-"eval_freq2": 20
+"eval_workspaces": 100  # will take the first workspaces
+"eval_freq": 2500
+"eval_freq2": 2500
 "change_eval_freq_after": 6
-"video_freq": 1
+"video_freq": 2
 "save_model_freq": 5000
 
 # Constants:

@@ -34,8 +34,6 @@ success_steps_before_done: 1 # The minimum number of steps the robot must be at 
 
 sticky_actions: 5
 
-position_control: False
-
 "use_td3": True  # otherwise DDPG
 # td3 specific parameters, ignored if use_td3=False
 "td3_smoothing_noise": 0.2
