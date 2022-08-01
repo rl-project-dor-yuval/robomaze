@@ -28,8 +28,8 @@ class MazeEnv(gym.Env):
     rewards: Rewards
     done_on_collision: bool
 
-    recording_video_size: Tuple[int, int] = (200, 200)
-    video_skip_frames: int = 2
+    recording_video_size: Tuple[int, int] = (250, 250)
+    video_skip_frames: int = 1
     zoom: float = 1.05  # is also relative to maze size
 
     _collision_manager: CollisionManager
@@ -399,13 +399,6 @@ class MazeEnv(gym.Env):
             raise Exception(f"Start location and target location must be at least "
                             f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
                             f"and {min_y} < y < {max_y} for this maze size")
-
-    def set_position_control(self, position_control: bool = True):
-        """set the ant to position control if true, or torque control if false"""
-        if position_control:
-            print("WARNING: setting ant to position control! make sure you know what you are doing! "
-                  "and please don't mix position and torque control in the same episode.")
-        self._ant.set_position_control(position_control)
 
     @staticmethod
     def compute_signed_rotation_diff(rotation_diff):
