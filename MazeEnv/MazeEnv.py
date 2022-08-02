@@ -171,7 +171,7 @@ class MazeEnv(gym.Env):
                                   maze_size=maze_size,
                                   video_size=self.recording_video_size,
                                   zoom=self.zoom,
-                                  fps=30)
+                                  fps=60)
 
     def step(self, action):
         if not self.is_reset:
