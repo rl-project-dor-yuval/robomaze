@@ -187,6 +187,7 @@ def trajectory_to_transitions(trajectory: np.ndarray, rewards_: Rewards, epsilon
 
     return observations, actions, rewards, next_observations, dones
 
+
 def make_workspace_list(workspaces):
     """
     Create workspace objects list to pass to MazeEnv given workspaces array of start and goal points.
@@ -204,4 +205,17 @@ def make_workspace_list(workspaces):
         ws_tuple = (*start_loc, heading, *goal_loc, heading)
         workspaces_list.append(mz.Workspace.from_array(np.array(ws_tuple)))
     return workspaces_list
+
+
+def unscale_action(env: NavigatorEnv, action):
+    """
+    unscale action from -1 to 1 to real action space
+    :param env: envrionment to unscale action for
+    :param action: 
+    :return: 
+    """
+    action_space = env.action_space
+    action_low = action_space.low
+    action_high = action_space.high
+    return (action + 1) * (action_high - action_low) / 2 + action_low
 
