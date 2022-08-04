@@ -6,14 +6,16 @@ import numpy as np
 POINTER_COLOR = [0, 1, 0, 0.5]
 
 
-# this function scales the given value to
+# this function scales the given value to new range
 def scale(value, old_high, old_low, new_high, new_low):
     return ((value - old_low) / (old_high - old_low)) * (new_high - new_low) + new_low
 
 
 class RobotBase:
     """ a base class for all robots. a robot must implement all the abstract method at the bottom of this class """
-    def __init__(self, pybullet_client: bc, position3d: np.ndarray, heading: float, robot_filename: str):
+
+    def __init__(self, pybullet_client: bc, position3d: np.ndarray, heading: float, robot_filename: str,
+                 scale_urdf: float):
         self._pclient = pybullet_client
         self.start_position = position3d
         self.heading = heading
@@ -22,7 +24,7 @@ class RobotBase:
         if robot_filename.endswith('.xml'):
             self.uid = self._pclient.loadMJCF(robot_filename)[0]
         else:
-            self.uid = self._pclient.loadURDF(robot_filename)
+            self.uid = self._pclient.loadURDF(robot_filename, globalScaling=scale_urdf)
 
         initial_orientation = self._pclient.getBasePositionAndOrientation(self.uid)[1]
         initial_orientation_euler = list(self._pclient.getEulerFromQuaternion(initial_orientation))
@@ -102,8 +104,9 @@ class RobotBase:
         self.initial_orientation = self._pclient.getQuaternionFromEuler(orientation_euler)
 
     def get_state_dim(self):
-        return 12 + self._get_joint_state_dim()
-        # 12 is the number of dimensions of the position and orientation and velocity
+        return 15 + self._get_joint_state_dim()
+        # 15 is the number of dimensions of the position and orientation and velocity
+        # and relative angle to target, relative distance and angle difference to desired
 
     @abstractmethod
     def _reset_joints(self, noisy_state):

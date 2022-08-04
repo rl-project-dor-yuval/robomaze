@@ -21,7 +21,7 @@ INIT_JOINT_STATES = [0, (ANKLE_1_4_HIGH + ANKLE_1_4_LOW) / 2,
 
 class Ant(RobotBase):
     def __init__(self, pybullet_client, position3d, heading):
-        super().__init__(pybullet_client, position3d, heading, "ant.xml")
+        super().__init__(pybullet_client, position3d, heading, "ant.xml", scale_urdf=None)
 
         # color ant:
         for link in range(self._pclient.getNumJoints(self.uid)):
@@ -65,5 +65,5 @@ class Ant(RobotBase):
     def get_action_dim(self):
         return 8
 
-    def get_state_dim(self):
+    def _get_joint_state_dim(self):
         return 16

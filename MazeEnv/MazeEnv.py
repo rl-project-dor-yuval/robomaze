@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 import gym
 from gym.spaces import Box, Dict
 import pybullet
@@ -12,9 +12,10 @@ from MazeEnv.Recorder import Recorder
 from MazeEnv.EnvAttributes import Rewards, MazeSize, Workspace
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant
+from MazeEnv.Rex import Rex
 from MazeEnv.Maze import Maze
 
-_ANT_START_Z_COORD = 0.7  # the height the ant starts at
+_ROBOT_START_Z_COORD = 0.7  # the height the ant starts at
 
 
 class MazeEnv(gym.Env):
@@ -34,7 +35,7 @@ class MazeEnv(gym.Env):
 
     _collision_manager: CollisionManager
     _maze: Maze
-    _ant: Ant
+    _robot: Union[Ant, Rex]
     _recorder: Recorder
 
     _start_loc: List
@@ -59,10 +60,11 @@ class MazeEnv(gym.Env):
                  done_on_collision=True,
                  done_on_goal_reached=True,
                  success_steps_before_done: int = 1,
-                 noisy_ant_initialization=False,
+                 noisy_robot_initialization=False,
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
-                 sticky_actions=8):
+                 sticky_actions=8,
+                 robot_type=str):
         """
         # TODO: Update docstring
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -70,7 +72,7 @@ class MazeEnv(gym.Env):
          if no value is passed, an empty maze is made, means there are only edges.
         :param tile_size: the size of each point in the maze passed by maze map. determines the
          resolution of the maze
-        :param start_loc: the location the ant starts at
+        :param start_loc: the location the robot starts at
         :param target_loc: the location of the target sphere center
         :param rewards: definition of reward values for events
         :param timeout_steps: maximum steps until getting timeout reward and episode ends
@@ -78,17 +80,17 @@ class MazeEnv(gym.Env):
         :param show_gui: if set to true, the simulation will be shown in a GUI window
         :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
                 if True, the two first elements of the observation are X and Y
-        :param done_on_collision: if True, episodes ends when the ant collides with the wall
+        :param done_on_collision: if True, episodes ends when the robot collides with the wall
         :param done_on_goal_reached
-        :param success_steps_before_done: number of steps the ant has to be in the target location
+        :param success_steps_before_done: number of steps the robot has to be in the target location
           (within epsilon distance) to end episode in case done_on_goal_reached is True (otherwise ignored)
-        :type noisy_ant_initialization: if True, the ant will start with a random joint state and with
+        :type noisy_robot_initialization: if True, the robot will start with a random joint state and with
          a noisy orientation at each reset
         :param goal_max_velocity: optional velocity limit to consider reaching goal
         :param optimize_boarders: if True, collision detection is checked only on boarder of
          free areas on the map
         :param sticky_actions: for how many simulation steps to repeat an action.
-
+        :param robot_type: string determines the the robot type - 'Ant' or 'Rex'.
         Initializing environment object
         """
 
@@ -115,18 +117,13 @@ class MazeEnv(gym.Env):
         self.done_on_goal_reached = done_on_goal_reached
         self.success_steps_before_done = success_steps_before_done
         self.max_goal_velocity = goal_max_velocity
-        self.noisy_ant_initialization = noisy_ant_initialization
+        self.noisy_robot_initialization = noisy_robot_initialization
         self.sticky_actions = sticky_actions
 
         self.is_reset = False
         self.step_count = 0
         self.episode_count = 0
         self.success_steps = 0
-
-        self.action_space = Box(low=-1, high=1, shape=(8,))
-
-        obs_space_size = 31 if xy_in_obs else 29
-        self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # setup simulation:
         if show_gui:
@@ -148,16 +145,25 @@ class MazeEnv(gym.Env):
         self._maze = Maze(self._pclient, maze_size, maze_map, tile_size, target_loc3d, workspace.goal_heading,
                           optimize_maze_boarders)
 
-        # load ant robot:
-        ant_loc_3d = workspace.start_loc_tuple() + (_ANT_START_Z_COORD,)
-        self._ant = Ant(self._pclient, ant_loc_3d, workspace.start_heading)
+        # load robot:
+        robot_loc_3d = workspace.start_loc_tuple() + (_ROBOT_START_Z_COORD,)
+        self._robot = Ant(self._pclient, robot_loc_3d, workspace.start_heading) if robot_type == "Ant" else \
+            (Rex(self._pclient, robot_loc_3d, workspace.start_heading) if robot_type == "Rex" else
+             None)
+        if self._robot is None:
+            raise Exception("Such robot does not exists")
+
+        # set Action & State space
+        self.action_space = Box(low=-1, high=1, shape=(8,))
+        obs_space_size = 15 + self._robot.get_state_dim() if xy_in_obs else 13 + self._robot.get_state_dim()
+        self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # create collision detector and pass relevant uids:
         maze_uids, target_sphere_uid, floorUid = self._maze.get_maze_objects_uids()
         self._collision_manager = CollisionManager(self._pclient,
                                                    maze_uids,
                                                    target_sphere_uid,
-                                                   self._ant.uid,
+                                                   self._robot.uid,
                                                    floorUid)
 
         # setup camera for a bird view:
@@ -179,19 +185,19 @@ class MazeEnv(gym.Env):
         # if not self.action_space.contains(action):
         #     raise Exception("Expected shape (8,) and value in [-1,1] ")
 
-        # perform step: pass actions through the ant object and run simulation step:
+        # perform step: pass actions through the robot object and run simulation step:
         for _ in range(self.sticky_actions):  # loop incase we want sticky actions
-            self._ant.action(action)
+            self._robot.action(action)
             self._pclient.stepSimulation()
-            self._ant.update_direction_pointer(visible=True)
-            # I left the option to choose not to show ant direction pointer in case we want this. just pass false.
+            self._robot.update_direction_pointer(visible=True)
+            # I left the option to choose not to show robot direction pointer in case we want this. just pass false.
 
         self.step_count += 1
 
         # resolve observation:
         observation = self._get_observation()
-        ant_xy = observation[0:2]
-        ant_heading_diff = observation[30]
+        robot_xy = observation[0:2]
+        robot_heading_diff = observation[14]
 
         if not self.xy_in_obs:
             observation = observation[2:]
@@ -210,13 +216,13 @@ class MazeEnv(gym.Env):
             reward += self.rewards.collision
 
         goal_loc_xy = np.array(self.workspace.goal_loc_tuple())
-        goal_distance = np.linalg.norm(goal_loc_xy - ant_xy)
+        goal_distance = np.linalg.norm(goal_loc_xy - robot_xy)
 
         reward += self.rewards.compute_target_distance_reward(target_distance=goal_distance)
-        reward += self.rewards.compute_rotation_reward(rotation_diff=ant_heading_diff)
+        reward += self.rewards.compute_rotation_reward(rotation_diff=robot_heading_diff)
 
         # check if goal is reached and update info/reward/is_done:
-        if goal_distance < self.hit_target_epsilon and abs(ant_heading_diff) < self.target_heading_epsilon:
+        if goal_distance < self.hit_target_epsilon and abs(robot_heading_diff) < self.target_heading_epsilon:
             # check if meets velocity condition:
             vx, vy = observation[3], observation[4]
             if np.sqrt(vx ** 2 + vy ** 2) < self.max_goal_velocity:
@@ -260,8 +266,8 @@ class MazeEnv(gym.Env):
 
         reset the environment for the next episode
         """
-        # move ant to start position:
-        self._ant.reset(self.noisy_ant_initialization)
+        # move robot to start position:
+        self._robot.reset(self.noisy_robot_initialization)
 
         # handle recording (save last episode if needed)
         if self._recorder.is_recording:
@@ -305,8 +311,8 @@ class MazeEnv(gym.Env):
         goal_loc_3d = workspace.goal_loc_tuple() + (0,)
         self._maze.set_new_goal(goal_loc_3d, workspace.goal_heading)
 
-        ant_loc_3d = workspace.start_loc_tuple() + (_ANT_START_Z_COORD,)
-        self._ant.set_start_state(ant_loc_3d, workspace.start_heading)
+        robot_loc_3d = workspace.start_loc_tuple() + (_ROBOT_START_Z_COORD,)
+        self._robot.set_start_state(robot_loc_3d, workspace.start_heading)
 
     # TODO: Remove those methods after checking that everything is working fine:
     # def set_target_loc_and_heading(self, new_loc, new_heading=None):
@@ -326,12 +332,12 @@ class MazeEnv(gym.Env):
     #
     # def set_start_loc(self, start_loc):
     #     """
-    #     change the start location of the ant in the next reset
+    #     change the start location of the robot in the next reset
     #     :param start_loc: tuple of the start location
     #     :return: None
     #     """
     #     self._check_start_state(self._maze.maze_size, start_loc, self._target_loc)
-    #     self._ant.start_position[0], self._ant.start_position[1] = start_loc[0], start_loc[1]
+    #     self._robot.start_position[0], self._robot.start_position[1] = start_loc[0], start_loc[1]
     #     self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
     #
     # def get_target_loc(self):
@@ -352,33 +358,37 @@ class MazeEnv(gym.Env):
         """
         get 31D/29D observation vector according to use of x,y
         observation consists of:
-        [ 0:2 - ant COM position (x,y,z),
-          3:5 - ant COM velocity (x,y,z),
-          6:8 - ant euler orientation [Roll, Pitch, Yaw],
-          9:11 - ant angular velocity (x,y,z),
-          12:19 - ant joint position (8 joints),
-          20:27 - ant joint velocities (8 joints),
-          28 - relative distance from target,
-          29 - relative angle to target (in radians),
-          30 - angle between rotation of the robot and target heading]
+        [ 0:2 -   robot COM position (x,y,z),
+          3:5 -   robot COM velocity (x,y,z),
+          6:8 -   robot euler orientation [Roll, Pitch, Yaw],
+          9:11 -  robot angular velocity (x,y,z),
+          12 - relative distance from target,
+          13 - relative angle to target (in radians),
+          14 - angle between rotation of the robot and target heading]
+          15:22|15:26 - robot joint position (8/12 joints),
+          23:30|27:38- robot joint velocities (8/12 joints),
         """
         # if xy not in observation it will be cut later
-        observation = np.zeros(31, dtype=np.float32)
+        obs_dim = self._robot.get_state_dim()
+        observation = np.zeros(obs_dim, dtype=np.float32)
 
-        observation[0:12] = self._ant.get_pos_orientation_velocity()
-        observation[12:28] = self._ant.get_joint_state()
+        # first 12 elements
+        observation[0:12] = self._robot.get_pos_orientation_velocity()
 
         # next two elements are angel and distance from target
-        ant_loc = observation[0:2]
+        robot_loc = observation[0:2]
         target_loc = np.array(self.workspace.goal_loc_tuple())
-        relative_target = target_loc - ant_loc
-        observation[28] = np.linalg.norm(relative_target)
-        observation[29] = np.arctan2(relative_target[1], relative_target[0])
+        relative_target = target_loc - robot_loc
+        observation[12] = np.linalg.norm(relative_target)
+        observation[13] = np.arctan2(relative_target[1], relative_target[0])
 
-        # last element is rotation angle between ant and target heading
+        # last element is rotation angle between robot and target heading
         robot_rotation = observation[8]
         rotation_diff = self.workspace.goal_heading - robot_rotation
-        observation[30] = self.compute_signed_rotation_diff(rotation_diff)
+        observation[14] = self.compute_signed_rotation_diff(rotation_diff)
+
+        # setting observation according to robot dim
+        observation[15:] = self._robot.get_joint_state()
 
         return observation
 
@@ -386,7 +396,7 @@ class MazeEnv(gym.Env):
     def _check_start_state(maze_size, start_loc, target_loc):
         """
         This function ensures that the locations are inside the maze.
-        It does not handle the cases where the ant or target are on
+        It does not handle the cases where the robot or target are on
         a maze tile or the maze is unsolvable.
         """
         min_x = min_y = 1
