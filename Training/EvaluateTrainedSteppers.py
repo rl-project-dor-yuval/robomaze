@@ -43,7 +43,7 @@ def get_env(sticky_actions, timeout_steps, noisy_initialization=False):
                                         max_goal_velocity=9999,
                                         show_gui=True,
                                         xy_in_obs=False,
-                                        noisy_ant_initialization=noisy_initialization,)
+                                        noisy_robotinitialization=noisy_initialization,)
 
     return maze_env
 

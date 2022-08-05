@@ -1,4 +1,4 @@
-"run_name": "NoWallhitLimit_NoDemo"
+"run_name": "SmallerRBF_NoDemo"
 "group": "SpiralThick20x20-firstTries"
 "project": "Robomaze-PaperNavigator"  # "Robomaze-tests"
 "config_file": "SpiralThick20x20.yaml"
@@ -15,7 +15,7 @@ use_TD3MP: True # otherwise DDPGMP
 "grad_clip_norm_critic": 0.5
 "batch_size": 1024
 "buffer_size": !!python/object/apply:eval
-  [33333 ** 1] # Note: effective size is buffer_size * num_envs!
+  [5000 ** 1] # Note: effective size is buffer_size * num_envs!
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03

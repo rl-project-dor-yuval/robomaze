@@ -41,7 +41,7 @@ def train_stepper(config: dict):
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
                       target_heading_epsilon=config["target_heading_epsilon"],
-                      noisy_ant_initialization=config["random_initialization"],
+                      noisy_robotinitialization=config["random_initialization"],
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
                       success_steps_before_done=config["success_steps_before_done"],
