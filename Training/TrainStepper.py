@@ -1,14 +1,5 @@
-"""
-Usage: TrainStepper.py ConfigFileName.yaml
-the config file must appear in Training/Configs and you shouldn't pass the full path
-"""
-
-import argparse
-import time
 import numpy as np
-import os
 import sys
-import yaml
 from stable_baselines3 import DDPG, TD3
 from stable_baselines3.common.noise import NormalActionNoise
 import wandb
@@ -19,16 +10,8 @@ from Utils import get_multi_workspace_circle_envs, get_multi_targets_circle_envs
 from Evaluation import EvalAndSaveCallback, MultiWorkspaceEvalAndSaveCallback
 import torch
 
-if __name__ == '__main__':
-    # noinspection DuplicatedCode
-    parser = argparse.ArgumentParser()
-    parser.add_argument('config_name', type=str, help='config file name without path,'
-                                                      ' the file must appear in Training/configs/')
-    args = parser.parse_args()
 
-    yaml_loader = yaml.Loader
-    yaml_loader.add_constructor("!Rewards", Rewards.from_yaml)
-    config = yaml.load(open("Training/configs/" + args.config_name, "r"), yaml_loader)
+def train_stepper(config: dict):
     config["dir"] = "./Training/logs/StepperV2" + config["run_name"]
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -84,13 +67,11 @@ if __name__ == '__main__':
     noise_sigma = [config["exploration_noise_std_shoulder"], config["exploration_noise_std_ankle"]] * 4
     exploration_noise = NormalActionNoise(mean=np.array([0] * 8), sigma=np.array(noise_sigma))
 
-
     def lr_func(progress):
         if progress < 0.33 and config["reduce_lr"]:
             return config["learning_rate"] * config["lr_reduce_factor"]
         else:
             return config["learning_rate"]
-
 
     model_kwargs = dict(policy="MlpPolicy",
                         env=maze_env,
