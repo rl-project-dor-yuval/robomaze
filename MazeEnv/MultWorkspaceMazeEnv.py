@@ -19,10 +19,11 @@ class MultiWorkspaceMazeEnv(MazeEnv):
                  done_on_collision: bool = True,
                  done_on_goal_reached: bool = True,
                  success_steps_before_done=1,
-                 noisy_ant_initialization: bool = False,
+                 noisy_robot_initialization: bool = False,
                  max_goal_velocity: float = np.inf,
                  optimize_maze_boarders=True,
-                 sticky_actions=1):
+                 sticky_actions=1,
+                 robot_type=str):
         """
         A MAzeEnv with multiple workspaces. A random workspace from workspace_list will be chosen for each
         episode unless one is provided in the reset() method.
@@ -43,10 +44,11 @@ class MultiWorkspaceMazeEnv(MazeEnv):
                          done_on_collision=done_on_collision,
                          done_on_goal_reached=done_on_goal_reached,
                          success_steps_before_done=success_steps_before_done,
-                         noisy_ant_initialization=noisy_ant_initialization,
+                         noisy_robot_initialization=noisy_robot_initialization,
                          goal_max_velocity=max_goal_velocity,
                          optimize_maze_boarders=optimize_maze_boarders,
-                         sticky_actions=sticky_actions)
+                         sticky_actions=sticky_actions,
+                         robot_type=robot_type)
 
     def reset(self, create_video=False, video_path=None, reset_episode_count=False, workspace_index=None):
         """

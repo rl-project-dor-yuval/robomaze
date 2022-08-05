@@ -7,7 +7,7 @@ from MazeEnv.EnvAttributes import Workspace
 sys.path.append('../..')
 
 import MazeEnv.MultWorkspaceMazeEnv as mz
-import MazeEnv.ObstaclesMultiTargetMazeEnv as omz
+# import MazeEnv.ObstaclesMultiTargetMazeEnv as omz
 import time
 import numpy as np
 from TrainingNavigator.StepperAgent import StepperAgent
@@ -19,8 +19,8 @@ start = time.time()
 tile_size = 0.1
 maze_size = mz.MazeSize.SQUARE10
 map_size = np.dot(maze_size, int(1 / tile_size))
-maze_map = make_circular_map(map_size, 1.1 / tile_size)
-# maze_map = np.zeros(map_size)
+# maze_map = make_circular_map(map_size, 0.8 / tile_size)
+maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
 workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_test.csv", delimiter=',')
@@ -45,13 +45,14 @@ maze_env = mtmz.MultiWorkspaceMazeEnv(maze_size=maze_size,
                                       show_gui=True,
                                       xy_in_obs=False,
                                       sticky_actions=5,
-                                      noisy_ant_initialization=False,
-                                      done_on_goal_reached=False)
+                                      noisy_robot_initialization=False,
+                                      done_on_goal_reached=False,
+                                      robot_type='Rex')
 i = 0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    agent = StepperAgent("Training/logs/StepperV2same_params(except_max_steps)/model_17600000.zip")
+    # agent = StepperAgent("Training/logs/StepperV2same_params(except_max_steps)/model_17600000.zip")
     for tgt_idx in range(20):
         obs = maze_env.reset(workspace_index=tgt_idx, create_video=False)
         is_done = False
@@ -67,7 +68,7 @@ if __name__ == "__main__":
             #     action = - action
             #
             # action = agent.step(obs)
-            action = [1] * 8
+            action = [0.1] * 12
             obs, reward, is_done, _ = maze_env.step(action)
             # print(obs)
             if reward != 0:
