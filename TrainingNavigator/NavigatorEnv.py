@@ -167,8 +167,8 @@ class NavigatorEnv(gym.Env):
             # stepper agent doesn't need x and y of the ant
             stepper_obs = self.ant_curr_obs[2:]
             # update r and theta and rotation for the subgoal (the environment returns for the main goal)
-            stepper_obs[26:28] = r_theta_to_subgoal
-            stepper_obs[28] = rotation_diff
+            stepper_obs[12:14] = r_theta_to_subgoal
+            stepper_obs[14] = rotation_diff
             stepper_action = self.stepper_agent.step(stepper_obs)
 
             # play ant step, reward is not required and is_done is determined using info
