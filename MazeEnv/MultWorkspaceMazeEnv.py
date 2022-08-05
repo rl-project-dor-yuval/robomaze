@@ -22,8 +22,8 @@ class MultiWorkspaceMazeEnv(MazeEnv):
                  noisy_robot_initialization: bool = False,
                  max_goal_velocity: float = np.inf,
                  optimize_maze_boarders=True,
-                 sticky_actions=1,
-                 robot_type=str):
+                 sticky_actions=8,
+                 robot_type: str = 'Ant'):
         """
         A MAzeEnv with multiple workspaces. A random workspace from workspace_list will be chosen for each
         episode unless one is provided in the reset() method.

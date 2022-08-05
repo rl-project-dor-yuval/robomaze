@@ -11,12 +11,13 @@ import os
 from MazeEnv.Recorder import Recorder
 from MazeEnv.EnvAttributes import Rewards, MazeSize, Workspace
 from MazeEnv.CollisionManager import CollisionManager
-from MazeEnv.Ant import Ant
+from MazeEnv.Ant import Ant, RobotBase
 from MazeEnv.Rex import Rex
 from MazeEnv.Maze import Maze
 
-_ROBOT_START_Z_COORD = 0.7  # the height the ant starts at
+_ROBOT_START_Z_COORD = 0.7  # the height the robot starts at
 
+robot_types = {"Ant": Ant, "Rex": Rex}
 
 class MazeEnv(gym.Env):
     rewards: Rewards
@@ -35,7 +36,7 @@ class MazeEnv(gym.Env):
 
     _collision_manager: CollisionManager
     _maze: Maze
-    _robot: Union[Ant, Rex]
+    _robot: RobotBase
     _recorder: Recorder
 
     _start_loc: List
@@ -64,7 +65,7 @@ class MazeEnv(gym.Env):
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
                  sticky_actions=8,
-                 robot_type=str):
+                 robot_type: str = 'Ant',):
         """
         # TODO: Update docstring
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -147,15 +148,15 @@ class MazeEnv(gym.Env):
 
         # load robot:
         robot_loc_3d = workspace.start_loc_tuple() + (_ROBOT_START_Z_COORD,)
-        self._robot = Ant(self._pclient, robot_loc_3d, workspace.start_heading) if robot_type == "Ant" else \
-            (Rex(self._pclient, robot_loc_3d, workspace.start_heading) if robot_type == "Rex" else
-             None)
-        if self._robot is None:
-            raise Exception("Such robot does not exists")
+        if not robot_type in robot_types.keys():
+            raise Exception("robot_type must be one of {}, but was {}".format(robot_types.keys(), robot_type))
+        self._robot = robot_types[robot_type](self._pclient, robot_loc_3d, workspace.start_heading,)
 
         # set Action & State space
-        self.action_space = Box(low=-1, high=1, shape=(8,))
-        obs_space_size = 15 + self._robot.get_state_dim() if xy_in_obs else 13 + self._robot.get_state_dim()
+        self.action_space = Box(low=-1, high=1, shape=(self._robot.get_action_dim(),))
+        obs_space_size = self._robot.get_state_dim()
+        if not self.xy_in_obs:
+            obs_space_size -= 2
         self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # create collision detector and pass relevant uids:
@@ -364,9 +365,9 @@ class MazeEnv(gym.Env):
           9:11 -  robot angular velocity (x,y,z),
           12 - relative distance from target,
           13 - relative angle to target (in radians),
-          14 - angle between rotation of the robot and target heading]
-          15:22|15:26 - robot joint position (8/12 joints),
-          23:30|27:38- robot joint velocities (8/12 joints),
+          14 - angle between rotation of the robot and target heading
+          n robot joint states
+          n robot joint velocities]
         """
         # if xy not in observation it will be cut later
         obs_dim = self._robot.get_state_dim()
