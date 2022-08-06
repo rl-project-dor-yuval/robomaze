@@ -30,15 +30,15 @@ class Rex(RobotBase):
             state_ = 0
             velocity = 0
             if noisy_state:
-                state_ += np.random.uniform(-np.pi, np.pi)
-                # velocity += np.random.uniform(-0.5, 0.5)
+                state_ += np.random.uniform(-np.pi/4, np.pi/4)
+                velocity += np.random.uniform(-0.1, 0.1)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
     def action(self, in_action: np.array):
         action = np.array(in_action, dtype=np.float32)
 
         mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 1500)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 25)
 
     def get_joint_state(self):
         """

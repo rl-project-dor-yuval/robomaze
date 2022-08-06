@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # load base config:
     yaml_loader = yaml.Loader
     yaml_loader.add_constructor("!Rewards", Rewards.from_yaml)
-    config = yaml.load(open("Training/configs/BaseAntParams.yaml", "r"), yaml_loader)
+    config = yaml.load(open("Training/configs/BaseParams.yaml", "r"), yaml_loader)
 
     # add all config parameters to argparse:
     parser = argparse.ArgumentParser()

@@ -18,7 +18,7 @@ def train_stepper(config: dict):
     print("running on:", device)
 
     # setup W&B:
-    wb_run = wandb.init(project="AntStepper", name=config["run_name"],
+    wb_run = wandb.init(project="Stepper-all-robots", name=config["run_name"],
                         group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
@@ -53,7 +53,8 @@ def train_stepper(config: dict):
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
                       success_steps_before_done=config["success_steps_before_done"],
-                      done_on_goal_reached=config["done_on_goal_reached"], )
+                      done_on_goal_reached=config["done_on_goal_reached"],
+                      robot_type=config["robot_type"], )
     if config["num_envs"] == 1:
         maze_env, eval_maze_env = get_multi_workspace_circle_envs(**env_kwargs)
     else:
@@ -72,8 +73,9 @@ def train_stepper(config: dict):
                                                  verbose=1)
 
     # create_model
-    noise_sigma = [config["exploration_noise_std_shoulder"], config["exploration_noise_std_ankle"]] * 4
-    exploration_noise = NormalActionNoise(mean=np.array([0] * 8), sigma=np.array(noise_sigma))
+    exploration_noise = NormalActionNoise(mean=np.array([0] * eval_maze_env.action_space.shape[0]),
+                                          sigma=np.array([config["exploration_noise_std"]] \
+                                                         * eval_maze_env.action_space.shape[0]))
 
     def lr_func(progress):
         if progress < 0.33 and config["reduce_lr"]:
