@@ -198,10 +198,10 @@ class MazeEnv(gym.Env):
         # resolve observation:
         observation = self._get_observation()
         robot_xy = observation[0:2]
+        vx, vy = observation[3], observation[4]
         robot_heading_diff = observation[14]
 
-        if not self.xy_in_obs:
-            observation = observation[2:]
+        observation = self.clean_xy_from_obs_if_needed(observation)
 
         # check status and resolve reward and is_done:
         reward = 0
@@ -225,7 +225,6 @@ class MazeEnv(gym.Env):
         # check if goal is reached and update info/reward/is_done:
         if goal_distance < self.hit_target_epsilon and abs(robot_heading_diff) < self.target_heading_epsilon:
             # check if meets velocity condition:
-            vx, vy = observation[3], observation[4]
             if np.sqrt(vx ** 2 + vy ** 2) < self.max_goal_velocity:
                 info['success'] = True
                 reward += self.rewards.target_arrival
@@ -235,8 +234,11 @@ class MazeEnv(gym.Env):
                     is_done = True
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            is_done = info['TimeLimit.truncated'] = True
-            reward += self.rewards.timeout
+            if info['success']:
+                is_done = True
+            else:
+                is_done = info['TimeLimit.truncated'] = True
+                reward += self.rewards.timeout
 
         reward += self.rewards.idle
 
@@ -248,11 +250,6 @@ class MazeEnv(gym.Env):
         # if done and recording save video
         if is_done and self._recorder.is_recording:
             self._recorder.save_recording_and_reset()
-
-        # print("-----------------")
-        # print(f"action {action}")
-        # print(f"reward {reward}")
-        # print(f"is_done {is_done}")
 
         return observation, reward, is_done, info
 
@@ -288,8 +285,7 @@ class MazeEnv(gym.Env):
         self.is_reset = True
 
         observation = self._get_observation()
-        if not self.xy_in_obs:
-            observation = observation[2:]
+        observation = self.clean_xy_from_obs_if_needed(observation)
         return observation
 
     def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
@@ -363,9 +359,9 @@ class MazeEnv(gym.Env):
           3:5 -   robot COM velocity (x,y,z),
           6:8 -   robot euler orientation [Roll, Pitch, Yaw],
           9:11 -  robot angular velocity (x,y,z),
-          12 - relative distance from target,
-          13 - relative angle to target (in radians),
-          14 - angle between rotation of the robot and target heading
+          12 - relative distance from target, # TODO can be computed in stepper instead of here
+          13 - relative angle to target (in radians), # TODO can be computed in stepper instead of here
+          14 - angle between rotation of the robot and target heading # TODO we probably don't need this anymores
           n robot joint states
           n robot joint velocities]
         """
@@ -393,6 +389,21 @@ class MazeEnv(gym.Env):
 
         return observation
 
+    def clean_xy_from_obs_if_needed(self, obs):
+        if not self.xy_in_obs:
+            return self.clean_xy_from_obs(obs)
+        return obs
+
+    @staticmethod
+    def clean_xy_from_obs(obs):
+        """
+        remove xy and heading from observation
+        :param obs: the observation
+        :return: the observation without xy and heading
+        """
+        # indices of xy are 0, 1 and index of heading is 8
+        return obs[2:]
+
     @staticmethod
     def _check_start_state(maze_size, start_loc, target_loc):
         """
@@ -415,7 +426,7 @@ class MazeEnv(gym.Env):
     def compute_signed_rotation_diff(rotation_diff):
         """
         given a raw angles difference, cast it to a signed angle between -pi and pi.
-        original diff may be more then pi or less than -pi.
+        original diff may be more than pi or less than -pi.
         """
         unsigned_diff = np.abs(rotation_diff) % 360
         if unsigned_diff > 180:

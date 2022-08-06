@@ -65,5 +65,5 @@ class Ant(RobotBase):
     def get_action_dim(self):
         return 8
 
-    def _get_joint_state_dim(self):
+    def get_joint_state_dim(self):
         return 16

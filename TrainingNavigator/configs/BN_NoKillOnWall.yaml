@@ -1,4 +1,4 @@
-"run_name": "Test_Robot_Refacotor2"
+"run_name": "Test_Robot_Refacotor3"
 "group": "Test_Robot_Refacotor"
 "project": "Robomaze-Tests"  # "Robomaze-tests"
 "config_file": "BN_NoKillOnWall.yaml"
@@ -9,7 +9,7 @@
 # algorithm and training parameters
 use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
-  [6 * 10 ** 6]
+  [1 * 10 ** 6]
 "learning_rate": 2.0e-5
 "grad_clip_norm_actor": 2
 "grad_clip_norm_critic": 0.5

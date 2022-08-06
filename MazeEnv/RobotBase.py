@@ -128,7 +128,7 @@ class RobotBase:
         raise NotImplementedError("any robot must implement get_action_dim")
 
     @abstractmethod
-    def _get_joint_state_dim(self):
+    def get_joint_state_dim(self):
         raise NotImplementedError("any robot must implement _get_joint_state_dim")
 
 

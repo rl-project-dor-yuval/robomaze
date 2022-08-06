@@ -18,17 +18,25 @@ def train_stepper(config: dict):
     print("running on:", device)
 
     # setup W&B:
-    wb_run = wandb.init(project="AntStepper-New-Workspaces", name=config["run_name"],
+    wb_run = wandb.init(project="AntStepper", name=config["run_name"],
                         group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
-    workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_train.csv", delimiter=',')
-    # workspaces contains: (start_heading, goal_x, goal_y, goal_heading) but should contain
-    # (start_x, start_y, start_heading, goal_x, goal_y, goal_heading) where start_xy are constant in our case.
-    workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5, workspaces), axis=1)
+    workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_train.csv", delimiter=',')
+    # workspaces contains: (goal_x, goal_y) but should contain
+    # (start_x, start_y, start_heading, goal_x, goal_y, goal_heading)
+    # where start_xy and start_heading are constant in our case, and goal_heading is ignored
+    # if we give high enough epsilon
+    workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5,
+                                 np.zeros((workspaces.shape[0], 1)),
+                                 workspaces,
+                                 np.zeros((workspaces.shape[0], 1))), axis=1)
     workspaces = Workspace.list_from_multiple_arrays(workspaces)
-    val_workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_validation.csv", delimiter=',')
-    val_workspaces = np.concatenate((np.ones((val_workspaces.shape[0], 2)) * 5, val_workspaces), axis=1)
+    val_workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_validation.csv", delimiter=',')
+    val_workspaces = np.concatenate((np.ones((val_workspaces.shape[0], 2)) * 5,
+                                     np.zeros((val_workspaces.shape[0], 1)),
+                                     val_workspaces,
+                                     np.zeros((val_workspaces.shape[0], 1))), axis=1)
     val_workspaces = Workspace.list_from_multiple_arrays(val_workspaces)
 
     env_kwargs = dict(radius=config["map_radius"],
@@ -41,7 +49,7 @@ def train_stepper(config: dict):
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
                       target_heading_epsilon=config["target_heading_epsilon"],
-                      noisy_robotinitialization=config["random_initialization"],
+                      noisy_robot_initialization=config["random_initialization"],
                       with_obstacles=config["with_obstacles"],
                       sticky_actions=config["sticky_actions"],
                       success_steps_before_done=config["success_steps_before_done"],

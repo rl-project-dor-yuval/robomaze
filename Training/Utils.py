@@ -11,6 +11,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import DDPG
 from Training.Evaluation import create_gifs_from_avi
+from Training.StepperEnv import StepperEnv
 
 
 def clear_files(path: str):
@@ -42,7 +43,9 @@ def get_multi_workspace_circle_envs(radius,
                                     show_gui=False,
                                     with_obstacles=False,
                                     **env_kwargs):
-    maze_cls = obsmtmz.ObstaclesMultiTargetMazeEnv if with_obstacles else mtmz.MultiWorkspaceMazeEnv
+    if with_obstacles:
+        raise NotImplementedError("obstacles are deprecated")
+    maze_cls = StepperEnv
 
     # create environment :
     tile_size = 0.1

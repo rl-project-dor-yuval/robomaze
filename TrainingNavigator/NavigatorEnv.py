@@ -59,6 +59,10 @@ class NavigatorEnv(gym.Env):
         :param wall_hit_limit: if wall_hit_limit is > 0, and done in collision is True, then the episode is done if
                      the robot hits the wall more than wall_hit_limit times
         """
+        raise NotImplementedError("fix:"
+                                  " indexing of observation,"
+                                  " order of observation passed to stepepr"
+                                  " make theta to goal relative to heading")
 
         if maze_env is None and maze_env_kwargs is None:
             raise ValueError("Either maze_env or maze_env_kwargs must be given")
@@ -165,6 +169,7 @@ class NavigatorEnv(gym.Env):
             # same applies to the rotation diff
 
             # stepper agent doesn't need x and y of the ant
+            # TODO: when you get here to fix the heading part, use mazeEnv.clean_xy_in_obs
             stepper_obs = self.ant_curr_obs[2:]
             # update r and theta and rotation for the subgoal (the environment returns for the main goal)
             stepper_obs[12:14] = r_theta_to_subgoal
