@@ -104,7 +104,7 @@ class RobotBase:
         self.initial_orientation = self._pclient.getQuaternionFromEuler(orientation_euler)
 
     def get_state_dim(self):
-        return 15 + self._get_joint_state_dim()
+        return 15 + self.get_joint_state_dim()
         # 15 is the number of dimensions of the position and orientation and velocity
         # and relative angle to target, relative distance and angle difference to desired
 
