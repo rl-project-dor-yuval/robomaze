@@ -97,8 +97,8 @@ class RobotBase:
 
         return np.concatenate([position, vel, orientation, angular_vel])
 
-    def set_start_state(self, position3d, heading):
-        self.start_position = position3d
+    def set_start_state(self, position2d, heading):
+        self.start_position[0:2] = position2d
         orientation_euler = list(self._pclient.getEulerFromQuaternion(self.initial_orientation))
         orientation_euler[2] = heading
         self.initial_orientation = self._pclient.getQuaternionFromEuler(orientation_euler)

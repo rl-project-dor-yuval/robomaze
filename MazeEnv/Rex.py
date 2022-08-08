@@ -1,6 +1,8 @@
 from MazeEnv.RobotBase import RobotBase, scale
 import numpy as np
 
+
+START_HEIGHT = 1
 JOINTS_INDICES = np.arange(0, 12)
 
 
@@ -16,13 +18,15 @@ class Rex(RobotBase):
     9-11 Front right leg
     """
 
-    def __init__(self, pybullet_client, position3d, heading):
-        super().__init__(pybullet_client, position3d, heading, "quadrupedal.urdf", scale_urdf=2)
+    def __init__(self, pybullet_client, position2d, heading):
+        position3d = np.concatenate((position2d, (START_HEIGHT,)))
+        super().__init__(pybullet_client, position3d, heading, "quadrupedal.urdf", scale_urdf=2.5)
 
-        # color ant:
-        # for link in range(self._pclient.getNumJoints(self.uid)):
-        #    self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
-        # self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
+        # color robot:
+        for link in range(self._pclient.getNumJoints(self.uid)):
+            self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
+        self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
+
 
     def _reset_joints(self, noisy_state):
 
@@ -38,7 +42,7 @@ class Rex(RobotBase):
         action = np.array(in_action, dtype=np.float32)
 
         mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 25)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 30)
 
     def get_joint_state(self):
         """

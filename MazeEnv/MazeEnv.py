@@ -15,8 +15,6 @@ from MazeEnv.Ant import Ant, RobotBase
 from MazeEnv.Rex import Rex
 from MazeEnv.Maze import Maze
 
-_ROBOT_START_Z_COORD = 0.7  # the height the robot starts at
-
 robot_types = {"Ant": Ant, "Rex": Rex}
 
 class MazeEnv(gym.Env):
@@ -147,10 +145,10 @@ class MazeEnv(gym.Env):
                           optimize_maze_boarders)
 
         # load robot:
-        robot_loc_3d = workspace.start_loc_tuple() + (_ROBOT_START_Z_COORD,)
+        robot_loc_2d = workspace.start_loc_tuple()
         if not robot_type in robot_types.keys():
             raise Exception("robot_type must be one of {}, but was {}".format(robot_types.keys(), robot_type))
-        self._robot = robot_types[robot_type](self._pclient, robot_loc_3d, workspace.start_heading,)
+        self._robot = robot_types[robot_type](self._pclient, robot_loc_2d, workspace.start_heading,)
 
         # set Action & State space
         self.action_space = Box(low=-1, high=1, shape=(self._robot.get_action_dim(),))
@@ -308,8 +306,8 @@ class MazeEnv(gym.Env):
         goal_loc_3d = workspace.goal_loc_tuple() + (0,)
         self._maze.set_new_goal(goal_loc_3d, workspace.goal_heading)
 
-        robot_loc_3d = workspace.start_loc_tuple() + (_ROBOT_START_Z_COORD,)
-        self._robot.set_start_state(robot_loc_3d, workspace.start_heading)
+        robot_loc_2d = workspace.start_loc_tuple()
+        self._robot.set_start_state(robot_loc_2d, workspace.start_heading)
 
     # TODO: Remove those methods after checking that everything is working fine:
     # def set_target_loc_and_heading(self, new_loc, new_heading=None):

@@ -2,6 +2,9 @@ from MazeEnv.RobotBase import RobotBase, scale
 import numpy as np
 
 
+START_HEIGHT = 0.7
+
+
 # the indices of the joints in the built model
 # ANKLE_IDX = np.array([3, 8, 13, 18])
 # SHOULDER_IDX = np.array([1, 6, 11, 16])
@@ -20,7 +23,8 @@ INIT_JOINT_STATES = [0, (ANKLE_1_4_HIGH + ANKLE_1_4_LOW) / 2,
 
 
 class Ant(RobotBase):
-    def __init__(self, pybullet_client, position3d, heading):
+    def __init__(self, pybullet_client, position2d, heading):
+        position3d = np.concatenate((position2d, (START_HEIGHT,)))
         super().__init__(pybullet_client, position3d, heading, "ant.xml", scale_urdf=None)
 
         # color ant:

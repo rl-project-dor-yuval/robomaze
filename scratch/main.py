@@ -3,6 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 
 from MazeEnv.EnvAttributes import Workspace, MazeSize
+from Training.StepperEnv import StepperEnv
 
 sys.path.append('../..')
 
@@ -19,8 +20,8 @@ start = time.time()
 tile_size = 0.1
 maze_size = MazeSize.SQUARE10
 map_size = np.dot(maze_size, int(1 / tile_size))
-# maze_map = make_circular_map(map_size, 0.8 / tile_size)
-maze_map = np.zeros(map_size)
+maze_map = make_circular_map(map_size, 5 / tile_size)
+# maze_map = np.zeros(map_size)
 START_LOC = (5, 5)
 
 workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_test.csv", delimiter=',')
@@ -39,18 +40,18 @@ workspaces = Workspace.list_from_multiple_arrays(workspaces)
 #                                            show_gui=True,
 #                                            xy_in_obs=False)
 
-env = mtmz.MultiWorkspaceMazeEnv(maze_size=maze_size,
-                                 maze_map=maze_map,
-                                 tile_size=tile_size,
-                                 workspace_list=workspaces,
-                                 hit_target_epsilon=0.25,
-                                 timeout_steps=200,
-                                 show_gui=True,
-                                 xy_in_obs=False,
-                                 sticky_actions=5,
-                                 noisy_robot_initialization=False,
-                                 done_on_goal_reached=False,
-                                 robot_type='Rex')
+env = StepperEnv(maze_size=maze_size,
+                 maze_map=maze_map,
+                 tile_size=tile_size,
+                 workspace_list=workspaces,
+                 hit_target_epsilon=0.25,
+                 timeout_steps=200,
+                 show_gui=True,
+                 xy_in_obs=False,
+                 sticky_actions=8,
+                 noisy_robot_initialization=False,
+                 done_on_goal_reached=False,
+                 robot_type='Rex')
 i = 0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
@@ -72,7 +73,7 @@ if __name__ == "__main__":
             #
             # action = agent.step(obs)
             action = [0.5] * 12
-            action = np.random.uniform(-1, 1, 12)
+            action = env.action_space.sample()
             obs, reward, is_done, _ = env.step(action)
             # print(obs)
             if reward != 0:
