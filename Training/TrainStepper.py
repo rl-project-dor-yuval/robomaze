@@ -3,6 +3,7 @@ import sys
 from stable_baselines3 import DDPG, TD3
 from stable_baselines3.common.noise import NormalActionNoise
 import wandb
+from datetime import datetime
 
 sys.path.append('.')
 from MazeEnv.EnvAttributes import Rewards, Workspace
@@ -12,7 +13,10 @@ import torch
 
 
 def train_stepper(config: dict):
-    config["dir"] = "./Training/logs/StepperV2" + config["run_name"]
+    # add datetime string to run name so each run will be on different dir in case we run a sweep:
+    datetime_string = datetime.now().strftime("%d%m_%I%M%S_%f")
+    config["run_name"] = config["run_name"] + datetime_string
+    config["dir"] = "./Training/logs/StepperV3" + config["run_name"]
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("running on:", device)
