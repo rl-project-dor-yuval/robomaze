@@ -52,7 +52,7 @@ class RobotBase:
         initial_orientation = self.initial_orientation
         if noisy_state:
             initial_orientation = list(self._pclient.getEulerFromQuaternion(initial_orientation))
-            initial_orientation = [np.random.uniform(-0.3, 0.3) + oriant for oriant in initial_orientation[:2]] + \
+            initial_orientation = [np.random.uniform(-0.2, 0.2) + oriant for oriant in initial_orientation[:2]] + \
                                   initial_orientation[2:]
             initial_orientation = self._pclient.getQuaternionFromEuler(initial_orientation)
         self._pclient.resetBasePositionAndOrientation(self.uid,
@@ -61,7 +61,7 @@ class RobotBase:
         # start with noisy velocity only if required
         if noisy_state:
             linear_vel = [np.random.uniform(-1, 1), np.random.uniform(-1, 1), 0]
-            angular_vel = np.random.uniform(-0.3, 0.3, 3)
+            angular_vel = np.random.uniform(-0.2, 0.2, 3)
             self._pclient.resetBaseVelocity(self.uid, linear_vel, angular_vel)
 
         self._reset_joints(noisy_state)

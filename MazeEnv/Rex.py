@@ -2,7 +2,7 @@ from MazeEnv.RobotBase import RobotBase, scale
 import numpy as np
 
 
-START_HEIGHT = 1
+START_HEIGHT = 1.1
 JOINTS_INDICES = np.arange(0, 12)
 
 
@@ -27,22 +27,26 @@ class Rex(RobotBase):
             self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
         self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
 
-
     def _reset_joints(self, noisy_state):
 
         for joint in JOINTS_INDICES:
             state_ = 0
             velocity = 0
             if noisy_state:
-                state_ += np.random.uniform(-np.pi/4, np.pi/4)
-                velocity += np.random.uniform(-0.1, 0.1)
+                if joint in [0, 3, 6, 9]:
+                    # shoulder joints, should move less
+                    state_ += np.random.uniform(-np.pi/16, np.pi/16)
+                    velocity += np.random.uniform(-0.05, 0.05)
+                else:
+                    state_ += np.random.uniform(-np.pi/8, np.pi/8)
+                    velocity += np.random.uniform(-0.1, 0.1)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
     def action(self, in_action: np.array):
         action = np.array(in_action, dtype=np.float32)
 
         mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 30)
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action * 40)
 
     def get_joint_state(self):
         """
