@@ -387,6 +387,9 @@ class MazeEnv(gym.Env):
 
         return observation
 
+    def get_joint_state_dim(self):
+        return self._robot.get_joint_state_dim()
+
     def clean_xy_from_obs_if_needed(self, obs):
         if not self.xy_in_obs:
             return self.clean_xy_from_obs(obs)

@@ -11,7 +11,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import DDPG
 from Training.Evaluation import create_gifs_from_avi
-from Training.StepperEnv import StepperEnv
+from Training.StepperEnv import StepperEnv, OBS_SPACE_SIZE_NO_JOINT_STATES
 
 
 def clear_files(path: str):
@@ -163,3 +163,4 @@ def visualize_model(model_path, targets_n, video_dir, eval_env: mtmz):
     labels = [pth.split('/')[-1].split('.')[0] for pth in gifs]
     labels.sort()
     ipyplot.plot_images(gifs, labels, rewards, img_width=200)
+

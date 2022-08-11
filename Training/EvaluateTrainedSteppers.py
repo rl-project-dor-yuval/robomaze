@@ -9,46 +9,46 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
-import MazeEnv.MultWorkspaceMazeEnv as mz
+import Training.StepperEnv as senv
 from Training.Utils import make_circular_map
 from TrainingNavigator.StepperAgent import StepperAgent
-from MazeEnv.EnvAttributes import Rewards, Workspace
+from MazeEnv.EnvAttributes import Rewards, Workspace, MazeSize
 
-
-num_workspaces = 1000
+num_workspaces = 200
 
 
 def get_env(sticky_actions, timeout_steps, noisy_initialization=False):
-    workspaces = np.genfromtxt("Training/workspaces/workspaces_06to3_test.csv", delimiter=',')
-    workspaces = np.concatenate((5 * np.ones((workspaces.shape[0], 2)), workspaces), axis=1)
+    workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_test.csv", delimiter=',')
+    workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5,
+                                 np.zeros((workspaces.shape[0], 1)),
+                                 workspaces,
+                                 np.zeros((workspaces.shape[0], 1))), axis=1)
     tile_size = 0.1
-    maze_size = mz.MazeSize.SQUARE10
+    maze_size = MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))
     maze_map = make_circular_map(map_size, 5 / tile_size)
 
-    rewards = Rewards(target_distance_weight=0.01, rotation_weight=0.01, target_distance_offset=5, fall=-1,
+    rewards = Rewards(target_distance_weight=0.01, rotation_weight=0.00, target_distance_offset=5, fall=-1,
                       target_arrival=1, collision=0, timeout=0, idle=0, )
     workspace_list = Workspace.list_from_multiple_arrays(workspaces)
 
-    maze_env = mz.MultiWorkspaceMazeEnv(maze_size=maze_size,
-                                        maze_map=maze_map,
-                                        tile_size=tile_size,
-                                        workspace_list=workspace_list,
-                                        rewards=rewards,
-                                        hit_target_epsilon=0.25,
-                                        target_heading_epsilon=np.pi / 9,
-                                        done_on_goal_reached=False,
-                                        timeout_steps=timeout_steps,
-                                        sticky_actions=sticky_actions,
-                                        max_goal_velocity=9999,
-                                        show_gui=True,
-                                        xy_in_obs=False,
-                                        noisy_robot_initialization=noisy_initialization,)
+    maze_env = senv.StepperEnv(maze_size=maze_size,
+                               maze_map=maze_map,
+                               tile_size=tile_size,
+                               workspace_list=workspace_list,
+                               rewards=rewards,
+                               hit_target_epsilon=0.25,
+                               done_on_goal_reached=False,
+                               timeout_steps=timeout_steps,
+                               sticky_actions=sticky_actions,
+                               max_goal_velocity=9999,
+                               show_gui=False,
+                               noisy_robot_initialization=noisy_initialization, )
 
     return maze_env
 
 
-def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
+def evaluate_stepper(agent, env: senv.StepperEnv):
     fall_count = 0
     last_step_success_count = 0
     ep_success_count_list = []
@@ -93,7 +93,7 @@ def evaluate_stepper(agent, env: mz.MultiWorkspaceMazeEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = ["Training/logs/StepperV2DDPG_StickyActions8_MaxSteps150"]
+    log_dirs = ["Training/logs/StepperV2Unnamed"]
     stepper_checkpoints = []
 
     # for log_dir in log_dirs:
@@ -105,8 +105,7 @@ if __name__ == "__main__":
     #         stepper_checkpoints.remove(c)
 
     # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_19600000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_22000000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_23000000.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
 
     env = get_env(sticky_actions=8, timeout_steps=150, noisy_initialization=False)
 

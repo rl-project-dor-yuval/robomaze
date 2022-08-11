@@ -384,7 +384,7 @@ class CustomActor(Actor):
         out = self.mu(features)
         # transforming to r,theta
 
-        dx, dy, rotation = out[:, 0], out[:, 1], out[:, 2]
+        dx, dy = out[:, 0], out[:, 1]
         r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
 
         # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
@@ -394,9 +394,8 @@ class CustomActor(Actor):
         r_scaled = th.tanh(r)
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
         # theta_scaled = theta_scaled.clip(-1, 1)
-        rotation_scaled = 2 * (rotation - low[2]) / (high[2] - low[2]) - 1
 
-        return th.stack([r_scaled, theta_scaled, rotation_scaled], dim=1)
+        return th.stack([r_scaled, theta_scaled], dim=1)
 
 
 class CustomTD3Policy(TD3Policy):

@@ -6,7 +6,6 @@ the config file must appear in TrainingNavigator/Configs and you shouldn't pass 
 import sys
 sys.path.append('.')
 from TrainingNavigator.TD3MP import TD3MP, CustomTD3Policy
-import argparse
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.env_util import make_vec_env
@@ -18,18 +17,10 @@ import torch
 from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
-import yaml
 from Utils import blackwhiteswitch, make_workspace_list
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('config_name', type=str, help='config file name without path,'
-                                                      ' the file must appear in TrainingNavigator/configs/')
-    args = parser.parse_args()
 
-    yaml_loader = yaml.Loader
-    yaml_loader.add_constructor("!Rewards", Rewards.from_yaml)
-    config = yaml.load(open("TrainingNavigator/configs/" + args.config_name, "r"), yaml_loader)
+def train_multiproc(config: dict):
     print(config)
     # noinspection DuplicatedCode
     config["dir"] = f"./TrainingNavigator/logs/{config['group']}/{config['run_name']}"
@@ -37,7 +28,7 @@ if __name__ == '__main__':
 
     # setup W&B:
     wb_run = wandb.init(project=config["project"], name=config["run_name"],
-                        group=config["group"], config=config)
+                        group=config["group"], config=config, tags=config["tags"])
     wandb.tensorboard.patch(root_logdir="TrainingNavigator/logs/tb", pytorch=True)
 
     # Setup Training Environment
@@ -48,11 +39,10 @@ if __name__ == '__main__':
     validation_workspaces = make_workspace_list(validation_workspaces)
 
     maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
-                           show_gui=config["show_gui"], )
+                           show_gui=config["show_gui"], robot_type=config["robot_type"],)
     nav_env_kwargs = dict(workspace_list=workspaces,
                           maze_env_kwargs=maze_env_kwargs,
                           epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
-                          epsilon_rotation_to_hit_subgoal=config["epsilon_rotation_to_subgoal"],
                           max_vel_in_subgoal=config["max_velocity_in_subgoal"],
                           rewards=config["rewards"],
                           done_on_collision=config["done_on_collision"],
@@ -69,7 +59,8 @@ if __name__ == '__main__':
 
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
-    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True, show_gui=False)
+    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
+                            robot_type=config['robot_type'], show_gui=False)
     eval_nav_env = MultiWorkspaceNavigatorEnv(workspace_list=validation_workspaces,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
@@ -85,8 +76,8 @@ if __name__ == '__main__':
     eval_nav_env.visualize_mode(False)
 
     # set up model and run:
-    exploration_noise = NormalActionNoise(mean=np.array([0] * 3),
-                                          sigma=np.array([config["exploration_noise_std"]] * 3))
+    exploration_noise = NormalActionNoise(mean=np.array([0] * 2),
+                                          sigma=np.array([config["exploration_noise_std"]] * 2))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('running on:', device)
