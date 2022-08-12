@@ -41,11 +41,9 @@ class RobotBase:
         self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
         self._pclient.changeVisualShape(self._direction_pointer, -1, rgbaColor=[0, 0, 0, 1])
 
-        self._joint_name_to_id = {}
-        self._build_joint_name2Id_dict()
+        self._setup_robot()
 
         self.reset()
-
 
 
     def reset(self, noisy_state=False):
@@ -135,5 +133,9 @@ class RobotBase:
     @abstractmethod
     def get_joint_state_dim(self):
         raise NotImplementedError("any robot must implement _get_joint_state_dim")
+
+    def _setup_robot(self):
+        """ optional to reimplement if robot needs setup in init before reset is called """
+        pass
 
 

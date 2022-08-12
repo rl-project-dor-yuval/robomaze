@@ -5,7 +5,7 @@ import numpy as np
 
 START_HEIGHT = 0.8
 JOINTS_INDICES = np.arange(0, 12)
-TORQUE_LIMITS = np.ones(12) * 40
+TORQUE_LIMITS = np.ones(12) * 150
 STAND_MOTOR_ANGLES = np.array([-10, 30, -75,
                                10, 30, -75,
                                -10, 50, -75,
@@ -38,6 +38,8 @@ class Rex(RobotBase):
     9-11 Front right leg
     """
 
+    _joint_name_to_id = {}
+
     def __init__(self, pybullet_client, position2d, heading):
         position3d = np.concatenate((position2d, (START_HEIGHT,)))
         super().__init__(pybullet_client, position3d, heading, os.path.join("laikago_urdf", "laikago.urdf"), scale_urdf=2)
@@ -47,8 +49,11 @@ class Rex(RobotBase):
             self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
         self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
 
+    def _setup_robot(self):
+        self._joint_name_to_id = {}
+        self._build_joint_name2id_dict()
 
-    def _build_joint_name2Id_dict(self):
+    def _build_joint_name2id_dict(self):
         num_joints = self._pclient.getNumJoints(self.uid)
         for i in range(num_joints):
             joint_info = self._pclient.getJointInfo(self.uid, i)
@@ -71,7 +76,7 @@ class Rex(RobotBase):
             self._pclient.resetJointState(self.uid, self._joint_name_to_id[name], state_, velocity)
 
     def action(self, in_action: np.array):
-        action = np.array(40 * in_action, dtype=np.float32)
+        action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
         action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
 
         mode = self._pclient.TORQUE_CONTROL
