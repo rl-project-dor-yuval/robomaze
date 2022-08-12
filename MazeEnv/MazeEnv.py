@@ -188,8 +188,9 @@ class MazeEnv(gym.Env):
         for _ in range(self.sticky_actions):  # loop incase we want sticky actions
             self._robot.action(action)
             self._pclient.stepSimulation()
-            self._robot.update_direction_pointer(visible=True)
-            # I left the option to choose not to show robot direction pointer in case we want this. just pass false.
+
+        self._robot.update_direction_pointer(visible=True)
+        # I left the option to choose not to show robot direction pointer in case we want this. just pass false.
 
         self.step_count += 1
 
