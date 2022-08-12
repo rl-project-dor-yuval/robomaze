@@ -54,11 +54,11 @@ use_TD3MP: True # otherwise DDPGMP
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 5000
-"eval_freq2": 5000
+"eval_freq": 10000
+"eval_freq2": 10000
 "change_eval_freq_after": 6
 "video_freq": 1
-"save_model_freq": 5000
+"save_model_freq": 10000
 
 # Constants:
 "maze_size": !!python/tuple [20, 20]
