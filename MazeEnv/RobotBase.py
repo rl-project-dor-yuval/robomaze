@@ -41,11 +41,12 @@ class RobotBase:
         self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
         self._pclient.changeVisualShape(self._direction_pointer, -1, rgbaColor=[0, 0, 0, 1])
 
+        self._joint_name_to_id = {}
+        self._build_joint_name2Id_dict()
+
         self.reset()
 
-        # turn off velocity motors, we use torque control
-        for joint in range(self._pclient.getNumJoints(self.uid)):
-            self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
+
 
     def reset(self, noisy_state=False):
 
@@ -65,6 +66,10 @@ class RobotBase:
             self._pclient.resetBaseVelocity(self.uid, linear_vel, angular_vel)
 
         self._reset_joints(noisy_state)
+
+        # turn off velocity motors, we use torque control
+        for joint in range(self._pclient.getNumJoints(self.uid)):
+            self._pclient.setJointMotorControl2(self.uid, joint, self._pclient.VELOCITY_CONTROL, force=0)
 
         self.update_direction_pointer()
 

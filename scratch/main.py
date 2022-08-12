@@ -1,5 +1,5 @@
 import os, sys
-import torch
+# import torch
 import matplotlib.pyplot as plt
 
 from MazeEnv.EnvAttributes import Workspace, MazeSize
@@ -48,7 +48,7 @@ env = StepperEnv(maze_size=maze_size,
                  timeout_steps=200,
                  show_gui=True,
                  xy_in_obs=False,
-                 sticky_actions=8,
+                 sticky_actions=4,
                  noisy_robot_initialization=False,
                  done_on_goal_reached=False,
                  robot_type='Rex')
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             #     action = - action
             #
             # action = agent.step(obs)
-            action = [0.5] * 12
+            # action = [0.5] * 12
             action = env.action_space.sample()
             obs, reward, is_done, _ = env.step(action)
             # print(obs)
