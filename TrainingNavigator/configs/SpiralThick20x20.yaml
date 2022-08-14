@@ -54,9 +54,9 @@ use_TD3MP: True # otherwise DDPGMP
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
-"eval_freq": 10000
-"eval_freq2": 10000
-"change_eval_freq_after": 6
+"eval_freq": 50000
+"eval_freq2": 20000
+"change_eval_freq_after": 2
 "video_freq": 1
 "save_model_freq": 10000
 

@@ -57,6 +57,7 @@ class NavEvalCallback(BaseCallback):
         self.verbose = verbose
 
         self.evals_count = 0
+        self.best_success_rate = 0
 
         wandb_run.define_metric('navStep', hidden=True)
         wandb_run.define_metric('TotalSimulationSteps')
@@ -87,6 +88,13 @@ class NavEvalCallback(BaseCallback):
             self.wandb_run.log({'eval_avg_reward': avg_reward, 'eval_avg_length': avg_length,
                                 'eval_success_rate': success_rate, 'eval_avg_wallhits': avg_wallhits,
                                 'navStep': self.n_calls, 'TotalSimulationSteps': simulation_steps, })
+
+            if success_rate >= self.best_success_rate:
+                self.best_success_rate = success_rate
+                print("saving best model...")
+                self.model.save(self.model_save_path + '/best_model')
+
+
             self.evals_count += 1
 
         if self.eval_video_freq > 0 and \

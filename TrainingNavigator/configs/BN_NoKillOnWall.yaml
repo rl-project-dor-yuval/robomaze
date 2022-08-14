@@ -58,7 +58,7 @@ use_TD3MP: True # otherwise DDPGMP
 "eval_freq2": 2000
 "change_eval_freq_after": 6
 "video_freq": 1
-"save_model_freq": 2000
+"save_model_freq": 10000
 
 # Constants:
 "maze_size": !!python/tuple [10, 10]
