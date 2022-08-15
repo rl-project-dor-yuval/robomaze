@@ -3,13 +3,15 @@ import os.path
 from MazeEnv.RobotBase import RobotBase, scale
 import numpy as np
 
-START_HEIGHT = 0.8
-JOINTS_INDICES = np.arange(0, 12)
-TORQUE_LIMITS = np.ones(12) * 150
+START_HEIGHT = 1.1
+JOINTS_INDICES = [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
+TORQUE_LIMITS = np.ones(12) * 100
+POSITION_LIMITS = np.array([np.pi/8, np.pi/2, np.pi/2] * 4, dtype=np.float32)
 STAND_MOTOR_ANGLES = np.array([-10, 30, -75,
                                10, 30, -75,
                                -10, 50, -75,
                                10, 50, -75]) * np.pi / 180
+
 JOINTS_NAMES = [
     "FR_hip_motor_2_chassis_joint",
     "FR_upper_leg_2_hip_motor_joint",
@@ -76,11 +78,16 @@ class Rex(RobotBase):
             self._pclient.resetJointState(self.uid, self._joint_name_to_id[name], state_, velocity)
 
     def action(self, in_action: np.array):
-        action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
-        action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
+        # action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
+        # action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
+        #
+        # mode = self._pclient.TORQUE_CONTROL
+        # self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action)
 
-        mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action)
+        action = np.array(in_action, dtype=np.float32) * POSITION_LIMITS
+        mode = self._pclient.POSITION_CONTROL
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action,
+                                                forces=TORQUE_LIMITS)
 
     def get_joint_state(self):
         """

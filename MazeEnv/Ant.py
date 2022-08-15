@@ -41,6 +41,7 @@ class Ant(RobotBase):
                 velocity += np.random.uniform(-0.5, 0.5)
             self._pclient.resetJointState(self.uid, joint, state_, velocity)
 
+
     def action(self, in_action: np.array):
         action = np.array(in_action, dtype=np.float32)
 

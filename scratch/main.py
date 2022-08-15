@@ -51,7 +51,7 @@ env = StepperEnv(maze_size=maze_size,
                  sticky_actions=8,
                  noisy_robot_initialization=False,
                  done_on_goal_reached=False,
-                 robot_type='Bipedal')
+                 robot_type='Rex')
 i = 0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
@@ -72,8 +72,8 @@ if __name__ == "__main__":
             #     action = - action
             #
             # action = agent.step(obs)
-            action = [0] * 3 + [1] * 3 + [0] * 3 + [-1] * 3
             action = env.action_space.sample()
+            action = [0.2] * 12
             obs, reward, is_done, _ = env.step(action)
             # print(obs)
             if reward != 0:
