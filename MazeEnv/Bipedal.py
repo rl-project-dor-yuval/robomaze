@@ -15,9 +15,6 @@ class Bipedal(RobotBase):
     - knee_yaw/roll/pitch
 
     """
-
-    _joint_name_to_id = {}
-
     def __init__(self, pybullet_client, position2d, heading):
         position3d = np.concatenate((position2d, (START_HEIGHT,)))
         super().__init__(pybullet_client, position3d, heading, "bipedal.urdf", scale_urdf=2)
@@ -26,17 +23,6 @@ class Bipedal(RobotBase):
         for link in range(self._pclient.getNumJoints(self.uid)):
             self._pclient.changeVisualShape(self.uid, linkIndex=link, rgbaColor=[0.4, 0.4, 0.4, 1])
         self._pclient.changeVisualShape(self.uid, linkIndex=-1, rgbaColor=[0.2, 0.2, 0.2, 1])
-
-    def _setup_robot(self):
-        self._joint_name_to_id = {}
-        self._build_joint_name2id_dict()
-
-    def _build_joint_name2id_dict(self):
-        self.num_joints = self._pclient.getNumJoints(self.uid)
-        for i in range(self.num_joints):
-            joint_info = self._pclient.getJointInfo(self.uid, i)
-            self._joint_name_to_id[joint_info[1].decode("UTF-8")] = joint_info[0]
-        print("Joint name to id dict:", self._joint_name_to_id)
 
     def _reset_joints(self, noisy_state):
 
