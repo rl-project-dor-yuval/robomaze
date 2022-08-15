@@ -2,8 +2,9 @@ import os.path
 from MazeEnv.RobotBase import RobotBase
 import numpy as np
 
-START_HEIGHT = 1.1
+START_HEIGHT = 1.2
 JOINTS_INDICES = np.arange(0, 12)
+POSITION_LIMITS = np.ones(12) * 2.5  # just like in the URDF
 TORQUE_LIMITS = np.array([2, 2, 2, 10, 10, 10, 2, 2, 2, 10, 10, 10])
 
 
@@ -35,6 +36,7 @@ class Bipedal(RobotBase):
         for i in range(self.num_joints):
             joint_info = self._pclient.getJointInfo(self.uid, i)
             self._joint_name_to_id[joint_info[1].decode("UTF-8")] = joint_info[0]
+        print("Joint name to id dict:", self._joint_name_to_id)
 
     def _reset_joints(self, noisy_state):
 
@@ -53,11 +55,16 @@ class Bipedal(RobotBase):
             self._pclient.resetJointState(self.uid, j_id, state_, velocity)
 
     def action(self, in_action: np.array):
-        action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
-        action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
+        # action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
+        # action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
+        #
+        # mode = self._pclient.TORQUE_CONTROL
+        # self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action)
 
-        mode = self._pclient.TORQUE_CONTROL
-        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action)
+        action = np.array(in_action, dtype=np.float32) * POSITION_LIMITS
+        mode = self._pclient.POSITION_CONTROL
+        self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action,
+                                                forces=TORQUE_LIMITS)
 
     def get_joint_state(self):
         """
