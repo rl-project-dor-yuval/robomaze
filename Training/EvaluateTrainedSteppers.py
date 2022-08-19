@@ -17,7 +17,7 @@ from MazeEnv.EnvAttributes import Rewards, Workspace, MazeSize
 num_workspaces = 200
 
 
-def get_env(sticky_actions, timeout_steps, noisy_initialization=False):
+def get_env(sticky_actions, timeout_steps, robot_type, noisy_initialization=False):
     workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_test.csv", delimiter=',')
     workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5,
                                  np.zeros((workspaces.shape[0], 1)),
@@ -43,6 +43,7 @@ def get_env(sticky_actions, timeout_steps, noisy_initialization=False):
                                sticky_actions=sticky_actions,
                                max_goal_velocity=9999,
                                show_gui=False,
+                               robot_type=robot_type,
                                noisy_robot_initialization=noisy_initialization, )
 
     return maze_env
@@ -93,7 +94,10 @@ def evaluate_stepper(agent, env: senv.StepperEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = ["Training/logs/StepperV2Unnamed"]
+    log_dirs = ["Training/logs/StepperV3PositionCtrl1508_070105_760463",  # 150 steps
+                "Training/logs/StepperV3PositionCtrl1508_070105_760522",  # 200 steps
+                "Training/logs/StepperV3PositionCtrl1508_070057_921711"   # 100 steps
+                ]
     stepper_checkpoints = []
 
     # for log_dir in log_dirs:
@@ -104,10 +108,14 @@ if __name__ == "__main__":
     #     if int(c.split("_")[-1].split(".")[0]) < 5000000:
     #         stepper_checkpoints.remove(c)
 
-    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_19600000.zip")
-    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_17600000.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_16800000.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[0] + "/best_model.zip")
+    # stepper_checkpoints += glob.glob(log_dirs[1] + "/best_model.zip")
+    stepper_checkpoints += glob.glob(log_dirs[2] + "/best_model.zip")
 
-    env = get_env(sticky_actions=8, timeout_steps=150, noisy_initialization=False)
+    robot_type = "Rex"
+
+    env = get_env(sticky_actions=8, timeout_steps=100, robot_type=robot_type, noisy_initialization=True)
 
     run_name_list = []
     success_once_list = []

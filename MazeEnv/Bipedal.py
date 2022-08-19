@@ -5,15 +5,11 @@ import numpy as np
 START_HEIGHT = 1.2
 JOINTS_INDICES = np.arange(0, 12)
 POSITION_LIMITS = np.ones(12) * 2.5  # just like in the URDF
-TORQUE_LIMITS = np.array([2, 2, 2, 10, 10, 10, 2, 2, 2, 10, 10, 10])
-
+TORQUE_LIMITS = np.ones(12) * 9
 
 class Bipedal(RobotBase):
     """
     Bipedal robot is a 12 joint robot with 6 DOF for each leg:
-    - hip_yaw/roll/pitch
-    - knee_yaw/roll/pitch
-
     """
     def __init__(self, pybullet_client, position2d, heading):
         position3d = np.concatenate((position2d, (START_HEIGHT,)))
@@ -26,7 +22,7 @@ class Bipedal(RobotBase):
 
     def _reset_joints(self, noisy_state):
 
-        for j_id in range(self.num_joints):
+        for j_id in JOINTS_INDICES:
             state_ = 0
             velocity = 0
             if noisy_state:
