@@ -26,7 +26,8 @@ class Rewards:
                  fall=-1,
                  target_distance_offset=0,
                  target_distance_weight=0,
-                 rotation_weight=0,):
+                 rotation_weight=0,
+                 height_weight=0):
         """
         :param target_arrival: the reward's value for arriving the target
         :param collision: the reward's value for a collision
@@ -47,6 +48,7 @@ class Rewards:
         self.target_distance_offset = target_distance_offset
         self.target_distance_weight = target_distance_weight
         self.rotation_weight = rotation_weight
+        self.height_weight = height_weight
 
     def compute_target_distance_reward(self, target_distance):
         return self.target_distance_weight * (self.target_distance_offset - target_distance)

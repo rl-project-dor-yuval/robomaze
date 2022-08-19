@@ -198,6 +198,7 @@ class MazeEnv(gym.Env):
         # resolve observation:
         observation = self._get_observation()
         robot_xy = observation[0:2]
+        robot_z = observation[2]
         vx, vy = observation[3], observation[4]
         robot_heading_diff = observation[14]
 
@@ -221,6 +222,7 @@ class MazeEnv(gym.Env):
 
         reward += self.rewards.compute_target_distance_reward(target_distance=goal_distance)
         reward += self.rewards.compute_rotation_reward(rotation_diff=robot_heading_diff)
+        reward += robot_z * self.rewards.height_weight
 
         # check if goal is reached and update info/reward/is_done:
         if goal_distance < self.hit_target_epsilon and abs(robot_heading_diff) < self.target_heading_epsilon:

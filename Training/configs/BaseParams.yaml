@@ -28,6 +28,7 @@
     collision: 0
     timeout: 0
     idle: 0
+    height_weight: 0.0
 done_on_goal_reached: False
 success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
                             # ignored when done_on_goal_reached is False
