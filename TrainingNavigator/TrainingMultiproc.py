@@ -6,18 +6,18 @@ the config file must appear in TrainingNavigator/Configs and you shouldn't pass 
 import sys
 sys.path.append('.')
 from TrainingNavigator.TD3MP import TD3MP, CustomTD3Policy
+from TrainingNavigator.DDPGMP import DDPGMP
 import numpy as np
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from TrainingNavigator.NavigatorEnv import MultiWorkspaceNavigatorEnv
 from MazeEnv.MazeEnv import MazeEnv
-from DDPGMP import DDPGMP
 import torch
 from MazeEnv.EnvAttributes import Rewards
 import wandb
 from TrainingNavigator.NavEvaluation import NavEvalCallback
-from Utils import blackwhiteswitch, make_workspace_list
+from TrainingNavigator.Utils import blackwhiteswitch, make_workspace_list
 
 
 def train_multiproc(config: dict):

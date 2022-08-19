@@ -205,6 +205,18 @@ def make_workspace_list(workspaces):
     return workspaces_list
 
 
+def scale_action(env, action):
+    """
+    Scale action to -1 to 1 range
+    :param env: environment
+    :param action: action to scale
+    :return: scaled action
+    """
+    action_space = env.action_space
+    low = action_space.low
+    high = action_space.high
+    return (action - low) / (high - low) * 2 - 1
+
 def unscale_action(env: NavigatorEnv, action):
     """
     unscale action from -1 to 1 to real action space

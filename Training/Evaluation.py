@@ -89,7 +89,7 @@ class BaseEvalAndSaveCallback(BaseCallback):
                 if self.verbose > 0:
                     print("creating video")
                 video_path = self._create_video()
-                vid_log_item = log_item = {'eval_video': wandb.Video(video_path, fps=40), 'step': self.n_calls}
+                vid_log_item = log_item = {'eval_video': wandb.Video(video_path, fps=20), 'step': self.n_calls}
                 self.wb_run.log(vid_log_item)
 
                 # The video that is being created here is different from the

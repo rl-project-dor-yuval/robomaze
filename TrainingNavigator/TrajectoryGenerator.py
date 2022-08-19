@@ -14,7 +14,7 @@ from typing import Tuple, Dict, List
 from TrainingNavigator.RRT_star.src.rrt.rrt_star import RRTStar
 from TrainingNavigator.RRT_star.src.search_space.search_space import ImgSearchSpace
 from TrainingNavigator.RRT_star.src.utilities.plotting import Plot
-from Utils import plot_trajectory, blackwhiteswitch
+from TrainingNavigator.Utils import plot_trajectory, blackwhiteswitch
 
 # noinspection PyUnreachableCode
 class TrajGenerator:
@@ -22,7 +22,7 @@ class TrajGenerator:
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self, mapPath: str, max_section_len=20):
+    def __init__(self, mapPath: str, max_section_len=15):
 
         self.map = blackwhiteswitch(mapPath)
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -40,8 +40,8 @@ class TrajGenerator:
 
     # noinspection PyUnreachableCode
     def find_optimal_trajectories(self,
-                                  xInit: Tuple[int, int],
-                                  xGoal: Tuple[int, int],
+                                  xInit: Tuple[float, float],
+                                  xGoal: Tuple[float, float],
                                   numOfTrajs: int,
                                   plot: bool) -> Dict[int, List[Tuple[int, int]]]:
         """
@@ -61,7 +61,7 @@ class TrajGenerator:
             path = rrt.rrt_star()
             end_t = time.time()
 
-            print(f"RRT* {i + 1}/{numOfTrajs} Time {end_t - start_t} [sec]")
+            # print(f"RRT* {i + 1}/{numOfTrajs} Time {end_t - start_t} [sec]")
 
             if path is not None:
                 # convert trajectory to integers, and fixing the origin to be on

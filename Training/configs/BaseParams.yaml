@@ -21,13 +21,13 @@
 "rewards":
   !Rewards
     target_distance_weight: 0.01
-    target_distance_offset: 5  # reward will be weight*(offset - distance)
+    target_distance_offset: 5.0  # reward will be weight*(offset - distance)
     rotation_weight: 0.00
-    fall: -1
-    target_arrival: 1
-    collision: 0
-    timeout: 0
-    idle: 0
+    fall: -1.0
+    target_arrival: 1.0
+    collision: 0.0
+    timeout: 0.0
+    idle: 0.0
     height_weight: 0.0
 done_on_goal_reached: False
 success_steps_before_done: 1 # The minimum number of steps the robot must be at the target to end episode,
