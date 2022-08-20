@@ -32,7 +32,7 @@ class MazeEnv(gym.Env):
     done_on_collision: bool
 
     recording_video_size: Tuple[int, int] = (250, 250)
-    video_skip_frames: int = 1
+    video_skip_frames: int = 2
     zoom: float = 1.05  # is also relative to maze size
 
     _collision_manager: CollisionManager
