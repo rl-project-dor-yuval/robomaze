@@ -16,7 +16,9 @@ from MazeEnv.Rex import Rex
 from MazeEnv.Bipedal import Bipedal
 from MazeEnv.Maze import Maze
 
+
 robot_types = {"Ant": Ant, "Rex": Rex, "Bipedal": Bipedal}
+
 
 class MazeEnv(gym.Env):
     rewards: Rewards

@@ -22,7 +22,7 @@ class TrajGenerator:
     an object that generates trajectories using RRTstar
     """
 
-    def __init__(self, mapPath: str, max_section_len=15):
+    def __init__(self, mapPath: str, max_section_len=25):
 
         self.map = blackwhiteswitch(mapPath)
         self.map = cv2.rotate(self.map, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -143,7 +143,7 @@ def generate_traj_set(trajGen: TrajGenerator, ws_dir, maze_map, ws_list, filenam
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('workspace_dir', type=str, help='everything is created in the same dir')
-    parser.add_argument('--max_section_len', type=int, default=15,
+    parser.add_argument('--max_section_len', type=int, default=25,
                         help='maximum distance between two points in the trajectory')
     parser.add_argument('--additional_name', type=str, default='',
                         help='additional name to be added to the file name')

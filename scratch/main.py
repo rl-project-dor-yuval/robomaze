@@ -77,11 +77,12 @@ if __name__ == "__main__":
             obs, reward, is_done, _ = env.step(action)
             # print(obs)
             if reward != 0:
-                print(reward)
-            print("step")
+                pass
+                # print(reward)
+            # print("step")
 
             # print(obs[6:9])
-            time.sleep(1. / 50)
+            # time.sleep(1. / 50)
 
     actions = np.array(actions)
     plt.hist(actions)

@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     config['tags'] = [args.map, args.robot, args.demo_kind]
     datetime_string = datetime.now().strftime("%d%m_%I%M%S_%f")
-    config['run_name'] = args.map + '_' + args.robot + '_' + datetime_string
+    config['run_name'] = args.map + '_' + args.robot + '_' + args.demo_kind + '_' + datetime_string
 
     train_multiproc(config)
 
