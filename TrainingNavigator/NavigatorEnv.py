@@ -97,7 +97,7 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/StepperAntNoRotation.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/AntNoHeading.pt', 'auto')
         elif isinstance(stepper_agent, str):
             stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
