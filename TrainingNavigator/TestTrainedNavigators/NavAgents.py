@@ -24,6 +24,7 @@ class NavAgent:
 class TD3MPAgent(NavAgent):
     def __init__(self, model_path, env: NavigatorEnv, demo_type='no_demo'):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print("using device: ", self.device)
         self.policy = TD3MP.load(model_path, env=env).policy.actor.eval().to(self.device)
         self.name = (model_path.split('logs'))[-1]
         self.demo_type = demo_type

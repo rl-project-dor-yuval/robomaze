@@ -11,6 +11,7 @@ maps_config_file = {'bottleneck': 'TrainingNavigator/configs/BN_NoKillOnWall.yam
                     'S-narrow': 'TrainingNavigator/configs/S-narrow.yaml',
                     'SpiralThick20x20': 'TrainingNavigator/configs/SpiralThick20x20.yaml',
                     '20x20maze': 'TrainingNavigator/configs/20x20maze.yaml',
+                    'room10x10': 'TrainingNavigator/configs/room10x10.yaml',
                     }
 
 stepper_agents_paths = {'Ant': 'TrainingNavigator/StepperAgents/AntNoHeading.pt',
@@ -33,7 +34,7 @@ if __name__ == '__main__':
         parser.add_argument('--reward_' + rew, type=type(reward_dict[rew]),)
 
     # add a mandatory arguments for map, robot and demo kind:
-    parser.add_argument('--map', choices=['bottleneck', 'S-narrow', 'SpiralThick20x20', '20x20maze'],
+    parser.add_argument('--map', choices=maps_config_file.keys(),
                         default='bottleneck', required=True)
     parser.add_argument('--robot', type=str, default='Ant', required=True)
     parser.add_argument('--demo_kind', choices=['no_demo', 'with_freespace', 'no_freespace'], default='no_freespace',

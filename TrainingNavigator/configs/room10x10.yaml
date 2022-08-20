@@ -46,7 +46,7 @@ use_TD3MP: True # otherwise DDPGMP
 
 # workspace paths:
 "maze_map_path": 'TrainingNavigator/workspaces/room10x10/room10x10.png'
-"workspaces_path": 'TrainingNavigator/workspaces/room10x10/room10x10.npy'
+"workspaces_path": 'TrainingNavigator/workspaces/room10x10/workspaces.npy'
 "validation_workspaces_path": 'TrainingNavigator/workspaces/room10x10/validation_workspaces.npy'
 "demonstration_path": 'TrainingNavigator/workspaces/room10x10/trajectories_train_no_freespace.npz'
 "validation_demonstration_path": 'TrainingNavigator/workspaces/room10x10/trajectories_validation_no_freespace.npz'

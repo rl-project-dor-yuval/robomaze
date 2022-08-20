@@ -29,6 +29,7 @@ if __name__ == '__main__':
     agent_list.append(RRTAgent(map_path=config['maze_map_path'], env=nav_env))
 
     success_rates, times = test_multiple_navigators(agent_list, nav_env)
+    print("writing results to csv")
     write_results_to_csv(agent_list, success_rates, times, config)
 
     # ------------------------
@@ -49,6 +50,7 @@ if __name__ == '__main__':
     agent_list.append(RRTAgent(map_path=config['maze_map_path'], env=nav_env))
 
     success_rates, times = test_multiple_navigators(agent_list, nav_env)
+    print("writing results to csv")
     write_results_to_csv(agent_list, success_rates, times, config)
 
     # ------------------------
@@ -68,6 +70,7 @@ if __name__ == '__main__':
     agent_list.append(RRTAgent(map_path=config['maze_map_path'], env=nav_env))
 
     success_rates, times = test_multiple_navigators(agent_list, nav_env)
+    print("writing results to csv")
     write_results_to_csv(agent_list, success_rates, times, config)
 
     # ------------------------
@@ -87,5 +90,6 @@ if __name__ == '__main__':
     agent_list.append(RRTAgent(map_path=config['maze_map_path'], env=nav_env))
 
     success_rates, times = test_multiple_navigators(agent_list, nav_env)
+    print("writing results to csv")
     write_results_to_csv(agent_list, success_rates, times, config)
 

@@ -418,15 +418,15 @@ class MazeEnv(gym.Env):
         It does not handle the cases where the robot or target are on
         a maze tile or the maze is unsolvable.
         """
-        min_x = min_y = 1
-        max_x, max_y = (maze_size[0] - 1), (maze_size[1] - 1)
+        min_x = min_y = 0.7
+        max_x, max_y = (maze_size[0] - 0.7), (maze_size[1] - 0.7)
         target_loc = tuple(target_loc)
         start_loc = tuple(start_loc)
 
         if start_loc < (min_x, min_y) or start_loc > (max_x, max_y) or \
                 target_loc < (min_x, min_y) or target_loc > (max_x, max_y):
             raise Exception(f"Start location and target location must be at least "
-                            f"1 unit away from maze boundries which is {min_x} < x < {max_x} "
+                            f"0.7 units away from maze boundries which is {min_x} < x < {max_x} "
                             f"and {min_y} < y < {max_y} for this maze size")
 
     @staticmethod
