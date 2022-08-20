@@ -5,8 +5,15 @@ import numpy as np
 
 START_HEIGHT = 1.1
 JOINTS_INDICES = [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
+
+LOWER_JOINT_LIMITS = np.array(
+    [-1.0472, -0.523599, -2.77507, -0.872665, -0.523599, -2.77507, -1.0472, -0.523599, -2.77507,
+     -0.872665, -0.523599, -2.77507])
+UPPER_JOINT_LIMITS = np.array(
+    [0.872665, 3.92699, -0.610865, 1.0472, 3.92699, -0.610865, 0.872665, 3.92699, -0.610865, 1.0472,
+     3.92699, -0.610865])
 TORQUE_LIMITS = np.ones(12) * 100
-POSITION_LIMITS = np.array([np.pi/8, np.pi/2, np.pi/2] * 4, dtype=np.float32)
+
 STAND_MOTOR_ANGLES = np.array([-10, 30, -75,
                                10, 30, -75,
                                -10, 50, -75,
@@ -44,7 +51,8 @@ class Rex(RobotBase):
 
     def __init__(self, pybullet_client, position2d, heading):
         position3d = np.concatenate((position2d, (START_HEIGHT,)))
-        super().__init__(pybullet_client, position3d, heading, os.path.join("laikago_urdf", "laikago.urdf"), scale_urdf=2)
+        super().__init__(pybullet_client, position3d, heading, os.path.join("laikago_urdf", "laikago.urdf"),
+                         scale_urdf=2)
 
         # color robot:
         for link in range(self._pclient.getNumJoints(self.uid)):
@@ -69,7 +77,7 @@ class Rex(RobotBase):
             if noisy_state:
                 # if joint in [0, 3, 6, 9]:
                 #     # shoulder joints, should move less
-                state_ += np.random.uniform(-np.pi/16, np.pi/16)
+                state_ += np.random.uniform(-np.pi / 16, np.pi / 16)
                 velocity += np.random.uniform(-0.05, 0.05)
                 # else:
                 #     state_ += np.random.uniform(-np.pi/8, np.pi/8)
@@ -78,13 +86,8 @@ class Rex(RobotBase):
             self._pclient.resetJointState(self.uid, self._joint_name_to_id[name], state_, velocity)
 
     def action(self, in_action: np.array):
-        # action = np.array(TORQUE_LIMITS * in_action, dtype=np.float32)
-        # action = np.clip(action, -1 * TORQUE_LIMITS, TORQUE_LIMITS)
-        #
-        # mode = self._pclient.TORQUE_CONTROL
-        # self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, forces=action)
-
-        action = np.array(in_action, dtype=np.float32) * POSITION_LIMITS
+        action = np.array(in_action, dtype=np.float32)
+        action = scale(action, 1, -1, UPPER_JOINT_LIMITS, LOWER_JOINT_LIMITS)
         mode = self._pclient.POSITION_CONTROL
         self._pclient.setJointMotorControlArray(self.uid, JOINTS_INDICES, mode, action,
                                                 forces=TORQUE_LIMITS)
@@ -98,6 +101,7 @@ class Rex(RobotBase):
         """
         joint_states_tuple = self._pclient.getJointStates(self.uid, JOINTS_INDICES)
         positions = np.array([j_state[0] for j_state in joint_states_tuple])
+        positions = scale(positions, UPPER_JOINT_LIMITS, LOWER_JOINT_LIMITS, 1, -1)
         velocities = np.array([j_state[1] for j_state in joint_states_tuple])
 
         return np.concatenate((positions, velocities))
