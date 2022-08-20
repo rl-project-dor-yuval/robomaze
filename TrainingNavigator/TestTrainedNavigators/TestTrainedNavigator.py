@@ -50,7 +50,9 @@ def test_multiple_navigators(agent_list: list[NavAgent], env: MultiWorkspaceNavi
 
 def get_env_from_config(config: dict, robot):
     maze_map = blackwhiteswitch(config["maze_map_path"])
-    workspaces = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
+    # config fives us train workspaces, we want test workspaces!
+    test_workspaces_path = config["workspaces_path"].replace("workspaces.npy", "test_workspaces.npy")
+    workspaces = np.load(test_workspaces_path) / 10  # all maps granularity is 10
     workspaces = make_workspace_list(workspaces)
 
     # workspaces = workspaces[:3] # for testing purposes
