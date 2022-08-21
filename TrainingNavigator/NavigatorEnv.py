@@ -202,7 +202,7 @@ class NavigatorEnv(gym.Env):
         nav_info['stepper_timeout'] = nav_info.pop('TimeLimit.truncated')
         self.curr_step += 1
         if self.curr_step >= self.max_steps:
-            nav_info['TimeLimit.truncated'] = True
+            nav_info['TimeLimit.truncated'] = not nav_is_done
             nav_is_done = True
         else:
             nav_info['TimeLimit.truncated'] = False

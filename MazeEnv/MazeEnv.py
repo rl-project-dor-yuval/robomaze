@@ -238,7 +238,7 @@ class MazeEnv(gym.Env):
                     is_done = True
 
         if self.timeout_steps != 0 and self.step_count >= self.timeout_steps:
-            if info['success']:
+            if info['success'] and self.done_on_goal_reached:
                 is_done = True
             else:
                 is_done = info['TimeLimit.truncated'] = True
