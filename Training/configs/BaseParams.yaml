@@ -16,7 +16,7 @@
 "tau": 0.005
 "reduce_lr": True
 "lr_reduce_factor": 0.2
-"exploration_noise_std": 0.1
+"exploration_noise_std": 0.05
 "batch_size": 512
 "rewards":
   !Rewards
