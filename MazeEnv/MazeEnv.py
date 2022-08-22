@@ -32,7 +32,7 @@ class MazeEnv(gym.Env):
     done_on_collision: bool
 
     recording_video_size: Tuple[int, int] = (250, 250)
-    video_skip_frames: int = 2
+    video_skip_frames: int = 8
     zoom: float = 1.05  # is also relative to maze size
 
     _collision_manager: CollisionManager
@@ -182,20 +182,22 @@ class MazeEnv(gym.Env):
                                   fps=60)
 
     def step(self, action):
-        if not self.is_reset:
-            raise Exception("MazeEnv.reset() must be called before before MazeEnv.step()")
-        # if not self.action_space.contains(action):
-        #     raise Exception("Expected shape (8,) and value in [-1,1] ")
+        self.step_count += 1
 
         # perform step: pass actions through the robot object and run simulation step:
-        for _ in range(self.sticky_actions):  # loop incase we want sticky actions
+        for a in range(self.sticky_actions):
             self._robot.action(action)
             self._pclient.stepSimulation()
+
+            # add frame to recording if needed
+            if self._recorder.is_recording and \
+                    (self.step_count * self.sticky_actions + a) % self.video_skip_frames == 0:
+                self._recorder.insert_current_frame()
+
 
         self._robot.update_direction_pointer(visible=True)
         # I left the option to choose not to show robot direction pointer in case we want this. just pass false.
 
-        self.step_count += 1
 
         # resolve observation:
         observation = self._get_observation()
@@ -246,10 +248,6 @@ class MazeEnv(gym.Env):
 
         reward += self.rewards.idle
 
-        # handle recording
-        if self._recorder.is_recording and \
-                self.step_count % self.video_skip_frames == 0:
-            self._recorder.insert_current_frame()
 
         # if done and recording save video
         if is_done and self._recorder.is_recording:
@@ -395,6 +393,16 @@ class MazeEnv(gym.Env):
 
     def get_joint_state_dim(self):
         return self._robot.get_joint_state_dim()
+
+    def set_view(self, angle: float = -75, focal: float = 1, zoom: float = 1.05):
+        """
+        basic setter for the view matrix.
+        :param angle: pitch angle of the camera. -90 means looking down
+        :param focal: focal point of the camera relative to the middle of the maze. 0 means middle.
+        :param zoom: zoom factor of the camera.
+        :return:
+        """
+        self._recorder.set_view(angle, focal, zoom)
 
     def clean_xy_from_obs_if_needed(self, obs):
         if not self.xy_in_obs:

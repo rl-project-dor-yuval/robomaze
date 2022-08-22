@@ -52,8 +52,29 @@ class Recorder:
 
         self._projection_matrix = self._pclient.computeProjectionMatrixFOV(fov=70,
                                                                            aspect=aspect,
-                                                                           nearVal=camera_distance - 6,
+                                                                           nearVal=camera_distance - 7,
                                                                            farVal=far_val)
+
+    def set_view(self, angle: float, focal: float, zoom: float):
+        """
+        basic setter for the view matrix.
+        :param angle: pitch angle of the camera. -90 means looking down
+        :param focal: focal point of the camera relative to the middle of the maze. 0 means middle.
+        :param zoom: zoom factor of the camera.
+        :return:
+        """
+
+        camera_distance = max(self._maze_size) / zoom  # depends on the longer axis
+        focal_point = [self._maze_size[0] / 2, self._maze_size[1] / 2, 0]  # middle
+        focal_point[0] += focal
+
+        self._view_matrix = self._pclient.computeViewMatrixFromYawPitchRoll(distance=camera_distance,
+                                                                            yaw=90,
+                                                                            pitch=angle,
+                                                                            roll=0,
+                                                                            upAxisIndex=2,
+                                                                            cameraTargetPosition=focal_point
+                                                                            )
 
     def start_recording(self, file_name, custom_path=False):
         """

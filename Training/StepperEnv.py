@@ -14,14 +14,15 @@ Stepper observation space is derived from the observation space of the maze envi
  0   -   robot_z;
  1:3 - robot_velocities r, theta, z where we rotate vx and vy to be relative to stepper coordinate system;
  4:6 - robot orientations yaw, pitch, roll, where yaw is rotated to be relative to goal (Stepper coordinate system);
- 7:9 - robot angular velocities
+ 7:9 - robot angular velocities;
  10  - distance from goal
+ 11  - heading diff from desired heading at goal
  n   - robot joint states
  n   - robot joint velocities
 ] 
 """
 
-OBS_SPACE_SIZE_NO_JOINT_STATES = 11
+OBS_SPACE_SIZE_NO_JOINT_STATES = 12
 
 
 class StepperEnv(MultiWorkspaceMazeEnv):
@@ -31,10 +32,12 @@ class StepperEnv(MultiWorkspaceMazeEnv):
 
         # since episodes are shorter for stepper, we can allow ourselves to invest more resources in video:
         self.recording_video_size = (400, 400)
-        self.video_skip_frames = 1
-        self.zoom = 1.1
+        self.video_skip_frames = 2
 
         super().__init__(**mw_maze_env_kwargs)
+
+        # better view for stepper:
+        self.set_view(-52.5, 1.3, 1.5)
 
         obs_space_size = OBS_SPACE_SIZE_NO_JOINT_STATES + self._robot.get_joint_state_dim()
         self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))

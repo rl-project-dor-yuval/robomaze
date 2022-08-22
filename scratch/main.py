@@ -45,22 +45,24 @@ env = StepperEnv(maze_size=maze_size,
                  tile_size=tile_size,
                  workspace_list=workspaces,
                  hit_target_epsilon=0.25,
-                 timeout_steps=150,
+                 timeout_steps=200,
                  show_gui=True,
                  xy_in_obs=False,
                  sticky_actions=8,
                  noisy_robot_initialization=False,
                  done_on_goal_reached=False,
                  robot_type='Bipedal')
+
+
 i = 0
 # run stepper to test and visualize angles
 if __name__ == "__main__":
 
-    # agent = StepperAgent("Training/logs/StepperV2same_params(except_max_steps)/model_17600000.zip")
-    for tgt_idx in range(20):
-        obs = env.reset(workspace_index=tgt_idx, create_video=False)
+    agent = StepperAgent("Training/logs/StepperV3HeightReward1908_065355_750775/model_19000000.zip")
+    actions = []
+    for tgt_idx in range(1):
+        obs = env.reset(workspace_index=tgt_idx, create_video=True)
         is_done = False
-        actions = []
         # while is_done is False:
         while not is_done:
             # action = np.clip(np.random.randn(8), -1, 1)
@@ -71,8 +73,9 @@ if __name__ == "__main__":
             # if (i//10)%2 == 0:
             #     action = - action
             #
-            # action = agent.step(obs)
-            action = env.action_space.sample()
+            action = agent.step(obs)
+            actions.append(action)
+            # action = env.action_space.sample()
             # action = [0.1] * 12
             obs, reward, is_done, _ = env.step(action)
             # print(obs)
@@ -82,7 +85,7 @@ if __name__ == "__main__":
             # print("step")
 
             # print(obs[6:9])
-            # time.sleep(1. / 50)
+            time.sleep(1. / 500)
 
     actions = np.array(actions)
     plt.hist(actions)
