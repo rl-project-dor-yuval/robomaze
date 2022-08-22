@@ -55,9 +55,7 @@ class Maze:
                                                          baseOrientation=pointer_orientation,
                                                          globalScaling=1.25)
         self._pclient.setCollisionFilterGroupMask(self._direction_pointer, -1, 0, 0)  # disable collisions
-        # ---- set alpha to non-zero to enable the pointer back, then uncomment lines in ----
-        # ---- set_subgoal_marker and set_new_goal ----
-        self._pclient.changeVisualShape(self._direction_pointer, linkIndex=-1, rgbaColor=[0, 0, 0.3, 0])
+        self._pclient.changeVisualShape(self._direction_pointer, linkIndex=-1, rgbaColor=[0, 0, 0.3, 0.5])
 
         # setup subgoal marker as well as direction pointer for it. It is invisible at the beginning:
         self._subgoal_marker = self._pclient.loadURDF("goalSphere.urdf",
@@ -93,11 +91,10 @@ class Maze:
         _, old_orientation = self._pclient.getBasePositionAndOrientation(self._target_sphereUid)
         self._pclient.resetBasePositionAndOrientation(self._target_sphereUid, target_position3d, old_orientation)
 
-        # ---- Uncomment to enable direction pointer ----
-        # pointer_position = list(target_position3d)
-        # pointer_position[2] += 0.75
-        # pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
-        # self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position, pointer_orientation)
+        pointer_position = list(target_position3d)
+        pointer_position[2] += 0.75
+        pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
+        self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position, pointer_orientation)
 
     def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
         """
@@ -111,12 +108,11 @@ class Maze:
             self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0.5, 0.5, 0.5, 0.75])
             self._pclient.resetBasePositionAndOrientation(self._subgoal_marker, position, [0, 0, 0, 1])
 
-            # ---- Uncomment to enable direction pointer ----
-            # pointer_position = list(position)
-            # pointer_position[2] += 0.75
-            # pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, heading))
-            # self._pclient.changeVisualShape(self._subgoal_pointer, -1, rgbaColor=[0.2, 0.2, 0.2, 0.75])
-            # self._pclient.resetBasePositionAndOrientation(self._subgoal_pointer, pointer_position, pointer_orientation)
+            pointer_position = list(position)
+            pointer_position[2] += 0.75
+            pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, heading))
+            self._pclient.changeVisualShape(self._subgoal_pointer, -1, rgbaColor=[0.2, 0.2, 0.2, 0.75])
+            self._pclient.resetBasePositionAndOrientation(self._subgoal_pointer, pointer_position, pointer_orientation)
         else:
             self._pclient.changeVisualShape(self._subgoal_marker, -1, rgbaColor=[0, 0, 0, 0])
             self._pclient.changeVisualShape(self._subgoal_pointer, -1, rgbaColor=[0, 0, 0, 0])

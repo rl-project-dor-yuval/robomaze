@@ -28,7 +28,7 @@ maze_map = - (cv2.imread('TrainingNavigator/workspaces/room10x10/room10x10.png',
 
 demos = np.load("TrainingNavigator/workspaces/room10x10/trajectories_train.npz")
 
-maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, xy_in_obs=True, show_gui=True)
+maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, show_gui=True)
 
 nav_env = MultiWorkspaceNavigatorEnv(workspaces,
                                      maze_env=maze_env,

@@ -38,7 +38,7 @@ def train_multiproc(config: dict):
     validation_workspaces = np.load(config["validation_workspaces_path"]) / 10
     validation_workspaces = make_workspace_list(validation_workspaces)
 
-    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
+    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map,
                            show_gui=config["show_gui"], robot_type=config["robot_type"],)
     nav_env_kwargs = dict(workspace_list=workspaces,
                           maze_env_kwargs=maze_env_kwargs,
@@ -59,7 +59,7 @@ def train_multiproc(config: dict):
 
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
-    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
+    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map,
                             robot_type=config['robot_type'], show_gui=False)
     eval_nav_env = MultiWorkspaceNavigatorEnv(workspace_list=validation_workspaces,
                                               maze_env=eval_maze_env,

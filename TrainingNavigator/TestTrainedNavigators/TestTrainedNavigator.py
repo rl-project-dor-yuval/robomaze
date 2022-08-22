@@ -57,7 +57,7 @@ def get_env_from_config(config: dict, robot):
 
     # workspaces = workspaces[:3] # for testing purposes
 
-    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
+    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map,
                            show_gui=config["show_gui"], robot_type=robot )
     nav_env = MultiWorkspaceNavigatorEnv(workspace_list=workspaces,
                                          maze_env_kwargs=maze_env_kwargs,

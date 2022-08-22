@@ -56,7 +56,6 @@ if __name__ == '__main__':
                           timeout_steps=config["timeout_steps"],
                           rewards=config["rewards"],
                           max_goal_velocity=config["max_goal_velocity"],
-                          xy_in_obs=False,
                           show_gui=config["show_gui"],
                           hit_target_epsilon=config["target_epsilon"])
     if config["num_envs"] == 1:

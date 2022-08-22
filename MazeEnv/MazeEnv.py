@@ -27,7 +27,6 @@ class MazeEnv(gym.Env):
     step_count: int
     is_reset: bool
     episode_count: int
-    xy_in_obs: bool
     rewards: Rewards
     done_on_collision: bool
 
@@ -56,7 +55,6 @@ class MazeEnv(gym.Env):
                  rewards: Rewards = Rewards(),
                  timeout_steps: int = 0,
                  show_gui: bool = False,
-                 xy_in_obs: bool = True,
                  hit_target_epsilon=0.4,
                  target_heading_epsilon=np.pi,
                  done_on_collision=True,
@@ -80,8 +78,6 @@ class MazeEnv(gym.Env):
         :param timeout_steps: maximum steps until getting timeout reward and episode ends
          (if a timeout reward is defined)
         :param show_gui: if set to true, the simulation will be shown in a GUI window
-        :param xy_in_obs: Weather to return the X and Y location of the robot in the observation.
-                if True, the two first elements of the observation are X and Y
         :param done_on_collision: if True, episodes ends when the robot collides with the wall
         :param done_on_goal_reached
         :param success_steps_before_done: number of steps the robot has to be in the target location
@@ -112,7 +108,6 @@ class MazeEnv(gym.Env):
         self.workspace = workspace
         self.rewards = rewards
         self.timeout_steps = timeout_steps
-        self.xy_in_obs = xy_in_obs
         self.hit_target_epsilon = hit_target_epsilon
         self.target_heading_epsilon = target_heading_epsilon
         self.done_on_collision = done_on_collision
@@ -156,8 +151,6 @@ class MazeEnv(gym.Env):
         # set Action & State space
         self.action_space = Box(low=-1, high=1, shape=(self._robot.get_action_dim(),))
         obs_space_size = self._robot.get_state_dim()
-        if not self.xy_in_obs:
-            obs_space_size -= 2
         self.observation_space = Box(-np.inf, np.inf, (obs_space_size,))
 
         # create collision detector and pass relevant uids:
@@ -205,8 +198,6 @@ class MazeEnv(gym.Env):
         robot_z = observation[2]
         vx, vy = observation[3], observation[4]
         robot_heading_diff = observation[14]
-
-        observation = self.clean_xy_from_obs_if_needed(observation)
 
         # check status and resolve reward and is_done:
         reward = 0
@@ -287,7 +278,6 @@ class MazeEnv(gym.Env):
         self.is_reset = True
 
         observation = self._get_observation()
-        observation = self.clean_xy_from_obs_if_needed(observation)
         return observation
 
     def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
@@ -313,38 +303,6 @@ class MazeEnv(gym.Env):
         robot_loc_2d = workspace.start_loc_tuple()
         self._robot.set_start_state(robot_loc_2d, workspace.start_heading)
 
-    # TODO: Remove those methods after checking that everything is working fine:
-    # def set_target_loc_and_heading(self, new_loc, new_heading=None):
-    #     """
-    #     set the target location. Call this Only Before reset()!
-    #     :param new_loc: the position of the target
-    #     :param new_heading: the heading at the target. optional if not given the heading will be 0
-    #     """
-    #     self._target_loc[0], self._target_loc[1] = new_loc
-    #     if new_heading is not None:
-    #         self._target_heading = new_heading
-    #     else:
-    #         self._target_heading = 0
-    #
-    #     # physically move and rotate goal
-    #     self._maze.set_new_goal(self._target_loc, self._target_heading)
-    #
-    # def set_start_loc(self, start_loc):
-    #     """
-    #     change the start location of the robot in the next reset
-    #     :param start_loc: tuple of the start location
-    #     :return: None
-    #     """
-    #     self._check_start_state(self._maze.maze_size, start_loc, self._target_loc)
-    #     self._robot.start_position[0], self._robot.start_position[1] = start_loc[0], start_loc[1]
-    #     self._start_loc[0], self._start_loc[1] = start_loc[0], start_loc[1]
-    #
-    # def get_target_loc(self):
-    #     """
-    #     :return: the target location
-    #     """
-    #     return self._target_loc[:2]
-
     def set_timeout_steps(self, timeout_steps):
         """
         change the amount of steps for timeout. The new value applies from the next step
@@ -363,11 +321,10 @@ class MazeEnv(gym.Env):
           9:11 -  robot angular velocity (x,y,z),
           12 - relative distance from target, # TODO can be computed in stepper instead of here
           13 - relative angle to target (in radians), # TODO can be computed in stepper instead of here
-          14 - angle between rotation of the robot and target heading # TODO we probably don't need this anymores
+          14 - angle between rotation of the robot and target heading # TODO can be computed in stepper instead of here
           n robot joint states
           n robot joint velocities]
         """
-        # if xy not in observation it will be cut later
         obs_dim = self._robot.get_state_dim()
         observation = np.zeros(obs_dim, dtype=np.float32)
 
@@ -403,21 +360,6 @@ class MazeEnv(gym.Env):
         :return:
         """
         self._recorder.set_view(angle, focal, zoom)
-
-    def clean_xy_from_obs_if_needed(self, obs):
-        if not self.xy_in_obs:
-            return self.clean_xy_from_obs(obs)
-        return obs
-
-    @staticmethod
-    def clean_xy_from_obs(obs):
-        """
-        remove xy and heading from observation
-        :param obs: the observation
-        :return: the observation without xy and heading
-        """
-        # indices of xy are 0, 1 and index of heading is 8
-        return obs[2:]
 
     @staticmethod
     def _check_start_state(maze_size, start_loc, target_loc):

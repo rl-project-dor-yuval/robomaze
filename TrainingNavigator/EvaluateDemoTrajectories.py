@@ -16,7 +16,7 @@ def test_trajectory(traj, maze_map, id, create_video=False):
 
     # setup environment:
     maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, start_loc=traj[0],
-                       target_loc=traj[-1], xy_in_obs=True, show_gui=False)
+                       target_loc=traj[-1], show_gui=False)
     maze_env.reset()
     nav_env = NavigatorEnv(maze_env=maze_env, done_on_collision=False,)
     nav_env.visualize_mode(False)

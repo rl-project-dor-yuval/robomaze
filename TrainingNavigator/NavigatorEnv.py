@@ -75,9 +75,6 @@ class NavigatorEnv(gym.Env):
         self.normalize_observations = normalize_observations
         self.wall_hit_limit = wall_hit_limit
 
-        if not maze_env.xy_in_obs:
-            raise Exception("In order to train a navigator, xy_in_obs is required for the environment")
-
         # make sure:
         if not self.maze_env.done_on_collision == done_on_collision:
             print("WARNING: done_on_collision is different in mazeEnv and navigatorEnv, changing mazeEnv")

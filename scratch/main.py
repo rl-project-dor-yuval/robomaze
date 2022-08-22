@@ -37,8 +37,7 @@ workspaces = Workspace.list_from_multiple_arrays(workspaces)
 #                                            start_loc=START_LOC,
 #                                            target_loc_list=targets_loc,
 #                                            timeout_steps=500,
-#                                            show_gui=True,
-#                                            xy_in_obs=False)
+#                                            show_gui=True,)
 
 env = StepperEnv(maze_size=maze_size,
                  maze_map=maze_map,
@@ -47,7 +46,6 @@ env = StepperEnv(maze_size=maze_size,
                  hit_target_epsilon=0.25,
                  timeout_steps=200,
                  show_gui=True,
-                 xy_in_obs=False,
                  sticky_actions=8,
                  noisy_robot_initialization=False,
                  done_on_goal_reached=False,

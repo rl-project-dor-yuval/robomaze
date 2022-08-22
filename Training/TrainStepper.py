@@ -49,7 +49,6 @@ def train_stepper(config: dict):
                       timeout_steps=config["timeout_steps"],
                       rewards=config["rewards"],
                       max_goal_velocity=config["max_goal_velocity"],
-                      xy_in_obs=False,
                       show_gui=config["show_gui"],
                       hit_target_epsilon=config["target_epsilon"],
                       target_heading_epsilon=config["target_heading_epsilon"],

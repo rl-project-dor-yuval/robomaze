@@ -77,7 +77,7 @@ def get_multi_workspace_circle_envs(radius,
 
 
 def get_multi_targets_circle_envs_multiproc(radius, targets, timeout_steps, rewards, max_goal_velocity,
-                                            xy_in_obs, show_gui, hit_target_epsilon, num_envs=4):
+                                            show_gui, hit_target_epsilon, num_envs=4):
     """ this is deprecated """
     # create environment :
     tile_size = 0.1
@@ -95,7 +95,6 @@ def get_multi_targets_circle_envs_multiproc(radius, targets, timeout_steps, rewa
                             timeout_steps=timeout_steps,
                             show_gui=show_gui,
                             rewards=rewards,
-                            xy_in_obs=xy_in_obs,
                             hit_target_epsilon=hit_target_epsilon,
                             max_goal_velocity=max_goal_velocity)
     maze_vec_env = make_vec_env(mtmz.MultiTargetMazeEnv, num_envs,
@@ -110,7 +109,6 @@ def get_multi_targets_circle_envs_multiproc(radius, targets, timeout_steps, rewa
                                             timeout_steps=timeout_steps,
                                             show_gui=False,
                                             rewards=rewards,
-                                            xy_in_obs=xy_in_obs,
                                             hit_target_epsilon=hit_target_epsilon,
                                             max_goal_velocity=max_goal_velocity)
     return maze_vec_env, eval_maze_env

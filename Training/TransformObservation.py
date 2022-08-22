@@ -26,6 +26,7 @@ def transform_to_stepper_obs(observation, robot_joint_state_dim):
     new_obs[6] = MazeEnv.compute_signed_rotation_diff(observation[8] - direction_to_goal)  # yaw -> new_yaw
     new_obs[7:10] = observation[9:12]  # v_yaw, v_pitch, v_roll are the same
     new_obs[10] = observation[12]  # distance from goal
-    new_obs[11:] = observation[15:]  # joint states and velocities
+    new_obs[11] = observation[14]  # heading diff from desired heading at goal
+    new_obs[12:] = observation[15:]  # joint states and velocities
 
     return new_obs

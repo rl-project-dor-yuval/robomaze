@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     # prepare environment:
     raise NotImplementedError("Fix to new workspaces")
-    maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, xy_in_obs=True,
+    maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map,
                        show_gui=True)
 
     nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,

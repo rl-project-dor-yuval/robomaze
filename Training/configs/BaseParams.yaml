@@ -22,7 +22,7 @@
   !Rewards
     target_distance_weight: 0.01
     target_distance_offset: 5.0  # reward will be weight*(offset - distance)
-    rotation_weight: 0.00
+    rotation_weight: 0.01
     fall: -1.0
     target_arrival: 1.0
     collision: 0.0
@@ -44,7 +44,7 @@ sticky_actions: 8
 
 "max_goal_velocity": 9999
 "target_epsilon": 0.25
-"target_heading_epsilon": 3.15 # removes the requirement of the target heading
+"target_heading_epsilon": 0.314
 "random_initialization": True
 "with_obstacles": False
 

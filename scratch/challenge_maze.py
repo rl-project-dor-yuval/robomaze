@@ -37,7 +37,7 @@ env = mz.MazeEnv(maze_size=m_size,
                  tile_size=0.05,
                  start_loc=(xs, ys),
                  target_loc=(xg, yg),
-                 show_gui=True)  # missing rewards, timeout, xy_in_obs
+                 show_gui=True)  # missing rewards, timeout,
 
 env.reset()
 

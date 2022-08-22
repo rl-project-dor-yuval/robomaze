@@ -128,8 +128,7 @@ if __name__ == '__main__':
 
     # create the maze environment
     raise NotImplementedError("Fix to new workspaces")
-    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, xy_in_obs=True,
-                            show_gui=config["show_gui"])
+    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, show_gui=config["show_gui"])
     eval_nav_env = MultiStartgoalNavigatorEnv(start_goal_pairs=start_goal_pairs,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],

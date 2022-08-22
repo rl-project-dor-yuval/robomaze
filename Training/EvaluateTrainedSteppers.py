@@ -2,6 +2,7 @@
     we dont use random initialization here because we want to evaluate the trained steppers equally."""
 
 import os, sys
+import time
 
 sys.path.append('../..')
 
@@ -42,7 +43,7 @@ def get_env(sticky_actions, timeout_steps, robot_type, noisy_initialization=Fals
                                timeout_steps=timeout_steps,
                                sticky_actions=sticky_actions,
                                max_goal_velocity=9999,
-                               show_gui=False,
+                               show_gui=True,
                                robot_type=robot_type,
                                noisy_robot_initialization=noisy_initialization, )
 
@@ -94,9 +95,7 @@ def evaluate_stepper(agent, env: senv.StepperEnv):
 if __name__ == "__main__":
 
     # load list of checkpoints from chosen models:
-    log_dirs = ["Training/logs/StepperV3PositionCtrl1508_070105_760463",  # 150 steps
-                "Training/logs/StepperV3PositionCtrl1508_070105_760522",  # 200 steps
-                "Training/logs/StepperV3PositionCtrl1508_070057_921711"   # 100 steps
+    log_dirs = ["Training/logs/StepperV3HeightReward1908_065355_750775"
                 ]
     stepper_checkpoints = []
 
@@ -111,11 +110,11 @@ if __name__ == "__main__":
     # stepper_checkpoints += glob.glob(log_dirs[0] + "/model_16800000.zip")
     # stepper_checkpoints += glob.glob(log_dirs[0] + "/best_model.zip")
     # stepper_checkpoints += glob.glob(log_dirs[1] + "/best_model.zip")
-    stepper_checkpoints += glob.glob(log_dirs[2] + "/best_model.zip")
+    stepper_checkpoints += glob.glob(log_dirs[0] + "/model_19000000.zip")
 
-    robot_type = "Rex"
+    robot_type = "Bipedal"
 
-    env = get_env(sticky_actions=8, timeout_steps=100, robot_type=robot_type, noisy_initialization=True)
+    env = get_env(sticky_actions=8, timeout_steps=200, robot_type=robot_type, noisy_initialization=True)
 
     run_name_list = []
     success_once_list = []

@@ -27,9 +27,6 @@ OBS_SPACE_SIZE_NO_JOINT_STATES = 12
 
 class StepperEnv(MultiWorkspaceMazeEnv):
     def __init__(self, **mw_maze_env_kwargs):
-        # always:
-        mw_maze_env_kwargs['xy_in_obs'] = True
-
         # since episodes are shorter for stepper, we can allow ourselves to invest more resources in video:
         self.recording_video_size = (400, 400)
         self.video_skip_frames = 2
