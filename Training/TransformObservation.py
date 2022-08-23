@@ -4,6 +4,9 @@ import numpy as np
 from MazeEnv.MazeEnv import MazeEnv
 
 
+OBS_SPACE_SIZE_NO_JOINT_STATES = 12
+
+
 def transform_to_stepper_obs(observation, robot_joint_state_dim):
     """
     transform observation from MazeEnv observation space to Stepper observation space including xy_in_obs
@@ -16,7 +19,7 @@ def transform_to_stepper_obs(observation, robot_joint_state_dim):
     rotation_matrix = np.array([[np.cos(-direction_to_goal), -np.sin(-direction_to_goal)],
                                 [np.sin(-direction_to_goal), np.cos(-direction_to_goal)]])
 
-    new_obs = np.zeros(11 + robot_joint_state_dim, dtype=np.float32)
+    new_obs = np.zeros(OBS_SPACE_SIZE_NO_JOINT_STATES + robot_joint_state_dim, dtype=np.float32)
 
     new_obs[0] = observation[2]  # z coord
     new_obs[1:3] = np.dot(rotation_matrix, observation[3:5])  # vx, vy -> vr, v_orth_to_r

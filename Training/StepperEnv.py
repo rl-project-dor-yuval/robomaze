@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 
 from MazeEnv.MultWorkspaceMazeEnv import MultiWorkspaceMazeEnv
-from Training.TransformObservation import transform_to_stepper_obs
+from Training.TransformObservation import transform_to_stepper_obs, OBS_SPACE_SIZE_NO_JOINT_STATES
 
 """
 MultiWorkspaceMazeEnv is almost good enough to be a StepperEnv, but lately it has become to complicated to configure
@@ -22,13 +22,11 @@ Stepper observation space is derived from the observation space of the maze envi
 ] 
 """
 
-OBS_SPACE_SIZE_NO_JOINT_STATES = 12
-
 
 class StepperEnv(MultiWorkspaceMazeEnv):
     def __init__(self, **mw_maze_env_kwargs):
         # since episodes are shorter for stepper, we can allow ourselves to invest more resources in video:
-        self.recording_video_size = (400, 400)
+        self.recording_video_size = (350, 350)
         self.video_skip_frames = 2
 
         super().__init__(**mw_maze_env_kwargs)

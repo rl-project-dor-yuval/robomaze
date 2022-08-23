@@ -96,7 +96,7 @@ class Maze:
         pointer_orientation = self._pclient.getQuaternionFromEuler((0, 0, target_heading))
         self._pclient.resetBasePositionAndOrientation(self._direction_pointer, pointer_position, pointer_orientation)
 
-    def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
+    def set_subgoal_marker(self, position=(0, 0), heading=0, show_direction_pointer=True, visible=True):
         """
         put a marker on the given position
         :param position: the position of the marker

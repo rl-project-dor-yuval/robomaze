@@ -280,14 +280,14 @@ class MazeEnv(gym.Env):
         observation = self._get_observation()
         return observation
 
-    def set_subgoal_marker(self, position=(0, 0), heading=0, visible=True):
+    def set_subgoal_marker(self, position=(0, 0), heading=0, show_direction_pointer=True, visible=True):
         """
         put a marker on the given position
         :param position: the position of the marker
         :param heading: heading of the pointer above the marker
         :param visible: set to false in order to remove the marker
         """
-        self._maze.set_subgoal_marker(position, heading, visible)
+        self._maze.set_subgoal_marker(position, heading, show_direction_pointer, visible)
 
     def set_workspace(self, workspace: Workspace):
         """
@@ -385,10 +385,10 @@ class MazeEnv(gym.Env):
         given a raw angles difference, cast it to a signed angle between -pi and pi.
         original diff may be more than pi or less than -pi.
         """
-        unsigned_diff = np.abs(rotation_diff) % 360
-        if unsigned_diff > 180:
-            unsigned_diff = 360 - unsigned_diff
+        unsigned_diff = np.abs(rotation_diff) % (2 * np.pi)
+        if unsigned_diff > np.pi:
+            unsigned_diff = (2 * np.pi) - unsigned_diff
 
-        rotation_sign = 1 if (0 <= rotation_diff <= 180) or (-180 >= rotation_diff >= -360) else -1
+        rotation_sign = 1 if (0 <= rotation_diff <= np.pi) or (-np.pi >= rotation_diff >= -(2 * np.pi)) else -1
 
         return rotation_sign * unsigned_diff

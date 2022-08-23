@@ -26,21 +26,19 @@ def train_stepper(config: dict):
                         group=config["group"], config=config)
     wandb.tensorboard.patch(root_logdir="Training/logs/StepperV2/tb", pytorch=True)
 
-    workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_train.csv", delimiter=',')
-    # workspaces contains: (goal_x, goal_y) but should contain
+    workspaces = np.genfromtxt("Training/workspaces/WithHeading/workspaces_06to3_train.csv", delimiter=',')
+    # workspaces contains: (goal_x, goal_y, goal_heading) but should contain
     # (start_x, start_y, start_heading, goal_x, goal_y, goal_heading)
     # where start_xy and start_heading are constant in our case, and goal_heading is ignored
     # if we give high enough epsilon
     workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5,
                                  np.zeros((workspaces.shape[0], 1)),
-                                 workspaces,
-                                 np.zeros((workspaces.shape[0], 1))), axis=1)
+                                 workspaces,), axis=1)
     workspaces = Workspace.list_from_multiple_arrays(workspaces)
-    val_workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_validation.csv", delimiter=',')
+    val_workspaces = np.genfromtxt("Training/workspaces/WithHeading/workspaces_06to3_validation.csv", delimiter=',')
     val_workspaces = np.concatenate((np.ones((val_workspaces.shape[0], 2)) * 5,
                                      np.zeros((val_workspaces.shape[0], 1)),
-                                     val_workspaces,
-                                     np.zeros((val_workspaces.shape[0], 1))), axis=1)
+                                     val_workspaces,), axis=1)
     val_workspaces = Workspace.list_from_multiple_arrays(val_workspaces)
 
     env_kwargs = dict(radius=config["map_radius"],

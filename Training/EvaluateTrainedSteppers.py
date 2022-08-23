@@ -19,11 +19,11 @@ num_workspaces = 200
 
 
 def get_env(sticky_actions, timeout_steps, robot_type, noisy_initialization=False):
-    workspaces = np.genfromtxt("Training/workspaces/NoHeading/workspaces_06to3_test.csv", delimiter=',')
+    workspaces = np.genfromtxt("Training/workspaces/WithHeading/workspaces_06to3_test.csv", delimiter=',')
     workspaces = np.concatenate((np.ones((workspaces.shape[0], 2)) * 5,
                                  np.zeros((workspaces.shape[0], 1)),
-                                 workspaces,
-                                 np.zeros((workspaces.shape[0], 1))), axis=1)
+                                 workspaces),
+                                axis=1)
     tile_size = 0.1
     maze_size = MazeSize.SQUARE10
     map_size = np.dot(maze_size, int(1 / tile_size))

@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from MazeEnv.MazeEnv import MazeEnv
+
 
 def create_workspaces(center, min_radius, max_radius, target_heading_max_offset, n_points=100):
     """
@@ -29,9 +31,12 @@ def create_workspaces(center, min_radius, max_radius, target_heading_max_offset,
                                                high=target_heading_max_offset,
                                                size=(n_points, 1))
 
-    start_headings = np.random.uniform(low=-math.pi, high=math.pi, size=(n_points, 1))
+    for h in goal_headings:
+    # TODO: fix that to be a utility function later
+        h = MazeEnv.compute_signed_rotation_diff(h)
 
-    return np.concatenate((start_headings, points, goal_headings), axis=1)
+
+    return np.concatenate((points, goal_headings), axis=1)
 
 
 def plot_and_save_goals(workspaces, file_name):
@@ -43,10 +48,10 @@ def plot_and_save_goals(workspaces, file_name):
     ax.add_artist(inner_circle)
     ax.add_artist(outer_circle)
 
-    u_goal = np.cos(workspaces[:, 3])
-    v_goal = np.sin(workspaces[:, 3])
+    u_goal = np.cos(workspaces[:, 2])
+    v_goal = np.sin(workspaces[:, 2])
 
-    ax.quiver(workspaces[:, 1], workspaces[:, 2], u_goal, v_goal, label="Goals With Direction")
+    ax.quiver(workspaces[:, 0], workspaces[:, 1], u_goal, v_goal, label="Goals With Direction")
     ax.plot(center[0], center[1], 'ro', label="Initial Center of Ant")
     ax.margins(0.3)
 
@@ -67,7 +72,7 @@ min_radius = 0.6
 max_radius = 3.0
 target_heading_max_offset = math.pi/2
 
-n_train, n_val, n_test = 10000, 200, 1000
+n_train, n_val, n_test = 10000, 100, 1000
 
 train_workspaces = create_workspaces(center, min_radius, max_radius, target_heading_max_offset, n_train)
 val_workspaces = create_workspaces(center, min_radius, max_radius, target_heading_max_offset, n_val)

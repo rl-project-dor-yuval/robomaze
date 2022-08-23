@@ -48,5 +48,5 @@ sticky_actions: 8
 "random_initialization": True
 "with_obstacles": False
 
-"eval_freq": !!python/object/apply:eval [2 * 10 ** 5]
+"eval_freq": !!python/object/apply:eval [2.5 * 10 ** 5]
 "video_freq": 1
