@@ -51,7 +51,8 @@ def train_multiproc(config: dict):
                           stepper_radius_range=config["stepper_radius_range"],
                           stepper_agent=config["stepper_agent_path"],
                           wall_hit_limit=config["wall_hit_limit"],
-                          repeat_failed_ws_prob=config["repeat_failed_ws_prob"],)
+                          repeat_failed_ws_prob=config["repeat_failed_ws_prob"],
+                          control_heading_at_subgoal=True)
 
     nav_env = make_vec_env(MultiWorkspaceNavigatorEnv, n_envs=config["num_envs"], seed=config["seed"],
                            env_kwargs=nav_env_kwargs, vec_env_cls=SubprocVecEnv)
@@ -71,13 +72,14 @@ def train_multiproc(config: dict):
                                               max_steps=config["max_navigator_steps"],
                                               stepper_agent=config["stepper_agent_path"],
                                               stepper_radius_range=config["stepper_radius_range"],
-                                              wall_hit_limit=config["wall_hit_limit"])
+                                              wall_hit_limit=config["wall_hit_limit"],
+                                              control_heading_at_subgoal=True)
     # noinspection DuplicatedCode
     eval_nav_env.visualize_mode(False)
 
     # set up model and run:
-    exploration_noise = NormalActionNoise(mean=np.array([0] * 2),
-                                          sigma=np.array([config["exploration_noise_std"]] * 2))
+    exploration_noise = NormalActionNoise(mean=np.array([0] * 3),
+                                          sigma=np.array([config["exploration_noise_std"]] * 3))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('running on:', device)

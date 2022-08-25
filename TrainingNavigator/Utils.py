@@ -85,55 +85,55 @@ def plot_trajectory(trajectory, map, save_loc=None):
         plt.show()
 
 
-# def trajectory_to_transitions_with_heading(trajectory: np.ndarray, rewards_: Rewards, epsilon_to_hit_subgoal: float,):
-#     """
-#     This is deprecated, when we had goal heading in action. saving this in case we need it again
-#     convert a tajectory [(x, y), (x, y), ...] to transitions as lists of:
-#     observations, actions, rewards, next_states, dones.
-#     :param trajectory: a trajectory of [(x, y), (x, y), ...]
-#     :param rewards: reward objects that defines the reward (used for idle and goal reward)
-#     :return: 5 lists
-#     """
-#     trajectory_len = trajectory.shape[0]
-#     start_loc = trajectory[0]
-#     goal_loc = trajectory[-1]
-#
-#     rewards = []
-#     dones = []
-#     observations = []
-#     actions = []
-#     next_observations = []
-#
-#     # robot starts heading to the goal:
-#     prev_heading_at_goal = np.arctan2(goal_loc[1] - start_loc[1], goal_loc[0] - start_loc[0])
-#     for i in range(trajectory_len - 1):
-#         curr_loc = trajectory[i]
-#         next_loc = trajectory[i+1]
-#         dx, dy = next_loc[0] - curr_loc[0], next_loc[1] - curr_loc[1]
-#         dist_to_goal = np.linalg.norm(next_loc - goal_loc)
-#
-#         r_action, theta_action = np.sqrt(dx ** 2 + dy ** 2), np.arctan2(dy, dx)
-#         heading_action = theta_action
-#         action = np.array((r_action, theta_action, heading_action))
-#         obs = np.concatenate((curr_loc, [prev_heading_at_goal], goal_loc))
-#         next_obs = np.concatenate((next_loc, [heading_action], goal_loc))
-#
-#         observations.append(obs)
-#         actions.append(action)
-#         next_observations.append(next_obs)
-#
-#         if dist_to_goal < epsilon_to_hit_subgoal or i == trajectory_len - 2:
-#             # last transition
-#             rewards.append(rewards_.target_arrival)
-#             dones.append(True)
-#             break
-#
-#         rewards.append(rewards_.idle)
-#         dones.append(False)
-#
-#         prev_heading_at_goal = heading_action
-#
-#     return observations, actions, rewards, next_observations, dones
+def trajectory_to_transitions_with_heading(trajectory: np.ndarray, rewards_: Rewards, epsilon_to_hit_subgoal: float,):
+    """
+    This is deprecated, when we had goal heading in action. saving this in case we need it again
+    convert a tajectory [(x, y), (x, y), ...] to transitions as lists of:
+    observations, actions, rewards, next_states, dones.
+    :param trajectory: a trajectory of [(x, y), (x, y), ...]
+    :param rewards: reward objects that defines the reward (used for idle and goal reward)
+    :return: 5 lists
+    """
+    trajectory_len = trajectory.shape[0]
+    start_loc = trajectory[0]
+    goal_loc = trajectory[-1]
+
+    rewards = []
+    dones = []
+    observations = []
+    actions = []
+    next_observations = []
+
+    # robot starts heading to the goal:
+    prev_heading_at_goal = np.arctan2(goal_loc[1] - start_loc[1], goal_loc[0] - start_loc[0])
+    for i in range(trajectory_len - 1):
+        curr_loc = trajectory[i]
+        next_loc = trajectory[i+1]
+        dx, dy = next_loc[0] - curr_loc[0], next_loc[1] - curr_loc[1]
+        dist_to_goal = np.linalg.norm(next_loc - goal_loc)
+
+        r_action, theta_action = np.sqrt(dx ** 2 + dy ** 2), np.arctan2(dy, dx)
+        heading_action = theta_action
+        action = np.array((r_action, theta_action, heading_action))
+        obs = np.concatenate((curr_loc, [prev_heading_at_goal], goal_loc))
+        next_obs = np.concatenate((next_loc, [heading_action], goal_loc))
+
+        observations.append(obs)
+        actions.append(action)
+        next_observations.append(next_obs)
+
+        if dist_to_goal < epsilon_to_hit_subgoal or i == trajectory_len - 2:
+            # last transition
+            rewards.append(rewards_.target_arrival)
+            dones.append(True)
+            break
+
+        rewards.append(rewards_.idle)
+        dones.append(False)
+
+        prev_heading_at_goal = heading_action
+
+    return observations, actions, rewards, next_observations, dones
 
 
 def trajectory_to_transitions(trajectory: np.ndarray, rewards_: Rewards, epsilon_to_hit_subgoal: float,):

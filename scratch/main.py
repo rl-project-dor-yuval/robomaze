@@ -59,7 +59,7 @@ if __name__ == "__main__":
     agent = StepperAgent("Training/logs/StepperV3HeightReward1908_065355_750775/model_19000000.zip")
     actions = []
     for tgt_idx in range(1):
-        obs = env.reset(workspace_index=tgt_idx, create_video=True)
+        obs = env.reset(workspace_index=tgt_idx, create_video=False)
         is_done = False
         # while is_done is False:
         while not is_done:
@@ -71,9 +71,9 @@ if __name__ == "__main__":
             # if (i//10)%2 == 0:
             #     action = - action
             #
-            action = agent.step(obs)
-            actions.append(action)
-            # action = env.action_space.sample()
+            # action = agent.step(obs)
+            # actions.append(action)
+            action = env.action_space.sample()
             # action = [0.1] * 12
             obs, reward, is_done, _ = env.step(action)
             # print(obs)

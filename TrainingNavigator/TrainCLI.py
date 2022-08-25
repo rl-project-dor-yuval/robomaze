@@ -14,8 +14,8 @@ maps_config_file = {'bottleneck': 'TrainingNavigator/configs/BN_NoKillOnWall.yam
                     'room10x10': 'TrainingNavigator/configs/room10x10.yaml',
                     }
 
-stepper_agents_paths = {'Ant': 'TrainingNavigator/StepperAgents/AntNoHeading.pt',
-                        'Rex': 'TrainingNavigator/StepperAgents/RexNoHeading.pt',
+stepper_agents_paths = {'Ant': 'TrainingNavigator/StepperAgents/AntWithHeading.pt',
+                        'Rex': 'TrainingNavigator/StepperAgents/RexWithHeading.pt',
                         }
 
 if __name__ == '__main__':

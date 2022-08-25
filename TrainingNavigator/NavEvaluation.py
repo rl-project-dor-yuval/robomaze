@@ -8,7 +8,7 @@ import torch
 from matplotlib import pyplot as plt
 from stable_baselines3.common.callbacks import BaseCallback
 from TrainingNavigator.NavigatorEnv import MultiWorkspaceNavigatorEnv
-from TrainingNavigator.Utils import trajectory_to_transitions
+from TrainingNavigator.Utils import trajectory_to_transitions, trajectory_to_transitions_with_heading
 import wandb
 
 
@@ -93,7 +93,6 @@ class NavEvalCallback(BaseCallback):
                 self.best_success_rate = success_rate
                 print("saving best model...")
                 self.model.save(self.model_save_path + '/best_model')
-
 
             self.evals_count += 1
 
@@ -203,16 +202,19 @@ class NavEvalCallback(BaseCallback):
         walked_u = np.cos(walked_heading)
         walked_v = np.sin(walked_heading)
 
+        actions_u = np.cos(action_traj[:, 2])
+        actions_v = np.sin(action_traj[:, 2])
+
         # in action we get r and theta, we need to convert first two elements to x and y
         actions_y = walked_traj[:, 0] + action_traj[:, 0] * np.sin(action_traj[:, 1])
         actions_x = walked_traj[:, 1] + action_traj[:, 0] * np.cos(action_traj[:, 1])
 
         with np.load(self.validation_traj_path) as demos:
             planned_traj = demos[str(ws_id)] * 10
-        planned_obs, _, _, planned_next_obs, _ = trajectory_to_transitions(planned_traj,
-                                                                           self.eval_env.rewards_config,
-                                                                           self.eval_env.epsilon_to_hit_subgoal)
-        planned_rotation = np.array(planned_next_obs)[:, 2]
+        pplanned_obs, planned_actions, _, _, _ = trajectory_to_transitions_with_heading(planned_traj,
+                                                                                        self.eval_env.rewards_config,
+                                                                                        self.eval_env.epsilon_to_hit_subgoal)
+        planned_rotation = np.array(planned_actions)[:, 2]
         planned_u = np.cos(planned_rotation)
         planned_v = np.sin(planned_rotation)
 
@@ -230,10 +232,10 @@ class NavEvalCallback(BaseCallback):
         axes[0, 1].set_title('RRT Planned Trajectory')
         axes[0, 1].quiver(planned_traj[1:, 1], planned_traj[1:, 0], planned_v, -planned_u, color='r')
         axes[1, 0].set_title('Action Trajectory')
-        axes[1, 0].scatter(actions_x, actions_y, color='b')
+        axes[1, 0].quiver(actions_x, actions_y, actions_v, -actions_u, color='b')
         axes[1, 1].set_title('Action + Walked Trajectory')
         axes[1, 1].quiver(walked_traj[:, 1], walked_traj[:, 0], walked_u, walked_v, color='r')
-        axes[1, 1].scatter(actions_x, actions_y, color='b', alpha=0.5)
+        axes[1, 1].quiver(actions_x, actions_y, actions_v, -actions_u, color='b', alpha=0.5)
 
         fig.tight_layout()
 

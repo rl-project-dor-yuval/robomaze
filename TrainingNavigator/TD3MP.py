@@ -14,7 +14,7 @@ from stable_baselines3.common.utils import should_collect_more_steps, polyak_upd
 from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
 from torch.nn import functional as F
-from TrainingNavigator.Utils import trajectory_to_transitions
+from TrainingNavigator.Utils import trajectory_to_transitions, trajectory_to_transitions_with_heading
 
 
 class TD3MP(TD3):
@@ -89,6 +89,7 @@ class TD3MP(TD3):
         # keep for comfort:
         self.epsilon_to_goal = env.get_attr('epsilon_to_hit_subgoal', 0)[0]
         self.normalize_obs = self.env.get_attr('normalize_observations', 0)[0]
+        self.control_heading_at_subgoal = self.env.get_attr('control_heading_at_subgoal', 0)[0]
         self.maze_size = self.env.get_attr('maze_env', 0)[0].maze_size
 
         # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
@@ -286,7 +287,9 @@ class TD3MP(TD3):
 
         rewards_config = self.env.get_attr('rewards_config', 0)[0]
         observations, actions, rewards, next_observations, dones = \
-            trajectory_to_transitions(demo_traj, rewards_config, self.epsilon_to_goal)
+            trajectory_to_transitions_with_heading(demo_traj, rewards_config, self.epsilon_to_goal) \
+            if self.control_heading_at_subgoal \
+            else trajectory_to_transitions(demo_traj, rewards_config, self.epsilon_to_goal)
 
         for i in range(len(observations)):
             self.obs_buff[self.curr_buff_idx] = self.normalize_obs_if_needed(observations[i])
@@ -384,7 +387,7 @@ class CustomActor(Actor):
         out = self.mu(features)
         # transforming to r,theta
 
-        dx, dy = out[:, 0], out[:, 1]
+        dx, dy, rotation = out[:, 0], out[:, 1], out[:, 2]
         r, theta = th.sqrt(dx ** 2 + dy ** 2), th.atan2(dy, dx)
 
         # scale the action. all sizes (except for low, high) are torch tensors to assure differentiation
@@ -394,8 +397,9 @@ class CustomActor(Actor):
         r_scaled = th.tanh(r)
         theta_scaled = 2 * (theta - low[1]) / (high[1] - low[1]) - 1
         # theta_scaled = theta_scaled.clip(-1, 1)
+        rotation_scaled = 2 * (rotation - low[2]) / (high[2] - low[2]) - 1
 
-        return th.stack([r_scaled, theta_scaled], dim=1)
+        return th.stack([r_scaled, theta_scaled, rotation_scaled], dim=1)
 
 
 class CustomTD3Policy(TD3Policy):

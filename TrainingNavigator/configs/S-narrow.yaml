@@ -10,7 +10,7 @@
 robot_type: "Ant"
 use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
-  [750000 ** 1]
+  [700000 ** 1]
 "learning_rate": 2.0e-5
 "grad_clip_norm_actor": 2
 "grad_clip_norm_critic": 0.5
@@ -26,7 +26,7 @@ use_TD3MP: True # otherwise DDPGMP
   [10 ** 3]
 
 # environment parameters (please do not modify unless something changes)
-"num_envs": 4
+"num_envs": 3
 "epsilon_to_subgoal": 0.25
 "max_velocity_in_subgoal": 9999
 "stepper_radius_range": !!python/tuple [0.3, 2.5]

@@ -38,12 +38,15 @@ class NavigatorEnv(gym.Env):
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
                  epsilon_to_hit_subgoal=0.25,
+                 control_heading_at_subgoal=True,
+                 epsilon_heading_to_subgoal=np.pi / 9,
                  max_vel_in_subgoal=9999,
                  rewards: Rewards = Rewards(),
                  done_on_collision=False,
                  normalize_observations=True,
                  wall_hit_limit=-1):
         """
+        # TODO update docstring
         :param maze_env: mz.MazeEnv object - with observation space of 30d - with robot x,y location
         :param maze_env_kwargs: if maze_env is None, then this is used to create a new maze_env,
                                 otherwise this is ignored
@@ -69,6 +72,8 @@ class NavigatorEnv(gym.Env):
         self.max_stepper_steps = max_stepper_steps
         self.max_steps = max_steps
         self.epsilon_to_hit_subgoal = epsilon_to_hit_subgoal
+        self.control_heading_at_subgoal = control_heading_at_subgoal
+        self.epsilon_heading_to_subgoal = epsilon_heading_to_subgoal
         self.max_vel_in_subgoal = max_vel_in_subgoal
         self.rewards_config = rewards
         self.done_on_collision = done_on_collision
@@ -94,20 +99,27 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/AntNoHeading.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/AntWithHeading.pt', 'auto')
         elif isinstance(stepper_agent, str):
             stepper_agent = StepperAgent(stepper_agent, 'auto')
         self.stepper_agent = stepper_agent
 
         # robot's current state
         self.robot_curr_obs = np.zeros(self.maze_env.observation_space.shape)
-        self.curr_subgoal = np.zeros(2)
+        self.curr_subgoal_xy = np.zeros(2)
+        self.curr_subgoal_heading = 0
         self.target_goal = np.array(self.maze_env.workspace.goal_loc_tuple(), dtype=np.float32)
 
-        # Action -> [radius, direction to subgoal (raidans)]
-        self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi], dtype=np.float32),
-                                high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
-                                shape=(2,))
+        if self.control_heading_at_subgoal:
+            # Action -> [radius, direction to subgoals (raidans), heading at subgoal (radians)]
+            self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi, -math.pi], dtype=np.float32),
+                                    high=np.array([stepper_radius_range[1], math.pi, math.pi], dtype=np.float32),
+                                    shape=(3,))
+        else:
+            # Action -> [radius, direction to subgoal (raidans)]
+            self.action_space = Box(low=np.array([stepper_radius_range[0], -math.pi], dtype=np.float32),
+                                    high=np.array([stepper_radius_range[1], math.pi], dtype=np.float32),
+                                    shape=(2,))
 
         # Observation -> [ Agent_x, Agent_y,  Agent_Heading, Goal_x, Goal_y]
         self.observation_space = Box(-np.inf, np.inf, (5,))
@@ -121,18 +133,28 @@ class NavigatorEnv(gym.Env):
         self.robot_curr_obs = self.maze_env.reset(**maze_env_kwargs)
         self.wall_hit_count = 0
 
-        nav_obs = self.get_nav_obs()
+        nav_obs = self.get_curr_nav_obs()
         return self.normalize_obs_if_needed(nav_obs)
 
     def step(self, action, visualize_subgoal=True):
 
         robot_xy = self.robot_curr_obs[0:2]
+        robot_heading = self.robot_curr_obs[8]
 
-        # 2 elements of action are range and direction to the subgoal
-        self.curr_subgoal = robot_xy + pol2cart(action[0:2])
+        # 2 elements of action are range and direction to the subgoal, third element is heading at subgoal
+        self.curr_subgoal_xy = robot_xy + pol2cart(action[0:2])
+        self.curr_subgoal_heading = action[2]
+
+        # compute the (r, theta) from the *current* robot location to the subgoal in order to put it
+        # in the observation to the stepper this is different then the value passed in the action
+        # to this env because it changes in each iteration in the loop
+        r_theta_to_subgoal = cart2pol(self.curr_subgoal_xy - robot_xy)
+        # we used subgoal-robot_loc and not the opposite just like in mazeEnv._get_observation
+        heading_diff = self.maze_env.compute_signed_rotation_diff(self.curr_subgoal_heading - robot_heading)
 
         if visualize_subgoal:
-            self.maze_env.set_subgoal_marker(self.curr_subgoal)
+            self.maze_env.set_subgoal_marker(self.curr_subgoal_xy, self.curr_subgoal_heading,
+                                             show_direction_pointer=self.control_heading_at_subgoal)
         else:
             self.maze_env.set_subgoal_marker(visible=False)
 
@@ -143,22 +165,19 @@ class NavigatorEnv(gym.Env):
                 time.sleep(1. / float(self.visualize_fps))
 
             self.total_stepper_steps += 1
-
-            # compute the (r, theta) from the *current* robot location to the subgoal in order to put it
-            # in the observation to the stepper this is different then the value passed in the action
-            # to this env because it changes in each iteration in the loop
-            r_theta_to_subgoal = cart2pol(self.curr_subgoal - robot_xy)
-            # we used subgoal-robot_loc and not the opposite just like in mazeEnv._get_observation
-
             # create observation for the stepper:
-            stepper_obs = self.get_stepper_obs(r_theta_to_subgoal)
+            stepper_obs = self.get_stepper_obs(r_theta_to_subgoal, heading_diff)
 
             stepper_action = self.stepper_agent.step(stepper_obs)
 
             # play robot step, reward is not required and is_done is determined using info
             self.robot_curr_obs, _, _, info = self.maze_env.step(stepper_action)
             robot_xy = self.robot_curr_obs[0:2]
+            robot_heading = self.robot_curr_obs[8]
             robot_velocity = np.sqrt(self.robot_curr_obs[3] ** 2 + self.robot_curr_obs[4] ** 2)
+
+            r_theta_to_subgoal = cart2pol(self.curr_subgoal_xy - robot_xy)
+            heading_diff = self.maze_env.compute_signed_rotation_diff(self.curr_subgoal_heading - robot_heading)
 
             # use info to check if finished (may override mazeEnv is_done in some cases):
             if info['success'] or info['fell'] or info['TimeLimit.truncated']:
@@ -168,8 +187,9 @@ class NavigatorEnv(gym.Env):
                 if self.done_on_collision:
                     break
             # check if meet subgoal criteria:
-            if np.linalg.norm(self.curr_subgoal - robot_xy) < self.epsilon_to_hit_subgoal \
-                    and robot_velocity < self.max_vel_in_subgoal:
+            if r_theta_to_subgoal[0] < self.epsilon_to_hit_subgoal \
+                    and robot_velocity < self.max_vel_in_subgoal\
+                    and (not self.control_heading_at_subgoal or heading_diff <= self.epsilon_heading_to_subgoal):
                 break
 
         nav_observation = self.get_curr_nav_obs()
@@ -218,10 +238,6 @@ class NavigatorEnv(gym.Env):
         self.visualize = visualize
         self.visualize_fps = fps
 
-    def get_nav_obs(self):
-        return np.concatenate([self.robot_curr_obs[0:2], [self.robot_curr_obs[8]], self.target_goal],
-                              dtype=np.float32)
-
     def normalize_obs_if_needed(self, obs):
         norm_obs = obs.copy()
         if self.normalize_observations:
@@ -252,10 +268,11 @@ class NavigatorEnv(gym.Env):
         return np.concatenate([self.robot_curr_obs[0:2], [self.robot_curr_obs[8]], self.target_goal],
                               dtype=np.float32)
 
-    def get_stepper_obs(self, r_theta_to_subgoal):
+    def get_stepper_obs(self, r_theta_to_subgoal, heading_diff):
         obs = self.robot_curr_obs
         # update goal to new subgoal before transforming to stepper obs:
         obs[12:14] = r_theta_to_subgoal
+        obs[14] = heading_diff
         return transform_to_stepper_obs(obs, self.maze_env.get_joint_state_dim())
 
 
