@@ -68,7 +68,8 @@ class RRTAgent(NavAgent):
 
         r = np.linalg.norm(action_xy)
         theta = np.arctan2(action_xy[1], action_xy[0])
+        heading = theta
 
         # need to scale action to work as TD3MP agent
-        return scale_action(self.env, np.array([r, theta]))
+        return scale_action(self.env, np.array([r, theta, heading]))
 

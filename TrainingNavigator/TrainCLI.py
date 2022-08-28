@@ -12,6 +12,8 @@ maps_config_file = {'bottleneck': 'TrainingNavigator/configs/BN_NoKillOnWall.yam
                     'SpiralThick20x20': 'TrainingNavigator/configs/SpiralThick20x20.yaml',
                     '20x20maze': 'TrainingNavigator/configs/20x20maze.yaml',
                     'room10x10': 'TrainingNavigator/configs/room10x10.yaml',
+                    'SpiralNarrow15x15': 'TrainingNavigator/configs/SpiralNarrow15x15.yaml',
+                    'complex15x15': 'TrainingNavigator/configs/complex15x15.yaml',
                     }
 
 stepper_agents_paths = {'Ant': 'TrainingNavigator/StepperAgents/AntWithHeading.pt',

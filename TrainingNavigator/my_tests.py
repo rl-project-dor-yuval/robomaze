@@ -24,11 +24,11 @@ def compute_fake_action(curr_loc, new_loc):
 
 workspaces = np.load('TrainingNavigator/workspaces/room10x10/workspaces.npy') / 10
 workspaces = make_workspace_list(workspaces)
-maze_map = - (cv2.imread('TrainingNavigator/workspaces/room10x10/room10x10.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
+maze_map = - (cv2.imread('TrainingNavigator/workspaces/complex15x15/complex15x15.png', cv2.IMREAD_GRAYSCALE) / 255) + 1
 
 demos = np.load("TrainingNavigator/workspaces/room10x10/trajectories_train.npz")
 
-maze_env = MazeEnv(maze_size=(10, 10), maze_map=maze_map, show_gui=True)
+maze_env = MazeEnv(maze_size=(15, 15), maze_map=maze_map, show_gui=True)
 
 nav_env = MultiWorkspaceNavigatorEnv(workspaces,
                                      maze_env=maze_env,
@@ -46,7 +46,7 @@ nav_env.visualize_mode(True, fps=120)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-for i in range(2, 20):
+for i in range(1, 20):
     obs = nav_env.reset(i)
     ws_id = nav_env.curr_ws_index
     demo_traj = demos[str(ws_id)]
@@ -54,7 +54,7 @@ for i in range(2, 20):
     done = False
     step = 0
     action = None
-    while not done:
+    while not False:
         if step <= demo_traj.shape[0]:
             action = compute_fake_action(demo_traj[step], demo_traj[step + 1])
         obs, reward, done, info = nav_env.step(action)
