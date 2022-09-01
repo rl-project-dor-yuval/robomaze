@@ -58,6 +58,7 @@ use_TD3MP: True # otherwise DDPGMP
 "eval_freq2": 20000
 "change_eval_freq_after": 2
 "video_freq": 1
+"tracking_recorder": False
 "save_model_freq": 40000
 
 # Constants:

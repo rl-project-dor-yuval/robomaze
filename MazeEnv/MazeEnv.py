@@ -8,7 +8,7 @@ import pybullet_data
 import numpy as np
 import math
 import os
-from MazeEnv.Recorder import Recorder
+from MazeEnv.Recorder import Recorder, TrackingRecorder
 from MazeEnv.EnvAttributes import Rewards, MazeSize, Workspace
 from MazeEnv.CollisionManager import CollisionManager
 from MazeEnv.Ant import Ant, RobotBase
@@ -30,9 +30,10 @@ class MazeEnv(gym.Env):
     rewards: Rewards
     done_on_collision: bool
 
-    recording_video_size: Tuple[int, int] = (250, 250)
+    recording_video_size: Tuple[int, int] = (192, 192)
     video_skip_frames: int = 8
     zoom: float = 1.05  # is also relative to maze size
+    recording_fps: int = 60
 
     _collision_manager: CollisionManager
     _maze: Maze
@@ -64,7 +65,8 @@ class MazeEnv(gym.Env):
                  goal_max_velocity: float = np.inf,
                  optimize_maze_boarders: bool = True,
                  sticky_actions=8,
-                 robot_type: str = 'Ant',):
+                 robot_type: str = 'Ant',
+                 tracking_recorder=False):
         """
         # TODO: Update docstring
         :param maze_size: the size of the maze from : {MazeSize.SMALL, MazeSize.MEDIUM, MazeSize.LARGE}
@@ -106,6 +108,7 @@ class MazeEnv(gym.Env):
 
         self.maze_size = maze_size
         self.workspace = workspace
+        self.tile_size = tile_size
         self.rewards = rewards
         self.timeout_steps = timeout_steps
         self.hit_target_epsilon = hit_target_epsilon
@@ -167,12 +170,17 @@ class MazeEnv(gym.Env):
                                                  cameraPitch=-89.9,
                                                  cameraTargetPosition=[self._maze.maze_size[0] / 2,
                                                                        self._maze.maze_size[1] / 2, 0])
-
-        self._recorder = Recorder(self._pclient,
-                                  maze_size=maze_size,
-                                  video_size=self.recording_video_size,
-                                  zoom=self.zoom,
-                                  fps=60)
+        if tracking_recorder:
+            self._recorder = TrackingRecorder(self._pclient,
+                                              self._robot.uid,
+                                              video_size=self.recording_video_size,
+                                              fps=self.recording_fps)
+        else:
+            self._recorder = Recorder(self._pclient,
+                                      maze_size=maze_size,
+                                      video_size=self.recording_video_size,
+                                      zoom=self.zoom,
+                                      fps=self.recording_fps)
 
     def step(self, action):
         self.step_count += 1
@@ -181,7 +189,6 @@ class MazeEnv(gym.Env):
         for a in range(self.sticky_actions):
             self._robot.action(action)
             self._pclient.stepSimulation()
-
             # add frame to recording if needed
             if self._recorder.is_recording and \
                     (self.step_count * self.sticky_actions + a) % self.video_skip_frames == 0:
@@ -353,7 +360,7 @@ class MazeEnv(gym.Env):
 
     def set_view(self, angle: float = -75, focal: float = 1, zoom: float = 1.05):
         """
-        basic setter for the view matrix.
+        basic setter for the view matrix. This is meaningless if using TrackingRecorder
         :param angle: pitch angle of the camera. -90 means looking down
         :param focal: focal point of the camera relative to the middle of the maze. 0 means middle.
         :param zoom: zoom factor of the camera.

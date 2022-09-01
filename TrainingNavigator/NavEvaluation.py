@@ -104,7 +104,8 @@ class NavEvalCallback(BaseCallback):
             if self.maze_map is not None:
                 log_item['video_trajectory'] = self._get_trajectory_plot(walked_trajectory,
                                                                          action_trajectory,
-                                                                         ws_id)
+                                                                         ws_id,
+                                                                         self.eval_env.maze_env.tile_size)
 
             self.wandb_run.log(log_item)
 
@@ -188,7 +189,7 @@ class NavEvalCallback(BaseCallback):
 
         return video_path, np.array(walked_traj), np.array(action_traj), ws_id
 
-    def _get_trajectory_plot(self, walked_traj: np.ndarray, action_traj, ws_id: int) -> plt.Figure:
+    def _get_trajectory_plot(self, walked_traj: np.ndarray, action_traj, ws_id: int, maze_tile_size) -> plt.Figure:
         """
         returns a plot of the walked trajectory near the RRT planned
          trajectory for that workspace
@@ -196,7 +197,7 @@ class NavEvalCallback(BaseCallback):
         # TODO: important note : if you get to refactor this, instead of getting to the rabbit hole of plotting
         # TODO: the angle of heading by switching and negating axes, just rotate the angle by 90 degrees in the angle
         # TODO: space before converting to u and v just like i did to walked heading
-        walked_traj[:, :2] = walked_traj[:, :2] * 10
+        walked_traj[:, :2] = walked_traj[:, :2] / maze_tile_size
 
         walked_heading = walked_traj[:, 2] - np.pi / 2
         walked_u = np.cos(walked_heading)
@@ -210,10 +211,10 @@ class NavEvalCallback(BaseCallback):
         actions_x = walked_traj[:, 1] + action_traj[:, 0] * np.cos(action_traj[:, 1])
 
         with np.load(self.validation_traj_path) as demos:
-            planned_traj = demos[str(ws_id)] * 10
-        pplanned_obs, planned_actions, _, _, _ = trajectory_to_transitions_with_heading(planned_traj,
-                                                                                        self.eval_env.rewards_config,
-                                                                                        self.eval_env.epsilon_to_hit_subgoal)
+            planned_traj = demos[str(ws_id)] / maze_tile_size
+        _, planned_actions, _, _, _ = trajectory_to_transitions_with_heading(planned_traj,
+                                                                             self.eval_env.rewards_config,
+                                                                             self.eval_env.epsilon_to_hit_subgoal)
         planned_rotation = np.array(planned_actions)[:, 2]
         planned_u = np.cos(planned_rotation)
         planned_v = np.sin(planned_rotation)

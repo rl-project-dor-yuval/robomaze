@@ -32,9 +32,9 @@ class TrajGenerator:
         X_dimensions = np.array([[0, self.map.shape[0] - 1], [0, self.map.shape[1] - 1]])  # dimensions of Search Space
         self.X = ImgSearchSpace(dimension_lengths=X_dimensions, O=None, Im=self.map)
 
-        self.Q = np.array([(10, 5, 2, 1)])  # length of tree edges
-        self.r = 1  # length of smallest edge to check for intersection with obstacles
-        self.max_samples = 10**7  # max number of samples to take before timing out
+        self.Q = np.array([(5, 2, 1)])  # length of tree edges
+        self.r = 0.1  # length of smallest edge to check for intersection with obstacles
+        self.max_samples = 10**5 # max number of samples to take before timing out
         self.rewire_count = 16  # optional, number of nearby branches to rewire
         self.prc = 0.1  # probability of checking for a connection to goal
 
@@ -83,8 +83,8 @@ class TrajGenerator:
                 else:
                     print("No Path was found")
 
-                plot.plot_start(self.X, x_init)
-                plot.plot_goal(self.X, x_goal)
+                plot.plot_start(self.X, xInit)
+                plot.plot_goal(self.X, xGoal)
                 plot.draw(auto_open=True)
 
         return optimal_trajs
@@ -110,11 +110,8 @@ class TrajGenerator:
         return new_traj
 
 
-def generate_traj_set(trajGen: TrajGenerator, ws_dir, maze_map, ws_list, filename):
+def generate_traj_set(trajGen: TrajGenerator, ws_dir, maze_map, ws_list, filename, map_granularity):
     num_ws = ws_list.shape[0]
-
-    map_granularity = 0.1  # in simulation coordinates, which means that any pixel in the map
-    # is map_granularity units in the simulation coordinates
 
     plot_dir = os.path.join(ws_dir, f"{filename}_plots")
     Path(plot_dir).mkdir(parents=True, exist_ok=True)
@@ -143,8 +140,11 @@ def generate_traj_set(trajGen: TrajGenerator, ws_dir, maze_map, ws_list, filenam
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('workspace_dir', type=str, help='everything is created in the same dir')
-    parser.add_argument('--max_section_len', type=int, default=25,
+    parser.add_argument('--max_section_len', type=int, default=20,
                         help='maximum distance between two points in the trajectory')
+    parser.add_argument('--map_granularity_inverse', type=float, default=10,
+                        help='inverse of the map granularity (if map granularity is 1/3 then set to 3 for example)'
+                             'use inverse to avoid floating point errors')
     parser.add_argument('--additional_name', type=str, default='',
                         help='additional name to be added to the file name')
     parser.add_argument('--freespace_map', action='store_true')
@@ -178,6 +178,9 @@ if __name__ == "__main__":
 
     trajGen = TrajGenerator(map_path, max_section_len=args.max_section_len)
 
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_train, traj_file_name_train)
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_test, traj_file_name_test)
-    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_validation, traj_file_name_validation)
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_train, traj_file_name_train,
+                      1./args.map_granularity_inverse)
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_test, traj_file_name_test,
+                      1./args.map_granularity_inverse)
+    generate_traj_set(trajGen, args.workspace_dir, maze_map, ws_validation, traj_file_name_validation,
+                      1./args.map_granularity_inverse)

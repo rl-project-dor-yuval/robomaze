@@ -33,13 +33,14 @@ def train_multiproc(config: dict):
 
     # Setup Training Environment
     maze_map = blackwhiteswitch(config["maze_map_path"])
-    workspaces = np.load(config["workspaces_path"]) / 10  # all maps granularity is 10
+    workspaces = np.load(config["workspaces_path"]) / config["tiles_per_block"]  # 1/maps granularity
     workspaces = make_workspace_list(workspaces)
-    validation_workspaces = np.load(config["validation_workspaces_path"]) / 10
+    validation_workspaces = np.load(config["validation_workspaces_path"]) / config["tiles_per_block"]
     validation_workspaces = make_workspace_list(validation_workspaces)
 
-    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map,
-                           show_gui=config["show_gui"], robot_type=config["robot_type"],)
+    maze_env_kwargs = dict(maze_size=config["maze_size"], maze_map=maze_map, tile_size=1/config['tiles_per_block'],
+                           show_gui=config["show_gui"], robot_type=config["robot_type"],
+                           tracking_recorder=config['tracking_recorder'])
     nav_env_kwargs = dict(workspace_list=workspaces,
                           maze_env_kwargs=maze_env_kwargs,
                           epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],
@@ -60,8 +61,9 @@ def train_multiproc(config: dict):
 
     # noinspection DuplicatedCode
     # set up separate evaluation environment:
-    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map,
-                            robot_type=config['robot_type'], show_gui=False)
+    eval_maze_env = MazeEnv(maze_size=config["maze_size"], maze_map=maze_map, robot_type=config['robot_type'],
+                            tile_size=1/config['tiles_per_block'], tracking_recorder=config['tracking_recorder'],
+                            show_gui=False)
     eval_nav_env = MultiWorkspaceNavigatorEnv(workspace_list=validation_workspaces,
                                               maze_env=eval_maze_env,
                                               epsilon_to_hit_subgoal=config["epsilon_to_subgoal"],

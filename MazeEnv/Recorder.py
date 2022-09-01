@@ -19,7 +19,7 @@ class Recorder:
     """
     is_recording: bool
 
-    def __init__(self, pybullet_client, maze_size, fps=24, video_size=(800, 600), zoom=1):
+    def __init__(self, pybullet_client, maze_size=(10, 10), fps=24, video_size=(800, 600), zoom=1):
         self._pclient = pybullet_client
         self._maze_size = maze_size
         self._video_size = video_size
@@ -109,3 +109,42 @@ class Recorder:
     def save_recording_and_reset(self):
         imageio.mimsave(self.path, self.vid_images, fps=self._fps)
         self.is_recording = False
+
+
+class TrackingRecorder(Recorder):
+    """
+    Recorder for large maps, keeps the ant at the center of the frame and moves according to it's position,
+    so the whole maze doesn't have to be in the frame.
+    """
+
+    def __init__(self, pybullet_client, robot_uid, fps=24, video_size=(800, 600), camera_distance=10):
+        self.robot_uid = robot_uid
+        self.camera_distance = camera_distance
+
+        super().__init__(pybullet_client, fps=fps, video_size=video_size)
+
+        # override view matrix:
+        self.update_view_matrix()
+
+        # override projection matrix, because camera distance may be different:
+        aspect = video_size[0] / video_size[1]
+        self._projection_matrix = self._pclient.computeProjectionMatrixFOV(fov=70,
+                                                                           aspect=aspect,
+                                                                           nearVal=camera_distance - 5,
+                                                                           farVal=camera_distance + 5)
+
+    def update_view_matrix(self):
+        robot_pos = self._pclient.getBasePositionAndOrientation(self.robot_uid)[0]
+        focal_point = (robot_pos[0], robot_pos[1], 0)
+        self._view_matrix = self._pclient.computeViewMatrixFromYawPitchRoll(distance=self.camera_distance,
+                                                                            yaw=90,
+                                                                            pitch=-75,
+                                                                            roll=0,
+                                                                            upAxisIndex=2,
+                                                                            cameraTargetPosition=focal_point)
+
+    def insert_current_frame(self):
+        self.update_view_matrix()
+        super().insert_current_frame()
+
+

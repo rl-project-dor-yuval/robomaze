@@ -75,7 +75,9 @@ class Maze:
             self._create_maze_urdf(maze_map_boarders, "curr_maze_boarders.urdf", tile_size)
             self._create_maze_urdf(maze_map_fill, "curr_maze_fill.urdf", tile_size)
             self._maze_tiles_uid = self._pclient.loadURDF("curr_maze_boarders.urdf")
-            _ = self._pclient.loadURDF("curr_maze_fill.urdf")
+            fill = self._pclient.loadURDF("curr_maze_fill.urdf")
+            # turn off collision detection for the fill
+            self._pclient.setCollisionFilterGroupMask(fill, -1, 0, 0)
         else:
             self._create_maze_urdf(maze_map, "curr_maze.urdf", tile_size)
             self._maze_tiles_uid = self._pclient.loadURDF("curr_maze.urdf")
