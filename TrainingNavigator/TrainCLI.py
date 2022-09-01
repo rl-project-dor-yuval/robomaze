@@ -14,6 +14,7 @@ maps_config_file = {'bottleneck': 'TrainingNavigator/configs/BN_NoKillOnWall.yam
                     'room10x10': 'TrainingNavigator/configs/room10x10.yaml',
                     'SpiralNarrow15x15': 'TrainingNavigator/configs/SpiralNarrow15x15.yaml',
                     'complex15x15': 'TrainingNavigator/configs/complex15x15.yaml',
+                    '1bedroom': 'TrainingNavigator/configs/1bedroom.yaml',
                     '2bedroom': 'TrainingNavigator/configs/2bedroom.yaml',
                     }
 

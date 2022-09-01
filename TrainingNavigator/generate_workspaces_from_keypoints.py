@@ -44,7 +44,7 @@ cv2.imwrite(workspaces_dir_name + f'/keypoints.png', freespace_map_with_keypoint
 workspaces = []
 for start in key_points:
     for goal in key_points:
-        if start[0] != goal[0] and start[1] != goal[1]:
+        if not (start[0] == goal[0] and start[1] == goal[1]):
             workspaces.append((start, goal))
 
 random.shuffle(workspaces)
