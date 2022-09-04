@@ -51,6 +51,7 @@ def train_multiproc(config: dict):
                           max_steps=config["max_navigator_steps"],
                           stepper_radius_range=config["stepper_radius_range"],
                           stepper_agent=config["stepper_agent_path"],
+                          stepper_device=config["stepper_device"],
                           wall_hit_limit=config["wall_hit_limit"],
                           repeat_failed_ws_prob=config["repeat_failed_ws_prob"],
                           control_heading_at_subgoal=True)
@@ -73,6 +74,7 @@ def train_multiproc(config: dict):
                                               max_stepper_steps=config["max_stepper_steps"],
                                               max_steps=config["max_navigator_steps"],
                                               stepper_agent=config["stepper_agent_path"],
+                                              stepper_device=config["stepper_device"],
                                               stepper_radius_range=config["stepper_radius_range"],
                                               wall_hit_limit=config["wall_hit_limit"],
                                               control_heading_at_subgoal=True)
@@ -94,7 +96,8 @@ def train_multiproc(config: dict):
                         batch_size=config["batch_size"],
                         action_noise=exploration_noise,
                         device=device,
-                        train_freq=(500, "step"),
+                        train_freq=(50, "step"),
+                        # gradient_steps=100*config["num_envs"],
                         verbose=0,
                         tensorboard_log="./TrainingNavigator/logs/tb",
                         learning_starts=config["learning_starts"],

@@ -34,6 +34,7 @@ class NavigatorEnv(gym.Env):
                  maze_env: mz.MazeEnv = None,
                  maze_env_kwargs: dict = None,
                  stepper_agent: Union[StepperAgent, str] = None,
+                 stepper_device: str = "cpu",
                  max_stepper_steps=200,
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
@@ -99,9 +100,9 @@ class NavigatorEnv(gym.Env):
         self.visualize_fps = 40
 
         if stepper_agent is None:
-            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/AntWithHeading.pt', 'auto')
+            stepper_agent = StepperAgent('TrainingNavigator/StepperAgents/AntWithHeading.pt', stepper_device)
         elif isinstance(stepper_agent, str):
-            stepper_agent = StepperAgent(stepper_agent, 'auto')
+            stepper_agent = StepperAgent(stepper_agent, stepper_device)
         self.stepper_agent = stepper_agent
 
         # robot's current state

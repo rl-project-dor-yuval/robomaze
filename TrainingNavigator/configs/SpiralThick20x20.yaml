@@ -51,6 +51,7 @@ use_TD3MP: True # otherwise DDPGMP
 "demonstration_path": 'TrainingNavigator/workspaces/SpiralThick20x20/trajectories_train_no_freespace.npz'
 "validation_demonstration_path": 'TrainingNavigator/workspaces/SpiralThick20x20/trajectories_validation_no_freespace.npz'
 "stepper_agent_path": 'TrainingNavigator/StepperAgents/StepperWithRotation.pt'
+"stepper_device": 'auto'
 
 # logging parameters
 "eval_workspaces": 100  # will take the first workspaces
