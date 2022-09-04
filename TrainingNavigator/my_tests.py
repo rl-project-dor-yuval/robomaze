@@ -28,7 +28,7 @@ maze_map = - (cv2.imread('TrainingNavigator/workspaces/2bedroom/2bedroom.png', c
 
 demos = np.load("TrainingNavigator/workspaces/2bedroom/trajectories_train.npz")
 
-maze_env = MazeEnv(maze_size=(40, 40), maze_map=maze_map, tile_size=1. / 3., show_gui=True, tracking_recorder=True,)
+maze_env = MazeEnv(maze_size=(40, 40), maze_map=maze_map, tile_size=1. / 3., show_gui=False, tracking_recorder=True,)
 
 nav_env = MultiWorkspaceNavigatorEnv(workspaces,
                                      maze_env=maze_env,
@@ -40,7 +40,7 @@ nav_env = MultiWorkspaceNavigatorEnv(workspaces,
                                      stepper_radius_range=(0.3, 2),
                                      normalize_observations=False,
                                      stepper_agent='TrainingNavigator/StepperAgents/AntWithHeading.pt',)
-nav_env.visualize_mode(True, fps=120)
+nav_env.visualize_mode(False, fps=120)
 
 # nav_agent_path = 'TrainingNavigator/logs/bufferSize33k_demoprob02/saved_model/model_250000.zip'
 # agent = TD3MP.load(nav_agent_path, env=nav_env).policy.actor.eval()
@@ -57,7 +57,7 @@ for i in range(1, 20):
     action = None
     while not done:
         if step <= demo_traj.shape[0]:
-            action = compute_fake_action(demo_traj[step], demo_traj[step + 1])
+            action = nav_env.action_space.sample()
         obs, reward, done, info = nav_env.step(action)
         if reward != 0:
             print(reward)

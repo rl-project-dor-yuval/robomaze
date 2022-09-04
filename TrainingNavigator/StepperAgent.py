@@ -1,6 +1,7 @@
 import torch
 from stable_baselines3 import DDPG
 
+
 class StepperAgent:
     """
      A wrapper for an agent, used to infer a trained actor network
@@ -10,6 +11,7 @@ class StepperAgent:
             _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             _device = torch.device(device)
+        print('stepper using device: ', _device)
 
         # agentpath could be pt file or zip file from SB3 format
         if agent_path.split(".")[-1] == 'pt':
