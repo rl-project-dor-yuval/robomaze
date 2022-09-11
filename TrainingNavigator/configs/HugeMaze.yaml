@@ -40,7 +40,7 @@ use_TD3MP: True # otherwise DDPGMP
     timeout: 0
 "use_demo_epsilon_offset": False
 "max_stepper_steps": 100 # maybe you can change this
-"max_navigator_steps": 70 # or this
+"max_navigator_steps": 80 # or this
 "wall_hit_limit": 9999
 "repeat_failed_ws_prob": 0.0
 

@@ -17,6 +17,7 @@ maps_config_file = {'bottleneck': 'TrainingNavigator/configs/BN_NoKillOnWall.yam
                     '1bedroom': 'TrainingNavigator/configs/1bedroom.yaml',
                     '2bedroom': 'TrainingNavigator/configs/2bedroom.yaml',
                     'HugeMaze': 'TrainingNavigator/configs/HugeMaze.yaml',
+                    'HugeMazeLight': 'TrainingNavigator/configs/HugeMazeLight.yaml',
                     }
 
 stepper_agents_paths = {'Ant': 'TrainingNavigator/StepperAgents/AntWithHeading.pt',
@@ -44,6 +45,9 @@ if __name__ == '__main__':
     parser.add_argument('--robot', type=str, default='Ant', required=True)
     parser.add_argument('--demo_kind', choices=['no_demo', 'with_freespace', 'no_freespace'], default='no_freespace',
                         required=True)
+
+    # TODO: remove from here and add to config files:
+    parser.add_argument('--supervised_weight', type=float, default=0.1)
 
     args = parser.parse_args()
 
@@ -76,6 +80,9 @@ if __name__ == '__main__':
     config['tags'] = [args.map, args.robot, args.demo_kind]
     datetime_string = datetime.now().strftime("%d%m_%I%M%S_%f")
     config['run_name'] = args.map + '_' + args.robot + '_' + args.demo_kind + '_' + datetime_string
+
+    # TODO: remove from here and add to config files:
+    config['supervised_weight'] = args.supervised_weight
 
     train_multiproc(config)
 

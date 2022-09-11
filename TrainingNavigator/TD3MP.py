@@ -14,6 +14,9 @@ from stable_baselines3.common.utils import should_collect_more_steps, polyak_upd
 from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 from stable_baselines3.td3.policies import TD3Policy, Actor
 from torch.nn import functional as F
+
+from MazeEnv.EnvAttributes import Rewards
+from TrainingNavigator.DemoBuffer import DemoBuffer
 from TrainingNavigator.Utils import trajectory_to_transitions, trajectory_to_transitions_with_heading
 
 
@@ -21,7 +24,7 @@ class TD3MP(TD3):
     def __init__(
             self,
             policy: Union[str, Type[TD3Policy]],
-            env: SubprocVecEnv,
+            env,
             learning_rate: Union[float, Schedule] = 1e-3,
             buffer_size: int = 1000000,  # 1e6
             learning_starts: int = 100,
@@ -50,6 +53,7 @@ class TD3MP(TD3):
             use_demo_epsilon_offset: bool = True,
             grad_clip_norm_actor: float = None,
             grad_clip_norm_critic: float = None,
+            supervised_update_weight: float = 0.1,
     ):
         super(TD3MP, self).__init__(
             policy=policy,
@@ -92,15 +96,13 @@ class TD3MP(TD3):
         self.control_heading_at_subgoal = self.env.get_attr('control_heading_at_subgoal', 0)[0]
         self.maze_size = self.env.get_attr('maze_env', 0)[0].maze_size
 
-        # keep a small buffer for demonstrations, it is used in _insert_demo_to_replay_buffer
-        num_envs = self.n_envs
-        self.obs_buff = np.zeros((num_envs,) + self.observation_space.shape)
-        self.new_obs_buff = np.zeros((num_envs,) + self.observation_space.shape)
-        self.action_buff = np.zeros((num_envs, self.action_space.shape[0]))
-        self.reward_buff = np.zeros(num_envs)
-        self.done_buff = np.zeros(num_envs)
-        self.info_buff = [{}] * num_envs
-        self.curr_buff_idx = 0
+        self.demo_buffer = DemoBuffer(self.buffer_size)
+        self.supervised_loss_weight = supervised_update_weight
+        self.virtual_n_normal_transitions = 0
+        self.virtual_n_demo_labels = 0
+
+        self.total_demo_samples_used = 0
+        self.total_normal_samples_used = 0
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         """
@@ -115,22 +117,61 @@ class TD3MP(TD3):
         for _ in range(gradient_steps):
 
             self._n_updates += 1
-            # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
 
+            supervised_samples_ratio = self.virtual_n_demo_labels /\
+                                        (self.virtual_n_demo_labels + self.virtual_n_normal_transitions)
+            n_demo_samples = int(batch_size * supervised_samples_ratio)
+            n_real_samples = batch_size - n_demo_samples
+
+            self.total_demo_samples_used += n_demo_samples
+            self.total_normal_samples_used += n_real_samples
+            self.logger.record("demonstrations/total_normal_samples", self.total_normal_samples_used)
+            self.logger.record("demonstrations/total_demo_samples", self.total_demo_samples_used)
+            self.logger.record("demonstrations/supervised_samples_ratio", supervised_samples_ratio)
+
+            # sample demos
+            observations_np, actions_np, rewards_np, next_states_np, dones_np, target_q_values_np = \
+                self.demo_buffer.sample(n_demo_samples)
+            observations_demo = th.tensor(observations_np, dtype=th.float32).to(self.device)
+            actions_demo = th.tensor(actions_np, dtype=th.float32).to(self.device)
+            rewards_demo = th.tensor(rewards_np, dtype=th.float32).to(self.device)
+            next_observations_demo = th.tensor(next_states_np, dtype=th.float32).to(self.device)
+            dones_demo = th.tensor(dones_np, dtype=th.float32).to(self.device)
+
+            target_q_values_sup = th.tensor(target_q_values_np, dtype=th.float32).to(self.device)
+            target_q_values_sup = target_q_values_sup.unsqueeze(1)
+
+            # Sample replay buffer
+            replay_data = self.replay_buffer.sample(n_real_samples, env=self._vec_normalize_env)
+            observations_real = replay_data.observations
+            actions_real = replay_data.actions
+            rewards_real = replay_data.rewards
+            next_observations_real = replay_data.next_observations
+            dones_real = replay_data.dones
+
+            # compute target q values for all samples:
+            observations_all = th.cat([observations_demo, observations_real], dim=0)
+            actions_all = th.cat([actions_demo, actions_real], dim=0)
+            rewards_all = th.cat([rewards_demo, rewards_real], dim=0)
+            next_observations_all = th.cat([next_observations_demo, next_observations_real], dim=0)
+            dones_all = th.cat([dones_demo, dones_real], dim=0)
             with th.no_grad():
                 # Select action according to policy and add clipped noise
-                noise = replay_data.actions.clone().data.normal_(0, self.target_policy_noise)
+                noise = actions_all.clone().data.normal_(0, self.target_policy_noise)
                 noise = noise.clamp(-self.target_noise_clip, self.target_noise_clip)
-                next_actions = (self.actor_target(replay_data.next_observations) + noise).clamp(-1, 1)
+                next_actions = (self.actor_target(next_observations_all) + noise).clamp(-1, 1)
 
                 # Compute the next Q-values: min over all critics targets
-                next_q_values = th.cat(self.critic_target(replay_data.next_observations, next_actions), dim=1)
+                next_q_values = th.cat(self.critic_target(next_observations_all, next_actions), dim=1)
                 next_q_values, _ = th.min(next_q_values, dim=1, keepdim=True)
-                target_q_values = replay_data.rewards + (1 - replay_data.dones) * self.gamma * next_q_values
+                target_q_values = rewards_all + (1 - dones_all) * self.gamma * next_q_values
+
+            w = self.supervised_loss_weight
+            # add supervised value to demo samples:
+            target_q_values[:n_demo_samples] = (1-w) * target_q_values[:n_demo_samples] + w * target_q_values_sup
 
             # Get current Q-values estimates for each critic network
-            current_q_values = self.critic(replay_data.observations, replay_data.actions)
+            current_q_values = self.critic(observations_all, actions_all)
 
             # Compute critic loss
             critic_loss = sum([F.mse_loss(current_q, target_q_values) for current_q in current_q_values])
@@ -146,9 +187,13 @@ class TD3MP(TD3):
 
             # Delayed policy updates
             if self._n_updates % self.policy_delay == 0:
-                # Compute actor loss
-                actor_loss = -self.critic.q1_forward(replay_data.observations,
-                                                     self.actor(replay_data.observations)).mean()
+                actor_out = self.actor(observations_all)
+                actor_loss_rl = -self.critic.q1_forward(observations_all, actor_out).mean()
+
+                actor_loss_supervised = F.mse_loss(actor_out[:n_demo_samples], actions_demo)
+
+                actor_loss = (1 - w) * actor_loss_rl + w * actor_loss_supervised
+
                 actor_losses.append(actor_loss.item())
 
                 # Optimize the actor
@@ -263,8 +308,7 @@ class TD3MP(TD3):
                             # to simulate one episode. Maybe one day we can optimize this.
                             with np.load(self.demonstrations_path) as demos:
                                 demo_traj = demos[str(info['workspace_idx'])]
-                            self._insert_demo_to_replay_buffer(replay_buffer, demo_traj,
-                                                               info['workspace_idx'])
+                            self._insert_demo_to_replay_buffer(demo_traj)
 
                             self.n_demos_inserted += 1
                             self.demo_on_fail_prob *= self.demo_prob_decay
@@ -277,54 +321,53 @@ class TD3MP(TD3):
 
         callback.on_rollout_end()
 
+        self.added_normal_transitions(num_collected_steps * env.num_envs)
         return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
 
-    def _insert_demo_to_replay_buffer(self, replay_buffer, demo_traj, demo_traj_idx):
-        # because replay buffer stores transitions in arrays of size buffer_size*num_envs,
-        # we need to collect transitions into arrays of num_envs to insert them to the replay buffer,
-        # therefore we insert just every num_envs'th transition from the demo trajectory
-        # until we collect that number of transitions, we save them in temporary buffers.
+    def _insert_demo_to_replay_buffer(self, demo_traj):
+        rewards_config: Rewards = self.env.get_attr('rewards_config', 0)[0]
 
-        rewards_config = self.env.get_attr('rewards_config', 0)[0]
         observations, actions, rewards, next_observations, dones = \
-            trajectory_to_transitions_with_heading(demo_traj, rewards_config, self.epsilon_to_goal) \
-            if self.control_heading_at_subgoal \
-            else trajectory_to_transitions(demo_traj, rewards_config, self.epsilon_to_goal)
+            trajectory_to_transitions_with_heading(demo_traj, rewards_config, self.epsilon_to_goal)
+        value = rewards_config.target_arrival
 
-        for i in range(len(observations)):
-            self.obs_buff[self.curr_buff_idx] = self.normalize_obs_if_needed(observations[i])
-            self.new_obs_buff[self.curr_buff_idx] = self.normalize_obs_if_needed(next_observations[i])
+        for i in reversed(range(len(observations))):
+            self.demo_buffer.add(self.normalize_obs_if_needed(observations[i]),
+                                 self.policy.scale_action(actions[i]),
+                                 rewards[i],
+                                 self.normalize_obs_if_needed(next_observations[i]),
+                                 dones[i],
+                                 value)
 
-            # important - rescale action!
-            actions[i] = self.policy.scale_action(actions[i])
-            self.action_buff[self.curr_buff_idx] = np.clip(actions[i], -1, 1)
+            # value for previous state action pair (which is in next iteration):
+            value = rewards_config.idle + self.gamma * value
 
-            self.done_buff[self.curr_buff_idx] = dones[i]
-            self.reward_buff[self.curr_buff_idx] = rewards[i]
+        self.added_demo_labels(len(observations))
 
-            self.info_buff[self.curr_buff_idx] = {'hit_maze': False, 'fell': False, 'stepper_timeout': False,
-                                                  'navigator_timeout': False, 'workspace_idx': demo_traj_idx,
-                                                  'TimeLimit.truncated': False}
-            if i == len(observations) - 1:
-                self.info_buff[self.curr_buff_idx]['success'] = True
+    def added_demo_labels(self, n_labels_added):
+        self.virtual_n_demo_labels += n_labels_added
+        if self.replay_buffer.full:
+            # 'virtually' remove random kind of transitions
+            ratio = self.virtual_n_demo_labels / (self.virtual_n_demo_labels + self.virtual_n_normal_transitions)
+            if np.random.rand() < ratio:
+                self.virtual_n_demo_labels -= n_labels_added
+                self.virtual_n_demo_labels = max(0, self.virtual_n_demo_labels)
             else:
-                self.info_buff[self.curr_buff_idx]['success'] = False
+                self.virtual_n_normal_transitions -= n_labels_added
+                self.virtual_n_normal_transitions = max(0, self.virtual_n_normal_transitions)
 
-            if self.curr_buff_idx + 1 != replay_buffer.n_envs:
-                # dont insert yet
-                self.curr_buff_idx += 1
-                continue
+    def added_normal_transitions(self, n_transitions_added):
+        self.virtual_n_normal_transitions += n_transitions_added
+        if self.replay_buffer.full:
+            # 'virtually' remove random kind of transitions
+            ratio = self.virtual_n_demo_labels / (self.virtual_n_demo_labels + self.virtual_n_normal_transitions)
+            if np.random.rand() < ratio:
+                self.virtual_n_demo_labels -= n_transitions_added
+                self.virtual_n_demo_labels = max(0, self.virtual_n_demo_labels)
+            else:
+                self.virtual_n_normal_transitions -= n_transitions_added
+                self.virtual_n_normal_transitions = max(0, self.virtual_n_normal_transitions)
 
-            # collected enough transitions, insert them to the replay buffer
-            replay_buffer.add(
-                self.obs_buff,
-                self.new_obs_buff,
-                self.action_buff,
-                self.reward_buff,
-                self.done_buff,
-                self.info_buff,
-            )
-            self.curr_buff_idx = 0
 
     def _excluded_save_params(self) -> List[str]:
         return super(TD3MP, self)._excluded_save_params() + ["demonstrations"]

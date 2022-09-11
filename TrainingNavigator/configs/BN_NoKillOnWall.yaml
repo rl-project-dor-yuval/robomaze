@@ -12,7 +12,7 @@ use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
   [400000 ** 1]
 "learning_rate": 2.0e-5
-"grad_clip_norm_actor": 2
+"grad_clip_norm_actor": 2.0
 "grad_clip_norm_critic": 0.5
 "batch_size": 1024
 "buffer_size": !!python/object/apply:eval

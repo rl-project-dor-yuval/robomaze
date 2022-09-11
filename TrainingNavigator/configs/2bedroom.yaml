@@ -12,13 +12,13 @@ use_TD3MP: True # otherwise DDPGMP
 "train_steps": !!python/object/apply:eval
   [5 * 10 ** 6]
 "learning_rate": 2.0e-5
-"grad_clip_norm_actor": 2
+"grad_clip_norm_actor": 2.0
 "grad_clip_norm_critic": 0.5
 "batch_size": 1024
 "buffer_size": !!python/object/apply:eval
   [10000 ** 1] # Note: effective size is buffer_size * num_envs!
 "actor_arch": !!python/tuple [400, 300]  # Should not be changed or explored
-"critic_arch": !!python/tuple [1000, 1000]  # Should not be changed or explored
+"critic_arch": !!python/tuple [400, 300]  # Should not be changed or explored
 "exploration_noise_std": 0.03
 "demo_on_fail_prob": 0.2
 "demo_prob_decay": 1
@@ -40,7 +40,7 @@ use_TD3MP: True # otherwise DDPGMP
     timeout: 0
 "use_demo_epsilon_offset": False
 "max_stepper_steps": 100 # maybe you can change this
-"max_navigator_steps": 50 # or this
+"max_navigator_steps": 70 # or this
 "wall_hit_limit": 9999
 "repeat_failed_ws_prob": 0.0
 

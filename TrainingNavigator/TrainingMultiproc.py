@@ -108,7 +108,8 @@ def train_multiproc(config: dict):
                         grad_clip_norm_critic=config["grad_clip_norm_critic"],
                         demo_prob_decay=config["demo_prob_decay"],
                         use_demo_epsilon_offset=config["use_demo_epsilon_offset"],
-                        policy_kwargs=policy_kwargs)
+                        policy_kwargs=policy_kwargs,
+                        supervised_update_weight=config["supervised_weight"],)
     if config["use_TD3MP"]:
         model = TD3MP(**model_kwargs)
     else:

@@ -34,7 +34,7 @@ class NavigatorEnv(gym.Env):
                  maze_env: mz.MazeEnv = None,
                  maze_env_kwargs: dict = None,
                  stepper_agent: Union[StepperAgent, str] = None,
-                 stepper_device: str = "cpu",
+                 stepper_device: str = "auto",
                  max_stepper_steps=200,
                  max_steps=50,
                  stepper_radius_range=(0.6, 2.5),
