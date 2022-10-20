@@ -168,14 +168,18 @@ class TD3MP(TD3):
 
             w = self.supervised_loss_weight
             # add supervised value to demo samples:
-            target_q_values[:n_demo_samples] = (1-w) * target_q_values[:n_demo_samples] + w * target_q_values_sup
+            # target_q_values[:n_demo_samples] = (1-w) * target_q_values[:n_demo_samples] + w * target_q_values_sup
 
             # Get current Q-values estimates for each critic network
             current_q_values = self.critic(observations_all, actions_all)
 
             # Compute critic loss
-            critic_loss = sum([F.mse_loss(current_q, target_q_values) for current_q in current_q_values])
+            critic_loss_rl = sum([F.mse_loss(current_q, target_q_values) for current_q in current_q_values])
+            critic_loss_sup = F.mse_loss(current_q_values[:n_demo_samples], target_q_values_sup)
+            critic_loss = (1 - w) * critic_loss_rl + w * critic_loss_sup
             critic_losses.append(critic_loss.item())
+            self.logger.record("training//critic_supervised_loss", critic_loss_sup.item())
+            self.logger.record("training//critic_rl_loss", critic_loss_rl.item())
 
             # Optimize the critics
             self.critic.optimizer.zero_grad()
@@ -191,6 +195,8 @@ class TD3MP(TD3):
                 actor_loss_rl = -self.critic.q1_forward(observations_all, actor_out).mean()
 
                 actor_loss_supervised = F.mse_loss(actor_out[:n_demo_samples], actions_demo)
+                self.logger.record("training//actor_supervised_loss", actor_loss_supervised.item())
+                self.logger.record("training//actor_rl_loss", actor_loss_rl.item())
 
                 actor_loss = (1 - w) * actor_loss_rl + w * actor_loss_supervised
 
