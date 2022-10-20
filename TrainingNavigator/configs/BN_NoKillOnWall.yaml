@@ -54,6 +54,7 @@ use_TD3MP: True # otherwise DDPGMP
 "stepper_device": 'auto'
 
 # logging parameters
+"num_train_workspaces": 9999999 # use all of them
 "eval_workspaces": 100  # will take the first workspaces
 "eval_freq": 4000
 "eval_freq2": 4000
