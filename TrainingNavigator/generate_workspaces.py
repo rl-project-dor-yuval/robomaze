@@ -61,11 +61,11 @@ if __name__ == '__main__':
 
     start_goal_free_space_map = np.copy(free_space_map)
     free_space_points = np.argwhere(free_space_map == 0)
-    # points where more than 2 neighbors are not free space are not valid for start or goal remove them
+    # points where more than 1 neighbors are not free space are not valid for start or goal remove them
     for p in free_space_points:
         neighbors = [(p[0] + i, p[1] + j) for i in range(-1, 2) for j in range(-1, 2)]
         n_obstacle_neighbors = np.sum([(free_space_map[n] > 0) for n in neighbors])
-        if n_obstacle_neighbors > 2:
+        if n_obstacle_neighbors > 1:
             start_goal_free_space_map[p[0], p[1]] = 1
     # recompute:
     free_space_points = np.argwhere(start_goal_free_space_map == 0)

@@ -35,6 +35,9 @@ def train_multiproc(config: dict):
     maze_map = blackwhiteswitch(config["maze_map_path"])
     workspaces = np.load(config["workspaces_path"]) / config["tiles_per_block"]  # 1/maps granularity
     workspaces = make_workspace_list(workspaces)
+    if "num_train_workspaces" in config:
+        last_ws = min(config["num_train_workspaces"], len(workspaces))
+        workspaces = workspaces[:last_ws]
     validation_workspaces = np.load(config["validation_workspaces_path"]) / config["tiles_per_block"]
     validation_workspaces = make_workspace_list(validation_workspaces)
 

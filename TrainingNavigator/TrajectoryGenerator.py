@@ -32,9 +32,9 @@ class TrajGenerator:
         X_dimensions = np.array([[0, self.map.shape[0] - 1], [0, self.map.shape[1] - 1]])  # dimensions of Search Space
         self.X = ImgSearchSpace(dimension_lengths=X_dimensions, O=None, Im=self.map)
 
-        self.Q = np.array([(5, 2, 1)])  # length of tree edges
-        self.r = 0.1  # length of smallest edge to check for intersection with obstacles
-        self.max_samples = 10**5 # max number of samples to take before timing out
+        self.Q = np.array([(max_section_len, max_section_len//2, max_section_len//4, 1)])  # length of tree edges
+        self.r = 1  # length of smallest edge to check for intersection with obstacles
+        self.max_samples = 10**6 # max number of samples to take before timing out
         self.rewire_count = 16  # optional, number of nearby branches to rewire
         self.prc = 0.1  # probability of checking for a connection to goal
 
