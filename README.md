@@ -1,6 +1,6 @@
 <div id="top"></div>
 
-## Long Term planning with Deep Reinforcement Learning agent ##
+# Long Term planning with Deep Reinforcement Learning 
 
 ___
 <p align="center">
@@ -11,36 +11,17 @@ ___
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="assets/p5.gif" alt="Logo" height=250>
-  </a>
-
+    <table>
+        <tr>
+            <td><img src="assets/bn.gif"  alt="U" height="200"/></td>
+            <td><img src="assets/S.gif" alt="S" height="200"/></td>
+        </tr>
+        <tr>
+            <td><img src="assets/20x20.gif" alt="20x20 maze" height="200"/></td>
+            <td><img src="assets/sprial.gif" alt="Spiral" height="200"/></td>
+        </tr>
+    </table>
 </div>
-
-
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
-
 
 <!-- ABOUT THE PROJECT -->
 
@@ -49,40 +30,48 @@ ___
 The following is the graduation project of Dor Bitton & Yuval Goshen, 2 Computer engineering Bsc. students from Technion
 Insitute - Haifa. 
 
-**The Problem**
+### The Problem
 
-The main Goal of the project is to use solve problem of long term planning, like solving a maze given
-an ant robot and a certain goal. The solution we've chosen for the problem is based on Deep Reinforcement learning.
-Our solution for solving a maze is built of 2 agents:
+The Goal of the project is to use solve problem of long term planning.
+We built an environment for robots to navigate in a  goal conditioned maze from an arbitrary start point to an arbitrary
+goal. The agent has to control the robot joint motors to move to the goal. This task is challenging because the robot has to plan and
+navigate through the maze from motor control, that problem has long horizon for planning.
 
-***The Stepper***
+We used a Deep Reinforcement Learning algorithms to solve the problem,
+but we divided the problem into 2 sub-problems that are solved independently by hierarchical agents. 
+
+### The Stepper
 <div align="center">
-    <img src="assets/p3.gif" alt="Logo" height=150>
+    <img src="assets/ant.gif" alt="Ant Stepper" height=150>
+    <img src="assets/rex.gif" alt="Rex Stepper" height=150>
 </div>
 
-- This agent is able to control the ant robot's joints given a certain relatively close goal (subgoal), and arrive it in
-  short time.
-- With DDPG algorithm we managed to reach any goal within reasonable radius, controlling the ant's joints only.
+- Trained in a separate environment to walk to a nearby subgoal (up to two times it's body size)
+- No obstacles, just learn the task of "walking"
+- Dense reward, but independent of the robot type. Reward is a function of distance from the goal plus an indicator
+ that goal achieved. 
+- trained with DDPG algorithm
 
-
-<br>
-
-***The Navigator (in progress...)***
+### The Navigator
 <div align="center">
-    <img src="assets/navigator.gif" alt="navigator" height=150>
+    <img src="assets/navigator_gif.gif" alt="Navigator" height=150>
+    <img src="assets/navigator_plot.jpg" alt="Navigator Plot" height=150>
 </div>
 
-- This agent aims to generate subgoals towards the main goal for the stepper as an input.
-- In order to implement this agent, we used a modification of DDPG (<a href="https://arxiv.org/abs/1906.00214">DDPG-MP</a>)
-In a nutshell, DDPG-MP uses pre-computed demonstrations when the agent fails. That way he could generalize for the different 
-new unseen main goals. 
-- The demonstrations the agent is given assumes the ant is a point robot, thus we applied some changes in the Neural network 
-to overcome that.  
+- trained to generate sub-goals for the stepper, which makes the horizon much shorter for the navigation part of the task.
+- It is still different from solving a point robot maze, because the next state depends on the provided goal, and on
+the stepper which is not perfect
+- the robot state is not fully observable for the navigator
+- We tried using one of the following algorithms:
+  - TD3
+  - RRT planner on the maze map where the robot is a point robot
+  - RRT planner on the maze map, with extended walls to the robot size
+  - TD3-MP similar to [DDPG-MP](https://arxiv.org/abs/1906.00214) with demonstrations planned by RRT.
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-### Built With
+## Tools we used for this project
 
 * [Pytorch](https://pytorch.org/)
 * [Stable-baselines3](https://stable-baselines3.readthedocs.io/en/master/)
@@ -91,63 +80,6 @@ to overcome that.
 * [Weights & Biases](https://wandb.ai/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
-<!-- GETTING STARTED -->
-
-## Getting Started
-
-### Prerequisites
-
-Just install the requirements file to ensure you've got the needed libraries.
-
-  ```sh
-  pip install requirements.txt -r
-  ```
-
-### Installation
-
-
-1.Clone the repo
-
-   ```sh
-   git clone https://github.com/rl-project-dor-yuval/robomaze.git
-   ```
-
-2.Install required packages
-
-   ```sh
-    pip install requirements.txt -r
-   ```
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- USAGE EXAMPLES -->
-
-## Usage
-
-to be written.
-
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- ROADMAP -->
-
-## Roadmap
-
-- [x] Train Stepper Agent
-- [ ] Train Navigator Agent
-- [ ] Add observation with computer vision
-- [ ] Try to generalize maze solving to generic maze.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-<!-- CONTACT -->
 
 ## Contact
 
@@ -158,18 +90,14 @@ Yuval Goshen - [Linkedin](https://www.linkedin.com/in/yuval-goshen-a8390b1ba/) -
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
-
-<!-- ACKNOWLEDGMENTS -->
-
 ## Acknowledgments
 
 Out work is mainly based on the following papers
 
 * [Continuous Control With Deep Reinforcement Learning](https://arxiv.org/pdf/1509.02971.pdf)
 * [Playing Atari With Deep Reinforcement Learning](https://arxiv.org/pdf/1312.5602.pdf)
-
-Second part will extend the following paper:
 * [Harnessing Reinforcement Learning for Neural Motion Planning](https://arxiv.org/abs/1906.00214)
+
 <div id="DDPG-MP"></div>
 <p align="right">(<a href="#top">back to top</a>)</p>
 
